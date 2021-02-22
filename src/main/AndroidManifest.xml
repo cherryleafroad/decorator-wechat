@@ -16,7 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
-          package="com.oasisfeng.nevo.decorators.wechat" android:versionCode="30000" android:versionName="3.0">
+          package="com.oasisfeng.nevo.decorators.wechat" android:versionCode="30000" android:versionName="3.0" android:sharedUserId="com.oasisfeng.nevo.test">
 
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" /> <!-- WeChatDecoratorSettingsActivity (ACTION_UNINSTALL_PACKAGE) -->
@@ -55,6 +55,7 @@
             android:label="@string/decorator_wechat_title"
             android:taskAffinity=""
             android:theme="@style/Theme.DayNight"
+            android:exported="true"
             android:process=":ui" />
 
         <provider android:name=".AssetFileProvider"
