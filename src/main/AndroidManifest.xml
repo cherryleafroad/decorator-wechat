@@ -56,7 +56,13 @@
             android:taskAffinity=""
             android:theme="@style/Theme.DayNight"
             android:exported="true"
-            android:process=":ui" />
+            android:process=":ui">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <provider android:name=".AssetFileProvider"
             android:authorities="com.oasisfeng.nevo.decorators.wechat.files"
