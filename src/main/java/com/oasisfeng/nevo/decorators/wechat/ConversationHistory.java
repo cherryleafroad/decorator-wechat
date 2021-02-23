@@ -128,7 +128,7 @@ class ConversationHistory {
 
         boolean convertedNotifications = false;
         String[] notificationMessages = new String[0];
-        CarExtender.Builder builder = new CarExtender.Builder(unreadConversation.getParticipant());
+        CarExtender.Builder builder = new CarExtender.Builder(EmojiTranslator.translate(unreadConversation.getParticipant()).toString());
         // our array is ordered from newest to oldest, but needs to be inserted from oldest to newest
 
         String[] messages = getConversationHistory(key);
