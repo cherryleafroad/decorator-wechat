@@ -4,6 +4,7 @@
     <string name="pref_wear_title">Wear OS (experimental)</string>
     <string name="self_display_name">You</string>
     <string name="action_reply">Reply</string>
+    <string name="action_reply_to">Reply to\u0020</string>
     <string name="header_group_chat">Group Chat</string>
     <string name="header_bot_message">WeChat Number</string>
     <string name="header_service_message">Service Message</string>

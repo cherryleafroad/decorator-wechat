@@ -153,8 +153,11 @@ class MessagingBuilder {
 			final RemoteInput.Builder reply_remote_input = new RemoteInput.Builder(remote_input.getResultKey()).addExtras(remote_input.getExtras())
 					.setAllowFreeFormInput(true).setChoices(SmartReply.generateChoices(messages));
 			final String participant = ext.getParticipant();	// No need to getParticipants() due to actually only one participant at most, see CarExtender.Builder().
-			if (BuildConfig.DEBUG && conversation.id != null) reply_remote_input.setLabel(conversation.id);
-			else if (participant != null) reply_remote_input.setLabel(participant);
+			if (BuildConfig.DEBUG && conversation.id != null) {
+				reply_remote_input.setLabel(conversation.id);
+			} else if (participant != null) {
+				reply_remote_input.setLabel(mContext.getString(R.string.action_reply_to) + participant);
+			}
 
 			final Action.Builder reply_action = new Action.Builder(null, mContext.getString(R.string.action_reply), proxy)
 					.addRemoteInput(reply_remote_input.build()).setAllowGeneratedReplies(true);
