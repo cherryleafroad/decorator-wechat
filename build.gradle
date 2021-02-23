@@ -41,6 +41,22 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    signingConfigs {
+        release {
+            storeFile file("../signing.jks")
+            storePassword "android"
+            keyAlias "android"
+            keyPassword "android"
+        }
+
+        debug {
+            storeFile file("../signing.jks")
+            storePassword "android"
+            keyAlias "android"
+            keyPassword "android"
+        }
+    }
 }
 
 dependencies {
