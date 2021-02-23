@@ -178,9 +178,19 @@ public class WeChatDecorator extends NevoDecoratorService {
 		conversation.summary = content_text;
 		conversation.ticker = n.tickerText;
 		conversation.timestamp = n.when;
-		conversation.ext = IGNORE_CAR_EXTENDER ? null : new Notification.CarExtender(n).getUnreadConversation();
-
+		// patch the carExtender's bad data
 		final String original_key = evolving.getOriginalKey();
+		conversation.ext = IGNORE_CAR_EXTENDER ? null : ConversationHistory.getUnreadConversation(
+				original_key,
+				new Notification.CarExtender(n).getUnreadConversation(),
+				conversation,
+				getArchivedNotifications(
+						original_key,
+						ConversationHistory.MAX_NUM_CONVERSATIONS
+				)
+		);
+
+
 		MessagingStyle messaging = mMessagingBuilder.buildFromConversation(conversation, evolving);
 		if (messaging == null)	// EXTRA_TEXT will be written in buildFromArchive()
 			messaging = mMessagingBuilder.buildFromArchive(conversation, n, title, getArchivedNotifications(original_key, MAX_NUM_ARCHIVED));

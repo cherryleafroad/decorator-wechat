@@ -47,6 +47,11 @@ class WeChatMessage {
 		return messages;
 	}
 
+	public static String getTickerMessage(Conversation conversation) {
+		WeChatMessage m = buildFromBasicFields(conversation);
+		return (String)m.text;
+	}
+
 	private static WeChatMessage buildFromBasicFields(final Conversation conversation) {
 		// Trim the possible trailing white spaces in ticker.
 		CharSequence ticker = conversation.ticker;
@@ -96,7 +101,7 @@ class WeChatMessage {
 	 * Parse unread count prefix in the form of "n" or "n条/則/…".
 	 * @return unread count, or 0 if unrecognized as unread count
 	 */
-	private static int parsePrefixAsUnreadCount(final CharSequence prefix) {
+	public static int parsePrefixAsUnreadCount(final CharSequence prefix) {
 		final int length = prefix.length();
 		if (length < 1) return 0;
 		final CharSequence count = length > 1 && ! Character.isDigit(prefix.charAt(length - 1)) ? prefix.subSequence(0, length - 1) : prefix;
