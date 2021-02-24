@@ -47,6 +47,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
+import static android.os.Build.VERSION_CODES.Q;
 import static androidx.core.app.NotificationCompat.EXTRA_CONVERSATION_TITLE;
 import static androidx.core.app.NotificationCompat.EXTRA_IS_GROUP_CONVERSATION;
 import static androidx.core.app.NotificationCompat.EXTRA_MESSAGES;
@@ -151,7 +152,11 @@ class MessagingBuilder {
 			final CharSequence[] input_history = n.extras.getCharSequenceArray(EXTRA_REMOTE_INPUT_HISTORY);
 			final PendingIntent proxy = proxyDirectReply(conversation.nid, sbn, on_reply, remote_input, input_history);
 			final RemoteInput.Builder reply_remote_input = new RemoteInput.Builder(remote_input.getResultKey()).addExtras(remote_input.getExtras())
-					.setAllowFreeFormInput(true).setChoices(SmartReply.generateChoices(messages));
+					.setAllowFreeFormInput(true);
+			// Android Q and above has its own smart reply system
+			if (SDK_INT < Q) {
+				reply_remote_input.setChoices(SmartReply.generateChoices(messages));
+			}
 			final String participant = ext.getParticipant();	// No need to getParticipants() due to actually only one participant at most, see CarExtender.Builder().
 			if (BuildConfig.DEBUG && conversation.id != null) {
 				reply_remote_input.setLabel(conversation.id);
