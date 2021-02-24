@@ -114,7 +114,13 @@ class ConversationHistory {
 
         // figure out the type of conversation we're dealing with
         newConversation.ext = unreadConversation;
+        // why do this? Because it stops it from thinking that many messages
+        // with [Emoji] in them mean it's a group message
+        newConversation.summary = EmojiTranslator.translate(conversation.summary);
+        newConversation.ticker = EmojiTranslator.translate(conversation.ticker);
         int type = WeChatMessage.guessConversationType(newConversation);
+        newConversation.summary = conversation.summary;
+        newConversation.ticker = conversation.ticker;
         boolean isGroupChat;
         // treat unknown as a normal message
         isGroupChat = type != Conversation.TYPE_DIRECT_MESSAGE && type != Conversation.TYPE_BOT_MESSAGE && type != Conversation.TYPE_UNKNOWN;
@@ -135,7 +141,6 @@ class ConversationHistory {
             msgCheck = WeChatMessage.getTickerMessage(msgCmp);
         }
 
-
         if (!msgCheck.equals("[Message]")) {
             // car extender has the correct msg in both cases
             // Name: Msg, for groups
@@ -145,9 +150,9 @@ class ConversationHistory {
             // fallback, real message is in the ticker
             String msg;
             if (!isGroupChat) {
-                msg = WeChatMessage.getTickerMessage(formatConversation(newConversation, (String) newConversation.summary));
+                msg = WeChatMessage.getTickerMessage(formatConversation(newConversation, newConversation.summary.toString()));
             } else {
-                msg = (String)conversation.ticker;
+                msg = conversation.ticker.toString();
             }
             addConversationMessage(key, msg);
         }
@@ -211,7 +216,7 @@ class ConversationHistory {
                     if (!isGroupChat) {
                         newMsg = WeChatMessage.getTickerMessage(newConversation);
                     } else {
-                        newMsg = (String)newConversation.ticker;
+                        newMsg = newConversation.ticker.toString();
                     }
 
                     builder.addMessage(newMsg);
