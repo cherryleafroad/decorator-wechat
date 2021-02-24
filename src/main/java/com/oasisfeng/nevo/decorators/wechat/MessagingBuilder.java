@@ -273,6 +273,7 @@ class MessagingBuilder {
 			final Intent input_data = addTargetPackageAndWakeUp(reply_action);
 			input_data.setClipData(proxy.getClipData());
 
+			((WeChatApp)context.getApplicationContext()).setReplying(true);
 			reply_action.send(mContext, 0, input_data, (pendingIntent, intent, _result_code, _result_data, _result_extras) -> {
 				if (BuildConfig.DEBUG) Log.d(TAG, "Reply sent: " + intent.toUri(0));
 				if (SDK_INT >= N) {

@@ -3,6 +3,7 @@ package com.oasisfeng.nevo.decorators.wechat;
 import android.app.Notification;
 import android.app.Notification.CarExtender.UnreadConversation;
 import android.app.Notification.CarExtender;
+import android.content.Context;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
@@ -100,8 +101,9 @@ class ConversationHistory {
     //
     // The purpose of this class is to fix an issue where WeChat sends "[Message]"
     // when you do certain actions like quote a message, which makes it unusable
-    public static UnreadConversation getUnreadConversation(String key, UnreadConversation unreadConversation,
-                                           Conversation conversation, List<StatusBarNotification> notificationHistory) {
+    public static UnreadConversation getUnreadConversation(Context context, String key, UnreadConversation unreadConversation,
+                                                           Conversation conversation, List<StatusBarNotification> notificationHistory) {
+        boolean isReplying = ((WeChatApp)context.getApplicationContext()).getReplying();
         Conversation newConversation;
         try {
             newConversation = conversation.clone();
@@ -141,20 +143,24 @@ class ConversationHistory {
             msgCheck = WeChatMessage.getTickerMessage(msgCmp);
         }
 
-        if (!msgCheck.equals("[Message]")) {
-            // car extender has the correct msg in both cases
-            // Name: Msg, for groups
-            // for regular chat just, Msg
-            addConversationMessage(key, carExtenderMessages[lastIndex]);
-        } else {
-            // fallback, real message is in the ticker
-            String msg;
-            if (!isGroupChat) {
-                msg = WeChatMessage.getTickerMessage(formatConversation(newConversation, newConversation.summary.toString()));
+        // Replying has a double entry, so don't add twice it if we're replying
+        // this means we're only getting the history, not adding to it
+        if (!isReplying) {
+            if (!msgCheck.equals("[Message]")) {
+                // car extender has the correct msg in both cases
+                // Name: Msg, for groups
+                // for regular chat just, Msg
+                addConversationMessage(key, carExtenderMessages[lastIndex]);
             } else {
-                msg = conversation.ticker.toString();
+                // fallback, real message is in the ticker
+                String msg;
+                if (!isGroupChat) {
+                    msg = WeChatMessage.getTickerMessage(formatConversation(newConversation, newConversation.summary.toString()));
+                } else {
+                    msg = conversation.ticker.toString();
+                }
+                addConversationMessage(key, msg);
             }
-            addConversationMessage(key, msg);
         }
 
         boolean convertedNotifications = false;
@@ -246,6 +252,9 @@ class ConversationHistory {
         builder.setReadPendingIntent(unreadConversation.getReadPendingIntent());
         builder.setReplyAction(unreadConversation.getReplyPendingIntent(), unreadConversation.getRemoteInput());
 
+        if (isReplying) {
+            ((WeChatApp)context.getApplicationContext()).setReplying(false);
+        }
         return builder.build();
     }
 }
