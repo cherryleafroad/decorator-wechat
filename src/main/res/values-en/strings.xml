@@ -43,4 +43,6 @@
     <string name="action_mark_as_read">Mark as read</string>
     <string name="pref_mark_as_read_title">Mark As Read</string>
     <string name="pref_mark_as_read_summary">Turn on the \"mark as red\" action button in the notification</string>
+    <string name="pref_notification_mark_as_read_title">Swipe Notification Mark As Read</string>
+    <string name="pref_notification_mark_as_read_summary">When swiping notification away, mark message as read. (if bubble is present, it will not be marked as read)</string>
 </resources>

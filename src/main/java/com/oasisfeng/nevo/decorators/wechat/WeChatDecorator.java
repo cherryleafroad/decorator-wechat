@@ -325,7 +325,9 @@ public class WeChatDecorator extends NevoDecoratorService {
 			mUseExtraChannels = false;
 			mHandler.post(() -> recastNotification(key, null));
 		} else if (SDK_INT < O || reason == REASON_CANCEL) {	// Exclude the removal request by us in above case. (Removal-Aware is only supported on Android 8+)
-			mMessagingBuilder.markRead(key);
+			if (isEnabled(mPrefKeyNotificationsMarkAsRead)) {
+				mMessagingBuilder.markRead(key);
+			}
 		}
 		return false;
 	}
@@ -404,6 +406,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 		// cross process solution
 		((WeChatApp)context.getApplicationContext()).setSharedPreferences(mPreferences);
 		mPrefKeyWear = getString(R.string.pref_wear);
+		mPrefKeyNotificationsMarkAsRead = getString(R.string.pref_notification_mark_as_read);
 
 		mMessagingBuilder = new MessagingBuilder(this, new MessagingBuilder.Controller() {
 			@Override public void recastNotification(final String key, final Bundle addition) {
@@ -469,6 +472,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 	private boolean mUseExtraChannels = true;	// Extra channels should not be used in Insider mode, as WeChat always removes channels not maintained by itself.
 	private SharedPreferences mPreferences;
 	private String mPrefKeyWear;
+	private String mPrefKeyNotificationsMarkAsRead;
 	private final Handler mHandler = new Handler(Looper.myLooper());
 	private final @Nullable Parcelable mActivityBlocker = buildParcelableWithFileDescriptor();
 

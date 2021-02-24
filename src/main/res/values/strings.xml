@@ -66,4 +66,6 @@
     <string name="action_mark_as_read">标记为已读</string>
     <string name="pref_mark_as_read_title">标记为已读</string>
     <string name="pref_mark_as_read_summary">在通知中启用\"标记为已读\"按钮</string>
+    <string name="pref_notification_mark_as_read_title">清除通知标记为已读</string>
+    <string name="pref_notification_mark_as_read_summary">清除通知后会标记为已读（如果存在聊天气泡，则不会被标记为已读）</string>
 </resources>
