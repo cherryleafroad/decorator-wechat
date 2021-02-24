@@ -113,16 +113,47 @@ class ConversationHistory {
             return unreadConversation;
         }
 
+        // figure out the type of conversation we're dealing with
+        newConversation.ext = unreadConversation;
+        int type = WeChatMessage.guessConversationType(newConversation);
+        boolean isGroupChat;
+        if (type == Conversation.TYPE_DIRECT_MESSAGE || type == Conversation.TYPE_BOT_MESSAGE || type == Conversation.TYPE_UNKNOWN) {
+            // treat unknown as a normal message
+            isGroupChat = false;
+        } else {
+            isGroupChat = true;
+        }
+
         // car extender messages are ordered from oldest to newest
         String[] carExtenderMessages = unreadConversation.getMessages();
         int lastIndex = carExtenderMessages.length - 1;
         // if it's an erroneous message, go to fallback, otherwise use original
         // make sure to grab the latest which is the last one
-        if (!carExtenderMessages[lastIndex].equals("[Message]")) {
+        String msgCheck;
+        if (!isGroupChat) {
+            // Single chat or Bot
+            msgCheck = carExtenderMessages[lastIndex];
+        } else {
+            // this is a group chat
+            // need to slice off -> Name: Msg -> Msg
+            Conversation msgCmp = formatConversation(newConversation, carExtenderMessages[lastIndex]);
+            msgCheck = WeChatMessage.getTickerMessage(msgCmp);
+        }
+
+
+        if (!msgCheck.equals("[Message]")) {
+            // car extender has the correct msg in both cases
+            // Name: Msg, for groups
+            // for regular chat just, Msg
             addConversationMessage(key, carExtenderMessages[lastIndex]);
         } else {
             // fallback, real message is in the ticker
-            String msg = WeChatMessage.getTickerMessage(formatConversation(newConversation, (String)newConversation.summary));
+            String msg;
+            if (!isGroupChat) {
+                msg = WeChatMessage.getTickerMessage(formatConversation(newConversation, (String) newConversation.summary));
+            } else {
+                msg = (String)conversation.ticker;
+            }
             addConversationMessage(key, msg);
         }
 
@@ -153,11 +184,11 @@ class ConversationHistory {
                 // use car extender message if it's not corrupted
                 // we can go forwards cause car extender is reversed order
                 addBuffer = true;
-                String msg = carExtenderMessages[forwardIndex];
-                if (!msg.equals("[Message]")) {
-                    builder.addMessage(msg);
+                if (!msgCheck.equals("[Message]")) {
+                    // valid message for both chats and groups
+                    builder.addMessage(carExtenderMessages[forwardIndex]);
                     // add it to cache also
-                    buffer[forwardIndex] = msg;
+                    buffer[forwardIndex] = carExtenderMessages[forwardIndex];
                 } else {
                     // lazy evaluation
                     if (!convertedNotifications) {
@@ -170,12 +201,24 @@ class ConversationHistory {
                     if (index < 0) {
                         // we don't have this message sadly :(
                         // however this shouldn't happen often at all at least
-                        builder.addMessage("[Unknown]");
-                        buffer[forwardIndex] = "[Unknown]";
+                        if (!isGroupChat) {
+                            builder.addMessage("[Unknown]");
+                            buffer[forwardIndex] = "[Unknown]";
+                        } else {
+                            builder.addMessage("Unknown: [Unknown]");
+                            buffer[forwardIndex] = "Unknown: [Unknown]";
+                        }
                         continue;
                     }
+
                     newConversation = formatConversation(newConversation, notificationMessages[index]);
-                    String newMsg = WeChatMessage.getTickerMessage(newConversation);
+                    String newMsg;
+                    if (!isGroupChat) {
+                        newMsg = WeChatMessage.getTickerMessage(newConversation);
+                    } else {
+                        newMsg = (String)newConversation.ticker;
+                    }
+
                     builder.addMessage(newMsg);
                     buffer[forwardIndex] = newMsg;
                 }
