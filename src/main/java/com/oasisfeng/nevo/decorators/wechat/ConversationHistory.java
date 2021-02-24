@@ -70,7 +70,6 @@ class ConversationHistory {
     // make edited conversation acceptable for processing
     private static Conversation formatConversation(Conversation conversation, String message) {
         conversation.summary = message;
-        CharSequence charMsg;
 
         conversation.ticker = message;
         final CharSequence ticker = conversation.ticker;
@@ -117,12 +116,8 @@ class ConversationHistory {
         newConversation.ext = unreadConversation;
         int type = WeChatMessage.guessConversationType(newConversation);
         boolean isGroupChat;
-        if (type == Conversation.TYPE_DIRECT_MESSAGE || type == Conversation.TYPE_BOT_MESSAGE || type == Conversation.TYPE_UNKNOWN) {
-            // treat unknown as a normal message
-            isGroupChat = false;
-        } else {
-            isGroupChat = true;
-        }
+        // treat unknown as a normal message
+        isGroupChat = type != Conversation.TYPE_DIRECT_MESSAGE && type != Conversation.TYPE_BOT_MESSAGE && type != Conversation.TYPE_UNKNOWN;
 
         // car extender messages are ordered from oldest to newest
         String[] carExtenderMessages = unreadConversation.getMessages();
@@ -237,8 +232,8 @@ class ConversationHistory {
         if (addBuffer) {
             // add oldest elements first (buffer is stored oldest to newest)
             // this way the newest element is first (we store history as newest to oldest)
-            for (int i = 0; i < buffer.length; i++) {
-                addConversationMessage(key, buffer[i]);
+            for (String s : buffer) {
+                addConversationMessage(key, s);
             }
         }
 
