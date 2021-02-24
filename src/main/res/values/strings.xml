@@ -62,4 +62,7 @@
     <string name="pref_open_source_summary">欢迎来 GitHub 上访问我们</string>
     <string name="prompt_uninstall_agent_first">安装新版本前，须先卸载当前安装的微信替身版本。（尽管将提示卸载“微信”，实际卸载的只是微信替身，您的微信应用及数据不会受到任何影响）</string>
     <string name="action_continue">继续</string>
+    <string name="action_mark_as_read">标记为已读</string>
+    <string name="pref_mark_as_read_title">标记为已读</string>
+    <string name="pref_mark_as_read_summary">在通知中启用\"标记为已读\"按钮</string>
 </resources>

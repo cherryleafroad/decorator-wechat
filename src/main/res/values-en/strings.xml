@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_mark_as_read">Mark as read</string>
+    <string name="pref_mark_as_read_title">Mark As Read</string>
+    <string name="pref_mark_as_read_summary">Turn on the \"mark as red\" action button in the notification</string>
+</resources>

@@ -13,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
@@ -64,8 +65,10 @@ class MessagingBuilder {
 	private static final int MAX_NUM_HISTORICAL_LINES = 10;
 
 	private static final String ACTION_REPLY = "REPLY";
+	private static final String ACTION_MARK_AS_READ = "MARK_AS_READ";
 	private static final String SCHEME_KEY = "key";
 	private static final String EXTRA_REPLY_ACTION = "pending_intent";
+	private static final String EXTRA_SBN_KEY = "sbn_key";
 	private static final String EXTRA_RESULT_KEY = "result_key";
 	private static final String EXTRA_ORIGINAL_KEY = "original_key";
 	private static final String EXTRA_REPLY_PREFIX = "reply_prefix";
@@ -160,6 +163,15 @@ class MessagingBuilder {
 					.addRemoteInput(reply_remote_input.build()).setAllowGeneratedReplies(true);
 			if (SDK_INT >= P) reply_action.setSemanticAction(Action.SEMANTIC_ACTION_REPLY);
 			n.addAction(reply_action.build());
+
+			boolean mark_as_read = mSharedPreferences.getBoolean(mPrefKeyMarkAsRead, false);
+			if (mark_as_read) {
+				final Action.Builder mark_as_read_action = new Action.Builder(null, mContext.getString(R.string.action_mark_as_read), proxyMarkAsRead(sbn.getKey()));
+				if (SDK_INT >= P)
+					mark_as_read_action.setSemanticAction(Action.SEMANTIC_ACTION_MARK_AS_READ);
+				n.addPerson(" "); // requires person
+				n.addAction(mark_as_read_action.build());
+			}
 		}
 
 		final MessagingStyle messaging = new MessagingStyle(mUserSelf);
@@ -228,7 +240,7 @@ class MessagingBuilder {
 
 	/** Intercept the PendingIntent in RemoteInput to update the notification with replied message upon success. */
 	private PendingIntent proxyDirectReply(final int cid, final MutableStatusBarNotification sbn, final PendingIntent on_reply,
-	                                       final RemoteInput remote_input, final @Nullable CharSequence[] input_history) {
+										   final RemoteInput remote_input, final @Nullable CharSequence[] input_history) {
 		final Intent proxy = new Intent(ACTION_REPLY)		// Separate action to avoid PendingIntent overwrite.
 				.setData(Uri.fromParts(SCHEME_KEY, sbn.getKey(), null))
 				.putExtra(EXTRA_REPLY_ACTION, on_reply).putExtra(EXTRA_RESULT_KEY, remote_input.getResultKey())
@@ -237,6 +249,21 @@ class MessagingBuilder {
 		if (SDK_INT >= N && input_history != null)
 			proxy.putCharSequenceArrayListExtra(EXTRA_REMOTE_INPUT_HISTORY, new ArrayList<>(Arrays.asList(input_history)));
 		return PendingIntent.getBroadcast(mContext, 0, proxy.setPackage(mContext.getPackageName()), FLAG_UPDATE_CURRENT);
+	}
+
+	private PendingIntent proxyMarkAsRead(String key) {
+		final Intent proxy = new Intent(ACTION_MARK_AS_READ)
+				.putExtra(EXTRA_SBN_KEY, key);
+		Log.d(TAG, "executing mark as read");
+		return PendingIntent.getBroadcast(mContext, 0, proxy.setPackage(mContext.getPackageName()), FLAG_UPDATE_CURRENT);
+	}
+
+	private class MarkAsReadReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context context, Intent proxy) {
+			String key = proxy.getStringExtra(EXTRA_SBN_KEY);
+			MessagingBuilder.this.markRead(key);
+		}
 	}
 
 	private final BroadcastReceiver mReplyReceiver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent proxy) {
@@ -355,6 +382,19 @@ class MessagingBuilder {
 
 		final IntentFilter filter = new IntentFilter(ACTION_REPLY); filter.addDataScheme(SCHEME_KEY);
 		context.registerReceiver(mReplyReceiver, filter);
+
+		mSharedPreferences = ((WeChatApp)mContext.getApplicationContext()).getSharedPreferences();
+
+		mPrefKeyMarkAsRead = mContext.getString(R.string.pref_mark_as_read);
+		boolean mark_as_read = mSharedPreferences.getBoolean(mPrefKeyMarkAsRead, false);
+		Log.d(TAG, "mark as read returned " + mark_as_read);
+
+		mMarkAsReadReceiver = new MarkAsReadReceiver();
+		// this must always be willing to receive, otherwise if we change setting later
+		// it will not receive until we restart the process
+		final IntentFilter markAsReadFilter = new IntentFilter(ACTION_MARK_AS_READ);
+		filter.addDataScheme(SCHEME_KEY);
+		context.registerReceiver(mMarkAsReadReceiver, markAsReadFilter);
 	}
 
 	private static Person buildPersonFromProfile(final Context context) {
@@ -363,9 +403,13 @@ class MessagingBuilder {
 
 	void close() {
 		try { mContext.unregisterReceiver(mReplyReceiver); } catch (final RuntimeException ignored) {}
+		try { mContext.unregisterReceiver(mMarkAsReadReceiver); } catch (final RuntimeException ignored) {}
 	}
 
 	private final Context mContext;
+	private final MarkAsReadReceiver mMarkAsReadReceiver;
+	private SharedPreferences mSharedPreferences;
+	private String mPrefKeyMarkAsRead;
 	private final Controller mController;
 	private final Person mUserSelf;
 	private final Map<String/* evolved key */, PendingIntent> mMarkReadPendingIntents = new ArrayMap<>();

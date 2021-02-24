@@ -382,6 +382,8 @@ public class WeChatDecorator extends NevoDecoratorService {
 		final Context context = SDK_INT >= N ? createDeviceProtectedStorageContext() : this;
 		//noinspection deprecation
 		mPreferences = context.getSharedPreferences(PREFERENCES_NAME, MODE_MULTI_PROCESS);
+		// cross process solution
+		((WeChatApp)context.getApplicationContext()).setSharedPreferences(mPreferences);
 		mPrefKeyWear = getString(R.string.pref_wear);
 
 		mMessagingBuilder = new MessagingBuilder(this, new MessagingBuilder.Controller() {

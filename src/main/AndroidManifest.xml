@@ -29,7 +29,7 @@
     </queries>
 
     <!-- Backup is intentionally disabled to avoid service interruption during backup. -->
-    <application android:label="@string/decorator_wechat_label" android:allowBackup="false" tools:ignore="GoogleAppIndexingWarning">
+    <application android:label="@string/decorator_wechat_label" android:allowBackup="false" tools:ignore="GoogleAppIndexingWarning" android:name=".WeChatApp">
 
         <service android:name=".WeChatDecorator"
                  android:directBootAware="true" tools:targetApi="N"
