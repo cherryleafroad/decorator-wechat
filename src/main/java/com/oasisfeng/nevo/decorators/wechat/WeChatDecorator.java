@@ -181,6 +181,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 		// patch the carExtender's bad data
 		final String original_key = evolving.getOriginalKey();
 		conversation.ext = IGNORE_CAR_EXTENDER ? null : ConversationHistory.getUnreadConversation(
+				this,
 				original_key,
 				new Notification.CarExtender(n).getUnreadConversation(),
 				conversation,
