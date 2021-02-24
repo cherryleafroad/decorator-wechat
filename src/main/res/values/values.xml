@@ -16,5 +16,7 @@
     <string name="pref_notification_mark_as_read" translatable="false">notification_mark_as_read</string>
     <string name="pref_agent" translatable="false">agent</string>
     <string name="pref_wear" translatable="false">wear</string>
+    <string name="pref_like" translatable="false">like</string>
+    <string name="action_like_text" translatable="false">👍</string>
 
 </resources>

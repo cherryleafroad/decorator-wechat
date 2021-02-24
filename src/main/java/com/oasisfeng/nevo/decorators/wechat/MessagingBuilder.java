@@ -67,6 +67,7 @@ class MessagingBuilder {
 
 	private static final String ACTION_REPLY = "REPLY";
 	private static final String ACTION_MARK_AS_READ = "MARK_AS_READ";
+	private static final String ACTION_LIKE = "LIKE";
 	private static final String SCHEME_KEY = "key";
 	private static final String EXTRA_REPLY_ACTION = "pending_intent";
 	private static final String EXTRA_SBN_KEY = "sbn_key";
@@ -180,6 +181,16 @@ class MessagingBuilder {
 				n.addPerson(" "); // requires person
 				n.addAction(mark_as_read_action.build());
 			}
+
+			boolean like = mSharedPreferences.getBoolean(mPrefKeyLike, false);
+			if (like) {
+				PendingIntent proxy_like = proxyLike(conversation.nid, sbn, on_reply, remote_input, input_history);
+				final Action.Builder like_action = new Action.Builder(null, mContext.getString(R.string.action_like), proxy_like);
+				if (SDK_INT >= P)
+					like_action.setSemanticAction(Action.SEMANTIC_ACTION_THUMBS_UP);
+				n.addPerson(" ");
+				n.addAction(like_action.build());
+			}
 		}
 
 		final MessagingStyle messaging = new MessagingStyle(mUserSelf);
@@ -262,7 +273,6 @@ class MessagingBuilder {
 	private PendingIntent proxyMarkAsRead(String key) {
 		final Intent proxy = new Intent(ACTION_MARK_AS_READ)
 				.putExtra(EXTRA_SBN_KEY, key);
-		Log.d(TAG, "executing mark as read");
 		return PendingIntent.getBroadcast(mContext, 0, proxy.setPackage(mContext.getPackageName()), FLAG_UPDATE_CURRENT);
 	}
 
@@ -272,6 +282,25 @@ class MessagingBuilder {
 			String key = proxy.getStringExtra(EXTRA_SBN_KEY);
 			MessagingBuilder.this.markRead(key);
 		}
+	}
+
+	private PendingIntent proxyLike(final int cid, final MutableStatusBarNotification sbn, final PendingIntent on_reply,
+									final RemoteInput remote_input, final @Nullable CharSequence[] input_history) {
+		// this is an identical method to proxy direct reply, except in this one we manually add the remote reply
+		final Intent proxy = new Intent(ACTION_LIKE)		// Separate action to avoid PendingIntent overwrite.
+				.setData(Uri.fromParts(SCHEME_KEY, sbn.getKey(), null))
+				.putExtra(EXTRA_REPLY_ACTION, on_reply).putExtra(EXTRA_RESULT_KEY, remote_input.getResultKey())
+				.putExtra(EXTRA_ORIGINAL_KEY, sbn.getOriginalKey()).putExtra(EXTRA_CONVERSATION_ID, cid)
+				.putExtra(Intent.EXTRA_USER, sbn.getUser());
+		if (SDK_INT >= N && input_history != null)
+			proxy.putCharSequenceArrayListExtra(EXTRA_REMOTE_INPUT_HISTORY, new ArrayList<>(Arrays.asList(input_history)));
+
+		Bundle bundle = new Bundle();
+		bundle.putString(remote_input.getResultKey(), mContext.getString(R.string.action_like_text));
+		RemoteInput[] remote_inputs = {remote_input};
+		RemoteInput.addResultsToIntent(remote_inputs, proxy, bundle);
+
+		return PendingIntent.getBroadcast(mContext, 0, proxy.setPackage(mContext.getPackageName()), FLAG_UPDATE_CURRENT);
 	}
 
 	private final BroadcastReceiver mReplyReceiver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent proxy) {
@@ -389,14 +418,16 @@ class MessagingBuilder {
 		mController = controller;
 		mUserSelf = buildPersonFromProfile(context);
 
-		final IntentFilter filter = new IntentFilter(ACTION_REPLY); filter.addDataScheme(SCHEME_KEY);
+		final IntentFilter filter = new IntentFilter();
+		filter.addAction(ACTION_REPLY);
+		filter.addAction(ACTION_LIKE);
+		filter.addDataScheme(SCHEME_KEY);
 		context.registerReceiver(mReplyReceiver, filter);
 
 		mSharedPreferences = ((WeChatApp)mContext.getApplicationContext()).getSharedPreferences();
 
 		mPrefKeyMarkAsRead = mContext.getString(R.string.pref_mark_as_read);
-		boolean mark_as_read = mSharedPreferences.getBoolean(mPrefKeyMarkAsRead, false);
-		Log.d(TAG, "mark as read returned " + mark_as_read);
+		mPrefKeyLike = mContext.getString(R.string.pref_like);
 
 		mMarkAsReadReceiver = new MarkAsReadReceiver();
 		// this must always be willing to receive, otherwise if we change setting later
@@ -417,8 +448,9 @@ class MessagingBuilder {
 
 	private final Context mContext;
 	private final MarkAsReadReceiver mMarkAsReadReceiver;
-	private SharedPreferences mSharedPreferences;
-	private String mPrefKeyMarkAsRead;
+	private final SharedPreferences mSharedPreferences;
+	private final String mPrefKeyMarkAsRead;
+	private final String mPrefKeyLike;
 	private final Controller mController;
 	private final Person mUserSelf;
 	private final Map<String/* evolved key */, PendingIntent> mMarkReadPendingIntents = new ArrayMap<>();

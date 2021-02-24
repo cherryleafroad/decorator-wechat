@@ -58,6 +58,12 @@
         android:defaultValue="false"
         android:summary="@string/pref_mark_as_read_summary" />
 
+    <SwitchPreference
+        android:key="@string/pref_like"
+        android:title="@string/pref_like_title"
+        android:defaultValue="false"
+        android:summary="@string/pref_like_summary" />
+
     <Preference
         android:title="@string/pref_open_source_title"
         android:summary="@string/pref_open_source_summary">
