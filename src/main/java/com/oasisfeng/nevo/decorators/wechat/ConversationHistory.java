@@ -259,6 +259,9 @@ class ConversationHistory {
     // when you do certain actions like quote a message, which makes it unusable
     public static UnreadConversation getUnreadConversation(Context context, String key, UnreadConversation unreadConversation,
                                                            Conversation conversation, List<StatusBarNotification> notificationHistory, boolean isRecalled) {
+        if (conversation.ticker == null) {
+            conversation.ticker = conversation.summary;
+        }
         boolean isReplying = ((WeChatApp)context.getApplicationContext()).getReplying();
         Conversation newConversation;
         try {
