@@ -327,7 +327,7 @@ class ConversationHistory {
             // this is a group chat
             // need to slice off -> Name: Msg -> Msg
             Conversation msgCmp = formatConversation(newConversation, real_message);
-            msgCheck = WeChatMessage.getTickerMessage(msgCmp);
+            msgCheck = splitSender(real_message)[1];
         }
 
         // Replying has a double entry, so don't add twice it if we're replying
