@@ -5,6 +5,12 @@
         <item>通話</item>  <!-- 繁體 -->
         <item>call</item> <!-- English -->
     </string-array>
+    <string-array name="text_keywords_for_recalled_message">
+        <item>撤回一条消息</item>  <!-- 简体 -->
+        <item>撤回一條消息</item>  <!-- 繁體 -->
+        <item>Recall a message</item> <!-- English WeChat 8.0 -->
+        <item>Recall</item> <!-- English WeChat 8.0 -->
+    </string-array>
     <string name="repacked_asset_suffix" translatable="false" />
     <string name="repacked_asset_appendix" translatable="false" />
     <integer name="repacked_asset_offset">0</integer>
@@ -17,6 +23,6 @@
     <string name="pref_agent" translatable="false">agent</string>
     <string name="pref_wear" translatable="false">wear</string>
     <string name="pref_like" translatable="false">like</string>
+    <string name="pref_recalled" translatable="false">recalled</string>
     <string name="action_like_text" translatable="false">👍</string>
-
 </resources>

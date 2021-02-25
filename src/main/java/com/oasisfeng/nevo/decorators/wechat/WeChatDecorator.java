@@ -151,13 +151,20 @@ public class WeChatDecorator extends NevoDecoratorService {
 		extras.putBoolean(Notification.EXTRA_SHOW_WHEN, true);
 		if (isEnabled(mPrefKeyWear)) n.flags &= ~ Notification.FLAG_LOCAL_ONLY;
 
+		boolean isRecalled = false;
 		if (n.tickerText == null/* Legacy misc. notifications */|| CHANNEL_MISC.equals(channel_id)) {
-			if (SDK_INT >= O && channel_id == null) n.setChannelId(CHANNEL_MISC);
-			n.setGroup(GROUP_MISC);             // Avoid being auto-grouped
-			if (SDK_INT >= O && evolving.getId() == NID_LOGIN_CONFIRMATION)
-				n.setTimeoutAfter(5 * 60_000);  // The actual timeout for login confirmation is a little shorter than 5 minutes.
-			Log.d(TAG, "Skip further process for non-conversation notification: " + title);    // E.g. web login confirmation notification.
-			return (n.flags & Notification.FLAG_FOREGROUND_SERVICE) == 0;
+			if (SDK_INT >= 0 && channel_id.equals(CHANNEL_MESSAGE)) {
+				// most likely a recalled message - treat it as one
+				isRecalled = true;
+			} else {
+				if (SDK_INT >= O && channel_id == null) n.setChannelId(CHANNEL_MISC);
+				n.setGroup(GROUP_MISC);             // Avoid being auto-grouped
+				if (SDK_INT >= O && evolving.getId() == NID_LOGIN_CONFIRMATION)
+					n.setTimeoutAfter(5 * 60_000);  // The actual timeout for login confirmation is a little shorter than 5 minutes.
+
+				Log.d(TAG, "Skip further process for non-conversation notification: " + title);    // E.g. web login confirmation notification.
+				return (n.flags & Notification.FLAG_FOREGROUND_SERVICE) == 0;
+			}
 		}
 		final CharSequence content_text = extras.getCharSequence(EXTRA_TEXT);
 		if (content_text == null) return true;
@@ -180,7 +187,11 @@ public class WeChatDecorator extends NevoDecoratorService {
 		conversation.icon = IconCompat.createFromIcon(this, large_icon != null ? large_icon : n.getSmallIcon());
 		conversation.title = title;
 		conversation.summary = content_text;
-		conversation.ticker = n.tickerText;
+		// recalled message comes with a null tickertext
+		// but the ticker is set when it's recalled already
+		if (!isRecalled && n.tickerText != null) {
+			conversation.ticker = n.tickerText;
+		}
 		conversation.timestamp = n.when;
 		// patch the carExtender's bad data
 		final String original_key = evolving.getOriginalKey();
@@ -192,7 +203,8 @@ public class WeChatDecorator extends NevoDecoratorService {
 				getArchivedNotifications(
 						original_key,
 						ConversationHistory.MAX_NUM_CONVERSATIONS
-				)
+				),
+				isRecalled
 		);
 
 

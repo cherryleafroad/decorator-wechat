@@ -42,10 +42,13 @@
     <string name="decorator_wechat_description">Support Android\'s modern notifications: advanced features such as conversations, direct reply, bubbles, and mark as read when swiping away the notification.</string>
     <string name="action_mark_as_read">Mark as read</string>
     <string name="pref_mark_as_read_title">Mark As Read</string>
-    <string name="pref_mark_as_read_summary">Turn on the \"mark as red\" button in the notification</string>
+    <string name="pref_mark_as_read_summary">Turn on the \"mark as read\" button in the notification</string>
     <string name="pref_notification_mark_as_read_title">Swipe Notification Mark As Read</string>
     <string name="pref_notification_mark_as_read_summary">When swiping notification away, mark message as read. (if bubble is present, it will not be marked as read)</string>
     <string name="action_like">Like</string>
     <string name="pref_like_title">Like Button</string>
     <string name="pref_like_summary">Turn on the \"like\" button in the notification</string>
+    <string name="recalled_message">[Recalled]</string>
+    <string name="pref_recalled_title">Visible Recalled Messages</string>
+    <string name="pref_recalled_summary">If enabled, you can see the recalled messages in notifications, otherwise the messages will be censored</string>
 </resources>
