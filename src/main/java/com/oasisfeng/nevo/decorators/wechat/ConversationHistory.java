@@ -41,12 +41,11 @@ class ConversationHistory {
                 for (int i = 0; i < history.size(); i++) {
                     if (history.get(i).equals(message)) {
 
+                        String[] sender = splitSender(history.get(i));
                         if (visible) {
                             // [Recalled] Message
-                            String[] sender = splitSender(history.get(i));
                             msg = sender[0] + ": " + context.getString(R.string.recalled_message) + " " + sender[1];
                         } else {
-                            String[] sender = splitSender(history.get(i));
                             msg = sender[0] + ": " + context.getString(R.string.recalled_message);
                         }
                         history.set(i, msg);
@@ -211,8 +210,7 @@ class ConversationHistory {
 
             // see if it's a number, otherwise we want the full message
             try {
-                int unread = Integer.parseInt(count.toString());
-                return unread;
+                return Integer.parseInt(count.toString());
             } catch (final NumberFormatException ignored) {     // Probably just emoji like "[Cry]"
                 Log.d(TAG, "Failed to parse as int: " + prefix);
                 return 0;
