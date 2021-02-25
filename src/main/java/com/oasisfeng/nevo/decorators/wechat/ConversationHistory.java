@@ -311,6 +311,15 @@ class ConversationHistory {
             conversation.ticker = senderT[0] + ": " + senderS[1];
             newConversation.summary = conversation.summary;
             newConversation.ticker = conversation.ticker;
+        } else if (isRecalled) {
+            // recalled single chat messages are usually:
+            // [2]Recalled -> this has no information at all
+            String[] sender = splitSender(conversation.ticker);
+            if (unreadCount > 0) {
+                conversation.summary = "[" + unreadCount + "]" + sender[0] + ": " + sender[1];
+            } else {
+                conversation.summary = sender[0] + ": " + sender[1];
+            }
         }
 
         // car extender messages are ordered from oldest to newest
@@ -327,7 +336,6 @@ class ConversationHistory {
         } else {
             // this is a group chat
             // need to slice off -> Name: Msg -> Msg
-            Conversation msgCmp = formatConversation(newConversation, real_message);
             msgCheck = splitSender(real_message)[1];
         }
 
@@ -440,6 +448,7 @@ class ConversationHistory {
         // this is a special case needing to be handled separately
         // handle it at the end to make sure all messages are added
         if (isRecalled) {
+
             handleRecalledMessage(key, isGroupChat ? conversation.ticker.toString() : splitSender(conversation.ticker)[1], context, carExtenderMessages, isGroupChat);
 
             // builder doesn't reflect our changed messages, so we need to re-fill it
