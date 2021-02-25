@@ -58,6 +58,13 @@ class ConversationHistory {
                 // CarExtender unreadmessages will have all but the missing message
                 // that's how we can pinpoint the lost one.
                 int lastIndex = messages.length-1;
+                if (lastIndex == -1) {
+                    // this happens if we recalled the ONLY message in the notification
+                    msg = visible ? context.getString(R.string.recalled_message) + " " + history.get(0) : context.getString(R.string.recalled_message);
+                    history.set(0, msg);
+                    mConversationHistory.put(key, history);
+                    return;
+                }
 
                 // get the starting position
                 int hist_start_index = history.indexOf(messages[lastIndex]);
@@ -437,6 +444,8 @@ class ConversationHistory {
             // builder doesn't reflect our changed messages, so we need to re-fill it
             messages = mConversationHistory.get(key).toArray(new String[0]);
             builder = new CarExtender.Builder(EmojiTranslator.translate(unreadConversation.getParticipant()).toString());
+            // happens if you recall a single message
+            if (lastIndex == -1) lastIndex = 0;
             for (int i = lastIndex; i >= 0; i--) {
                 if (messages.length-1 >= i) {
                     builder.addMessage(messages[i]);
