@@ -57,11 +57,14 @@ class ConversationHistory {
                 // CarExtender unreadmessages will have all but the missing message
                 // that's how we can pinpoint the lost one.
                 int lastIndex = messages.length-1;
-                if (lastIndex == -1) {
+                if (lastIndex == -1 && !history.get(0).startsWith(context.getString(R.string.recalled_message))) {
                     // this happens if we recalled the ONLY message in the notification
                     msg = visible ? context.getString(R.string.recalled_message) + " " + history.get(0) : context.getString(R.string.recalled_message);
                     history.set(0, msg);
                     mConversationHistory.put(key, history);
+                    return;
+                } else if (lastIndex == -1) {
+                    // already has the recalled entry
                     return;
                 }
 
