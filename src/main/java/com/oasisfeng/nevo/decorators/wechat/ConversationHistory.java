@@ -249,6 +249,9 @@ class ConversationHistory {
         if (!mUnreadCount.containsKey(key)) {
             mUnreadCount.put(key, 0);
         }
+        if (!mConversationHistory.containsKey(key)) {
+            mConversationHistory.put(key, new ArrayList<>());
+        }
 
         boolean isReplying = ((WeChatApp)context.getApplicationContext()).getReplying();
         Conversation newConversation;
@@ -326,14 +329,7 @@ class ConversationHistory {
         } else {
             // fix counter in messages
             String[] split;
-            if (!isRecalled) {
-                split = splitSender(conversation.summary);
-            } else {
-                // data isn't available in summary for chat,
-                // recalled single chat messages are usually:
-                // [2]Recalled -> this has no information at all
-                split = splitSender(conversation.ticker);
-            }
+            split = splitSender(conversation.ticker);
 
             // fix the fields to make sure they're correct, also replaces the count
             if (unreadCount > 0) {
@@ -346,6 +342,21 @@ class ConversationHistory {
         // car extender messages are ordered from oldest to newest
         String[] carExtenderMessages = unreadConversation.getMessages();
         int lastIndex = carExtenderMessages.length - 1;
+        // carextender missing data for some reason? strange
+        if (lastIndex == -1) {
+            lastIndex = 0;
+            // we >Probably< have it in history, BUT if not...
+            if (mConversationHistory.get(key).size() > 0) {
+                carExtenderMessages = new String[] {mConversationHistory.get(key).get(0)};
+            } else {
+                String[] split = splitSender(conversation.ticker);
+                if (split[0] != null) {
+                    carExtenderMessages = new String[]{split[1]};
+                } else {
+                    carExtenderMessages = new String[]{"[Unknown]"};
+                }
+            }
+        }
         // if it's an erroneous message, go to fallback, otherwise use original
         // make sure to grab the latest which is the last one
         String msgCheck;
