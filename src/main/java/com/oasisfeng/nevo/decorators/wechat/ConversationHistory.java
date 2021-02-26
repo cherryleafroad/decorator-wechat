@@ -314,24 +314,6 @@ class ConversationHistory {
         int unreadCount = Math.min(mUnreadCount.get(key), MAX_NUM_CONVERSATIONS);
         conversation.count = unreadCount;
 
-        // fix counter in messages
-        String[] split;
-        if (!isRecalled) {
-            split = splitSender(conversation.summary);
-        } else {
-            // data isn't available in summary for chat,
-            // recalled single chat messages are usually:
-            // [2]Recalled -> this has no information at all
-            split = splitSender(conversation.ticker);
-        }
-
-        // fix the fields to make sure they're correct, also replaces the count
-        if (unreadCount > 0) {
-            conversation.summary = "[" + unreadCount + "]" + split[0] + ": " + split[1];
-        } else {
-            conversation.summary = split[0] + ": " + split[1];
-        }
-
 
         // this part serves the purpose of :
         // fixing the conversation ticker and summary when isRecalled is true
@@ -359,6 +341,24 @@ class ConversationHistory {
             conversation.ticker = senderT[0] + ": " + senderS[1];
             newConversation.summary = conversation.summary;
             newConversation.ticker = conversation.ticker;
+        } else {
+            // fix counter in messages
+            String[] split;
+            if (!isRecalled) {
+                split = splitSender(conversation.summary);
+            } else {
+                // data isn't available in summary for chat,
+                // recalled single chat messages are usually:
+                // [2]Recalled -> this has no information at all
+                split = splitSender(conversation.ticker);
+            }
+
+            // fix the fields to make sure they're correct, also replaces the count
+            if (unreadCount > 0) {
+                conversation.summary = "[" + unreadCount + "]" + split[0] + ": " + split[1];
+            } else {
+                conversation.summary = split[0] + ": " + split[1];
+            }
         }
 
         // car extender messages are ordered from oldest to newest
