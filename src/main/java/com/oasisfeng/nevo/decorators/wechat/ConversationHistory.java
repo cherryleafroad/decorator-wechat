@@ -390,77 +390,79 @@ class ConversationHistory {
         // go through each of the calculated unread messages
         int messages_last_index = messages.length-1;
         String[] buffer = new String[unreadCount];
-        for (int i = unreadCount-1; i >= 0; i--) {
-            int forwardIndex = unreadCount-1-i;
+        // don't add regular messages when it was recalled (recalled won't need to recalculate data anyways)
+        // because a recalled message requires a re-build due to changing message content
+        if (!isRecalled) {
+            for (int i = unreadCount - 1; i >= 0; i--) {
+                int forwardIndex = unreadCount - 1 - i;
 
-            // first used cached messages
-            // guaranteed to have no [Message] nonsense
-            if (messages_last_index >= i) {
-                builder.addMessage(messages[i]);
-                buffer[forwardIndex] = messages[i];
-            } else {
-                // we have to calculate it then...
-                addBuffer = true;
-                if (!msgCheck.equals("[Message]") &&
-                    carExtenderMessages.length-1 >= forwardIndex) {
-
-                    // valid message for both chats and groups
-                    builder.addMessage(carExtenderMessages[forwardIndex]);
-                    // add it to cache also
-                    buffer[forwardIndex] = carExtenderMessages[forwardIndex];
-                    continue;
-                }
-                // deliberate fallthrough to try another method if the above fails
-
-                // lazy evaluation
-                if (!convertedNotifications) {
-                    notificationMessages = extractNotificationMessages(notificationHistory);
-                    convertedNotifications = true;
-                }
-
-                // process the ticker message using WeChatMessage
-                int index = notificationMessages.length-1-i;
-                if (index < 0) {
-                    // we don't have this message sadly :(
-                    // however this shouldn't happen often at all at least
-                    if (!isGroupChat) {
-                        builder.addMessage("[Unknown]");
-                        buffer[forwardIndex] = "[Unknown]";
-                    } else {
-                        builder.addMessage("Unknown: [Unknown]");
-                        buffer[forwardIndex] = "Unknown: [Unknown]";
-                    }
-                    continue;
-                }
-
-                newConversation = formatConversation(newConversation, notificationMessages[index]);
-                String newMsg;
-                if (!isGroupChat) {
-                    newMsg = WeChatMessage.getTickerMessage(newConversation);
+                // first used cached messages
+                // guaranteed to have no [Message] nonsense
+                if (messages_last_index >= i) {
+                    builder.addMessage(messages[i]);
+                    buffer[forwardIndex] = messages[i];
                 } else {
-                    newMsg = newConversation.ticker.toString();
+                    // we have to calculate it then...
+                    addBuffer = true;
+                    if (!msgCheck.equals("[Message]") &&
+                            carExtenderMessages.length - 1 >= forwardIndex) {
+
+                        // valid message for both chats and groups
+                        builder.addMessage(carExtenderMessages[forwardIndex]);
+                        // add it to cache also
+                        buffer[forwardIndex] = carExtenderMessages[forwardIndex];
+                        continue;
+                    }
+                    // deliberate fallthrough to try another method if the above fails
+
+                    // lazy evaluation
+                    if (!convertedNotifications) {
+                        notificationMessages = extractNotificationMessages(notificationHistory);
+                        convertedNotifications = true;
+                    }
+
+                    // process the ticker message using WeChatMessage
+                    int index = notificationMessages.length - 1 - i;
+                    if (index < 0) {
+                        // we don't have this message sadly :(
+                        // however this shouldn't happen often at all at least
+                        if (!isGroupChat) {
+                            builder.addMessage("[Unknown]");
+                            buffer[forwardIndex] = "[Unknown]";
+                        } else {
+                            builder.addMessage("Unknown: [Unknown]");
+                            buffer[forwardIndex] = "Unknown: [Unknown]";
+                        }
+                        continue;
+                    }
+
+                    newConversation = formatConversation(newConversation, notificationMessages[index]);
+                    String newMsg;
+                    if (!isGroupChat) {
+                        newMsg = WeChatMessage.getTickerMessage(newConversation);
+                    } else {
+                        newMsg = newConversation.ticker.toString();
+                    }
+
+                    builder.addMessage(newMsg);
+                    buffer[forwardIndex] = newMsg;
                 }
-
-                builder.addMessage(newMsg);
-                buffer[forwardIndex] = newMsg;
             }
-        }
 
-        // add buffer history to conversation history to supplement it
-        // also so we don't have to rebuild the messages again
-        // at this point we're simply overwriting everything in it with the
-        // new history
-        if (addBuffer) {
-            // add oldest elements first (buffer is stored oldest to newest)
-            // this way the newest element is first (we store history as newest to oldest)
-            for (String s : buffer) {
-                addConversationMessage(key, s);
+            // add buffer history to conversation history to supplement it
+            // also so we don't have to rebuild the messages again
+            // at this point we're simply overwriting everything in it with the
+            // new history
+            if (addBuffer) {
+                // add oldest elements first (buffer is stored oldest to newest)
+                // this way the newest element is first (we store history as newest to oldest)
+                for (String s : buffer) {
+                    addConversationMessage(key, s);
+                }
             }
-        }
-
-        // this is a special case needing to be handled separately
-        // handle it at the end to make sure all messages are added
-        if (isRecalled) {
+        } else {
+            // this is a special case needing to be handled separately
+            // handle it at the end to make sure all messages are added
             handleRecalledMessage(key, isGroupChat ? conversation.ticker.toString() : splitSender(conversation.ticker)[1], context, carExtenderMessages, isGroupChat);
 
             // builder doesn't reflect our changed messages, so we need to re-fill it
