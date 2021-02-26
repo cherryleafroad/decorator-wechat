@@ -23,8 +23,8 @@ import static com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG;
 class ConversationHistory {
     public static final int MAX_NUM_CONVERSATIONS = 10;
 
-    private static ArrayMap<String, ArrayList<String>> mConversationHistory = new ArrayMap<>();
-    public static ArrayMap<String, Integer> mUnreadCount = new ArrayMap<>();
+    private static final ArrayMap<String, ArrayList<String>> mConversationHistory = new ArrayMap<>();
+    public final static ArrayMap<String, Integer> mUnreadCount = new ArrayMap<>();
 
 
     private static void handleRecalledMessage(String key, String message, Context context, String[] messages, boolean isGroupChat) {
