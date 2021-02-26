@@ -24,7 +24,7 @@ class ConversationHistory {
     public static final int MAX_NUM_CONVERSATIONS = 10;
 
     private static ArrayMap<String, ArrayList<String>> mConversationHistory = new ArrayMap<>();
-    private static ArrayMap<String, Integer> mUnreadCount = new ArrayMap<>();
+    public static ArrayMap<String, Integer> mUnreadCount = new ArrayMap<>();
 
 
     private static void handleRecalledMessage(String key, String message, Context context, String[] messages, boolean isGroupChat) {
@@ -202,26 +202,6 @@ class ConversationHistory {
         return messages;
     }
 
-    private static int getUnreadCount(CharSequence message) {
-        final int content_length = message.length();
-        // need to remove unread count from message for ticker
-        int pos;
-        if (content_length > 3 && message.charAt(0) == '[' && (pos = TextUtils.indexOf(message, ']', 1)) > 0) {
-            CharSequence prefix = message.subSequence(1, pos);
-            final int length = prefix.length();
-            final CharSequence count = length > 1 && ! Character.isDigit(prefix.charAt(length - 1)) ? prefix.subSequence(0, length - 1) : prefix;
-
-            // see if it's a number, otherwise we want the full message
-            try {
-                return Integer.parseInt(count.toString());
-            } catch (final NumberFormatException ignored) {     // Probably just emoji like "[Cry]"
-                Log.d(TAG, "Failed to parse as int: " + prefix);
-                return 0;
-            }
-        }
-        return 0;
-    }
-
     private static CharSequence removeUnreadCount(CharSequence message) {
         final int content_length = message.length();
         // need to remove unread count from message for ticker
@@ -264,7 +244,7 @@ class ConversationHistory {
         }
 
         if (!mUnreadCount.containsKey(key)) {
-            mUnreadCount.put(key, 1);
+            mUnreadCount.put(key, 0);
         }
 
         boolean isReplying = ((WeChatApp)context.getApplicationContext()).getReplying();
@@ -293,22 +273,21 @@ class ConversationHistory {
 
 
         // A simple unread message counter
-        // Only will reset when the notification tells us it's 0
+        // Only will reset when we clear the notification
         // this simple way of counting is more reliable than
-        // relying on the notification counter
+        // relying on the apps notification counter which is notoriously unreliable (specifically
+        // when dealing with recalled messages)
         // -> This is used to tell us how many messages we should display
-        int origUnreadCounter = getUnreadCount(conversation.summary);
 
         // Don't create extra notifications when replying or recalling a message
-        // recalled is replaced in-line
+        // this is a regular message
         if (!isReplying && !isRecalled) {
             mUnreadCount.put(key, mUnreadCount.get(key) + 1);
         }
 
-        // just a single one!
-        if (origUnreadCounter == 0) {
-            mUnreadCount.put(key, 1);
-        }
+        // unread count will be set to 0 respectively when we clear the notification
+        // recalled messages are simply skipped as they are the same message
+        // see @WeChatDecorator.onNotificationRemoved
 
         // only MAX is allowed
         int unreadCount = Math.min(mUnreadCount.get(key), MAX_NUM_CONVERSATIONS);

@@ -339,6 +339,9 @@ public class WeChatDecorator extends NevoDecoratorService {
 		} else if (SDK_INT < O || reason == REASON_CANCEL) {	// Exclude the removal request by us in above case. (Removal-Aware is only supported on Android 8+)
 			if (isEnabled(mPrefKeyNotificationsMarkAsRead)) {
 				mMessagingBuilder.markRead(key);
+
+				// clear out unread messages
+				ConversationHistory.mUnreadCount.put(key, 0);
 			}
 		}
 		return false;
