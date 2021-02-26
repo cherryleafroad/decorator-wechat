@@ -264,18 +264,8 @@ class ConversationHistory {
             return unreadConversation;
         }
 
-        // figure out the type of conversation we're dealing with
-        newConversation.ext = unreadConversation;
-        // why do this? Because it stops it from thinking that many messages
-        // with [Emoji] in them mean it's a group message
-        newConversation.summary = EmojiTranslator.translate(conversation.summary);
-        newConversation.ticker = EmojiTranslator.translate(conversation.ticker);
-        int type = WeChatMessage.guessConversationType(newConversation);
-        newConversation.summary = conversation.summary;
-        newConversation.ticker = conversation.ticker;
-        boolean isGroupChat;
-        // treat unknown as a normal message
-        isGroupChat = type != Conversation.TYPE_DIRECT_MESSAGE && type != Conversation.TYPE_BOT_MESSAGE && type != Conversation.TYPE_UNKNOWN;
+
+        boolean isGroupChat = conversation.isGroupChat();
 
 
         // A simple unread message counter
@@ -306,13 +296,7 @@ class ConversationHistory {
         // Sadly, can't figure out the proper single chat fix here, but
         // unread car extender messages will have the missing message
         // so we can pinpoint the deleted one
-        if (removeUnreadCount(conversation.summary.toString()).toString().startsWith("wxid_") &&
-            conversation.summary.toString().indexOf(':') != -1 &&
-            conversation.ticker.toString().indexOf(':') != -1 && isRecalled) {
-            // there's STRONG evidence that this is actually a group chat regardless that isGroupChat is false
-            // the ID's are strange if it's recalled though
-            isGroupChat = true;
-
+        if (isGroupChat && isRecalled) {
             // update conversation fields to be correct
             String[] senderS = splitSender(conversation.summary);
             String[] senderT = splitSender(conversation.ticker);

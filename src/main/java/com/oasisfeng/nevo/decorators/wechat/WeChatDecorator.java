@@ -183,6 +183,31 @@ public class WeChatDecorator extends NevoDecoratorService {
 			conversation = mConversationManager.getOrCreateConversation(profile, title_hash);
 		} else conversation = mConversationManager.getOrCreateConversation(profile, evolving.getOriginalId());
 
+		if (conversation.id == null && mActivityBlocker != null) try {
+			final CountDownLatch latch = new CountDownLatch(1);
+			n.contentIntent.send(this, 0, new Intent().putExtra("", mActivityBlocker), (pi, intent, r, d, e) -> {
+				final String id = intent.getStringExtra(EXTRA_USERNAME);
+				if (id == null) { Log.e(TAG, "Unexpected null ID received for conversation: " + conversation.title); return; }
+				conversation.id = id;    // setType() below will trigger rebuilding of conversation sender.
+				latch.countDown();
+				if (BuildConfig.DEBUG && id.hashCode() != conversation.nid) Log.e(TAG, "NID is not hash code of CID");
+			}, null);
+			try {
+				if (latch.await(100, TimeUnit.MILLISECONDS)) {
+					if (BuildConfig.DEBUG) Log.d(TAG, "Conversation ID retrieved: " + conversation.id);
+				} else Log.w(TAG, "Timeout retrieving conversation ID");
+			} catch (final InterruptedException ignored) {}
+		} catch (final PendingIntent.CanceledException ignored) {}
+
+		final String cid = conversation.id;
+		if (cid != null) {
+			final int type = cid.endsWith("@chatroom") || cid.endsWith("@im.chatroom"/* WeWork */) ? TYPE_GROUP_CHAT
+					: cid.startsWith("gh_") || cid.equals(KEY_SERVICE_MESSAGE) ? TYPE_BOT_MESSAGE
+					: cid.endsWith("@openim") ? TYPE_DIRECT_MESSAGE : TYPE_UNKNOWN;
+			conversation.setType(type);
+		} else if (conversation.isTypeUnknown())
+			conversation.setType(WeChatMessage.guessConversationType(conversation));
+
 		final Icon large_icon = n.getLargeIcon();
 		conversation.icon = IconCompat.createFromIcon(this, large_icon != null ? large_icon : n.getSmallIcon());
 		conversation.title = title;
@@ -214,31 +239,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 		if (messaging == null) return true;
 		final List<MessagingStyle.Message> messages = messaging.getMessages();
 		if (messages.isEmpty()) return true;
-
-		if (conversation.id == null && mActivityBlocker != null) try {
-			final CountDownLatch latch = new CountDownLatch(1);
-			n.contentIntent.send(this, 0, new Intent().putExtra("", mActivityBlocker), (pi, intent, r, d, e) -> {
-				final String id = intent.getStringExtra(EXTRA_USERNAME);
-				if (id == null) { Log.e(TAG, "Unexpected null ID received for conversation: " + conversation.title); return; }
-				conversation.id = id;    // setType() below will trigger rebuilding of conversation sender.
-				latch.countDown();
-				if (BuildConfig.DEBUG && id.hashCode() != conversation.nid) Log.e(TAG, "NID is not hash code of CID");
-			}, null);
-			try {
-				if (latch.await(100, TimeUnit.MILLISECONDS)) {
-					if (BuildConfig.DEBUG) Log.d(TAG, "Conversation ID retrieved: " + conversation.id);
-				} else Log.w(TAG, "Timeout retrieving conversation ID");
-			} catch (final InterruptedException ignored) {}
-		} catch (final PendingIntent.CanceledException ignored) {}
-
-		final String cid = conversation.id;
-		if (cid != null) {
-			final int type = cid.endsWith("@chatroom") || cid.endsWith("@im.chatroom"/* WeWork */) ? TYPE_GROUP_CHAT
-					: cid.startsWith("gh_") || cid.equals(KEY_SERVICE_MESSAGE) ? TYPE_BOT_MESSAGE
-					: cid.endsWith("@openim") ? TYPE_DIRECT_MESSAGE : TYPE_UNKNOWN;
-			conversation.setType(type);
-		} else if (conversation.isTypeUnknown())
-			conversation.setType(WeChatMessage.guessConversationType(conversation));
 
 		if (SDK_INT >= Build.VERSION_CODES.R && input_history != null) {    // EXTRA_REMOTE_INPUT_HISTORY is not longer supported on Android R.
 			for (int i = input_history.length - 1; i >= 0; i--)             // Append them to messages in MessagingStyle.
