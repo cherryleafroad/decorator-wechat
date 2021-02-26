@@ -29,6 +29,9 @@ class ConversationHistory {
 
     private static void handleRecalledMessage(String key, String message, Context context, String[] messages, boolean isGroupChat) {
         // this should ALWAYS succeed
+        // Please note that it is IMPOSSIBLE to differentiate which message was recalled
+        // when both messages content is exactly the same. This is an unfortunate side effect
+        // and there's no way to solve it as carExtenderMessages only tells us the missing ones (not which one it was)
         if (mConversationHistory.containsKey(key)) {
             ArrayList<String> history = mConversationHistory.get(key);
             assert history != null;
