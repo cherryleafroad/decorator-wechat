@@ -13,7 +13,8 @@ import android.util.Log;
 import com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static android.app.Notification.EXTRA_TEXT;
@@ -27,15 +28,16 @@ class ConversationHistory {
     public final static ArrayMap<String, Integer> mUnreadCount = new ArrayMap<>();
 
 
-    private static void handleRecalledMessage(String key, String message, Context context, String[] messages, boolean isGroupChat) {
+    private static void handleRecalledMessage(String key, String message, Context context, String[] car_messages, boolean isGroupChat) {
         // this should ALWAYS succeed
         // Please note that it is IMPOSSIBLE to differentiate which message was recalled
         // when both messages content is exactly the same. This is an unfortunate side effect
         // and there's no way to solve it as carExtenderMessages only tells us the missing ones (not which one it was)
-        if (mConversationHistory.containsKey(key)) {
-            ArrayList<String> history = mConversationHistory.get(key);
-            assert history != null;
 
+        if (mConversationHistory.containsKey(key)) {
+            // we MUST slice this to prevent previously returned history (that we aren't showing) from
+            // influencing the data
+            List<String> history = new ArrayList<>((List<String>)mConversationHistory.get(key)).subList(0, mUnreadCount.get(key));
             boolean visible = ((WeChatApp) context.getApplicationContext()).getSharedPreferences().getBoolean(context.getString(R.string.pref_recalled), false);
 
             String msg;
@@ -52,97 +54,80 @@ class ConversationHistory {
                             msg = sender[0] + ": " + context.getString(R.string.recalled_message);
                         }
                         history.set(i, msg);
-                        mConversationHistory.put(key, history);
+                        mConversationHistory.put(key, new ArrayList<>(history));
                         return;
                     }
                 }
             } else {
-                // CarExtender unreadmessages will have all but the missing message
-                // that's how we can pinpoint the lost one.
-                int lastIndex = messages.length-1;
-                if (lastIndex == -1 && !history.get(0).startsWith(context.getString(R.string.recalled_message))) {
-                    // this happens if we recalled the ONLY message in the notification
+
+                List<String> messages = Arrays.asList(car_messages);
+                // the list is originally ordered from oldest->newest
+                // ours is newest->oldest. Best that they are both the same and exact same length
+                Collections.reverse(messages);
+                messages = messages.subList(0, Math.max(Math.min(messages.size(), history.size()-1), 0));
+
+                int m_size = messages.size();
+                int h_size = history.size();
+
+
+                //
+                // Check for when there's only 1 message
+                //
+                if (h_size == 1 && m_size == 0 && !history.get(0).startsWith(context.getString(R.string.recalled_message))) {
                     msg = visible ? context.getString(R.string.recalled_message) + " " + history.get(0) : context.getString(R.string.recalled_message);
                     history.set(0, msg);
-                    mConversationHistory.put(key, history);
+                    mConversationHistory.put(key, new ArrayList<>(history));
                     return;
-                } else if (lastIndex == -1) {
+                } else if (h_size == 1 && m_size == 0) {
                     // already has the recalled entry
                     return;
                 }
 
-                // get the starting position
-                int hist_start_index = history.indexOf(messages[lastIndex]);
-                // unread messages contain no similar elements?
-                if (hist_start_index == -1) return;
 
-                // first check elements below the start index to ensure we already handled them
-                int c_last_index = lastIndex;
-                if (hist_start_index > 0) {
-                    for (int i = 0; i < hist_start_index; i++) {
-                        if (c_last_index < 0) break;
+                // Here we check the valid indexes by removing invalid ones, if there's only 1 left
+                // then that's the correct one
+                //
+                // the remaining indexes in history that could be the potential recalled message
+                List<Integer> valid_indexes = new ArrayList<>();
+                // initialize all potential indexes
+                for (int i = 0; i < history.size(); i++) {
+                    valid_indexes.add(i);
+                }
 
-                        if (!history.get(i).equals(messages[c_last_index]) &&
-                            !history.get(i).startsWith(context.getString(R.string.recalled_message))) {
+                // remove invalid indexes from List
+                for (int i = 0; i < h_size; i++) {
+                    // any history message contained in messages is invalid as it wasn't removed
+                    // from messages. Also, already recalled message indexes are also invalid
+                    if (messages.contains(history.get(i)) ||
+                        history.get(i).startsWith(context.getString(R.string.recalled_message))) {
 
-                            msg = visible ? context.getString(R.string.recalled_message) + " " + history.get(i) : context.getString(R.string.recalled_message);
-                            history.set(i, msg);
-                            mConversationHistory.put(key, history);
-                            return;
-                        }
-                        c_last_index -= i;
+                        // remove invalid index
+                        valid_indexes.remove(Integer.valueOf(i));
                     }
                 }
 
-                // if there are any gaps in the data that are not == recalled_message
-                // it means that we found the recalled message
-                c_last_index = lastIndex;
-                for (int i = hist_start_index; i < history.size(); i++) {
-                    // all elements match up to the end match
-                    // this means that there are no gaps and it was the last (oldest) element
-                    if (c_last_index < 0) {
-                        msg = visible ? context.getString(R.string.recalled_message) + " " + history.get(i) : context.getString(R.string.recalled_message);
-                        history.set(i, msg);
-                        mConversationHistory.put(key, history);
-                        return;
-                    }
-
-                    // verify that the element is equal &&
-                    // if it's not equal, then it wasn't a previously recalled one
-                    // (as a previously recalled one will also have a gap)
-                    if (!history.get(i).equals(messages[c_last_index]) &&
-                        !history.get(i).startsWith(context.getString(R.string.recalled_message))) {
-                        msg = visible ? context.getString(R.string.recalled_message) + " " + history.get(i) : context.getString(R.string.recalled_message);
-                        history.set(i, msg);
-                        mConversationHistory.put(key, history);
-                        return;
-                    } else if (!history.get(i).equals(messages[c_last_index])) {
-                        // this is a gap, these need to re-sync together
-                        // the size of the gap is unknown however
-
-                        // next sync location - I literally feel like this this sync is a goto statement :/
-                        int sync = history.indexOf(messages[c_last_index]);
-                        // either it wasn't found.. so... there's nothing to do then
-                        if (sync == -1) return;
-
-                        // check the inside contents of the gap for any re-callable elements
-                        // any element found is invalid
-                        for (int j = i+1; j < sync; j++) {
-                            // found an unrecalled element in the gap!
-                            if (!history.get(j).startsWith(context.getString(R.string.recalled_message))) {
-                                msg = visible ? context.getString(R.string.recalled_message) + " " + history.get(j) : context.getString(R.string.recalled_message);
-                                history.set(j, msg);
-                                mConversationHistory.put(key, history);
-                                return;
-                            }
-                        }
-
-                        // re-sync the loops - but variables will increment, so less by 1
-                        i = sync;
-                    }
-
-                    c_last_index -= 1;
+                // found the exact one!
+                if (valid_indexes.size() == 1) {
+                    int index = valid_indexes.get(0);
+                    msg = visible ? context.getString(R.string.recalled_message) + " " + history.get(index) : context.getString(R.string.recalled_message);
+                    history.set(index, msg);
+                    mConversationHistory.put(key, new ArrayList<>(history));
+                    return;
                 }
+                //
+                // /End
+                //
+
+
+                //
+                // Two or more duplicate elements were found
+                //
+
+                // TODO find a way to triangulate the one if there's multiple same messages
+
+                ///
+                /// /End
+                ///
             }
         }
         // this point should never be reached
