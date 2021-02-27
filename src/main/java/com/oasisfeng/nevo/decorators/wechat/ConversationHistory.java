@@ -25,7 +25,9 @@ class ConversationHistory {
     public static final int MAX_NUM_CONVERSATIONS = 10;
 
     private static final ArrayMap<String, ArrayList<String>> mConversationHistory = new ArrayMap<>();
-    public final static ArrayMap<String, Integer> mUnreadCount = new ArrayMap<>();
+    private final static ArrayMap<String, Integer> mUnreadCount = new ArrayMap<>();
+    private final static ArrayMap<String, Integer> mUnreadOffset = new ArrayMap<>();
+    private final static ArrayMap<String, Integer> mReplyFlag = new ArrayMap<>();
 
 
     private static void handleRecalledMessage(String key, String message, Context context, String[] car_messages, boolean isGroupChat) {
@@ -99,7 +101,7 @@ class ConversationHistory {
                     // any history message contained in messages is invalid as it wasn't removed
                     // from messages. Also, already recalled message indexes are also invalid
                     if (messages.contains(history.get(i)) ||
-                        history.get(i).startsWith(context.getString(R.string.recalled_message))) {
+                            history.get(i).startsWith(context.getString(R.string.recalled_message))) {
 
                         // remove invalid index
                         valid_indexes.remove(Integer.valueOf(i));
@@ -190,6 +192,11 @@ class ConversationHistory {
         return messages;
     }
 
+    public static void markAsRead(String key) {
+        mUnreadCount.put(key, 0);
+        mUnreadOffset.put(key, 0);
+    }
+
     private static CharSequence removeUnreadCount(CharSequence message) {
         final int content_length = message.length();
         // need to remove unread count from message for ticker
@@ -231,14 +238,22 @@ class ConversationHistory {
             conversation.ticker = removeUnreadCount(conversation.summary);
         }
 
-        if (!mUnreadCount.containsKey(key)) {
-            mUnreadCount.put(key, 0);
-        }
+        boolean isReplying = ((WeChatApp)context.getApplicationContext()).getReplying();
+
+        // create keys for new conversation if not here
         if (!mConversationHistory.containsKey(key)) {
             mConversationHistory.put(key, new ArrayList<>());
+            mUnreadCount.put(key, 0);
+            mUnreadOffset.put(key, 0);
+            mReplyFlag.put(key, 0);
         }
 
-        boolean isReplying = ((WeChatApp)context.getApplicationContext()).getReplying();
+        if (mReplyFlag.get(key) == 1 && !isReplying) {
+            // we can now reset the history because we're done replying
+            markAsRead(key);
+            mReplyFlag.put(key, 0);
+        }
+
         Conversation newConversation;
         try {
             newConversation = conversation.clone();
@@ -264,6 +279,8 @@ class ConversationHistory {
         // this is a regular message
         if (!isReplying && !isRecalled) {
             mUnreadCount.put(key, mUnreadCount.get(key) + 1);
+        } else if (!isReplying && isRecalled) {
+            mUnreadOffset.put(key, mUnreadOffset.get(key) + 1);
         }
 
         // unread count will be set to 0 respectively when we clear the notification
@@ -464,6 +481,10 @@ class ConversationHistory {
         builder.setReplyAction(unreadConversation.getReplyPendingIntent(), unreadConversation.getRemoteInput());
 
         if (isReplying) {
+            // now that we got the full conversation, flag it to be changed next when we send a regular message
+            if (mReplyFlag.get(key) == 0) {
+                mReplyFlag.put(key, 1);
+            }
             ((WeChatApp)context.getApplicationContext()).setReplying(false);
         }
         return builder.build();

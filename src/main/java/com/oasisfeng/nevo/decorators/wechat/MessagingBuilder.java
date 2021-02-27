@@ -358,6 +358,12 @@ class MessagingBuilder {
 		if (action == null) return;
 		try {
 			action.send(mContext, 0, addTargetPackageAndWakeUp(action));
+			// don't clear the conversation just yet when replying, wait until we can display all
+			// the messages first
+			boolean isReplying = ((WeChatApp)mContext.getApplicationContext()).getReplying();
+			if (!isReplying) {
+				ConversationHistory.markAsRead(key);
+			}
 		} catch (final PendingIntent.CanceledException e) {
 			Log.w(TAG, "Mark-read action is already cancelled: " + key);
 		}
