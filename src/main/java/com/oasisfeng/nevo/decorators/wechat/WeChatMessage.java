@@ -47,11 +47,6 @@ class WeChatMessage {
 		return messages;
 	}
 
-	public static String getTickerMessage(Conversation conversation) {
-		WeChatMessage m = buildFromBasicFields(conversation);
-		return (String)m.text;
-	}
-
 	private static WeChatMessage buildFromBasicFields(final Conversation conversation) {
 		// Trim the possible trailing white spaces in ticker.
 		CharSequence ticker = conversation.ticker;

@@ -156,6 +156,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 			if (SDK_INT >= 0 && channel_id.equals(CHANNEL_MESSAGE)) {
 				// most likely a recalled message - treat it as one
 				isRecalled = true;
+				((WeChatApp)this.getApplicationContext()).setLastIsRecalled(true);
 			} else {
 				if (SDK_INT >= O && channel_id == null) n.setChannelId(CHANNEL_MISC);
 				n.setGroup(GROUP_MISC);             // Avoid being auto-grouped
@@ -331,7 +332,15 @@ public class WeChatDecorator extends NevoDecoratorService {
 
 	@Override protected boolean onNotificationRemoved(final String key, final int reason) {
 		if (reason == REASON_APP_CANCEL) {		// For ongoing notification, or if "Removal-Aware" of Nevolution is activated
-			Log.d(TAG, "Cancel notification: " + key);
+			// don't cancel notification if it was because of recalled message
+			if (((WeChatApp)this.getApplicationContext()).getLastIsRecalled()) {
+				mHandler.post(() -> recastNotification(key, null));
+				((WeChatApp)this.getApplicationContext()).setIsRecasted(true);
+				((WeChatApp)this.getApplicationContext()).setLastIsRecalled(false);
+				Log.d(TAG, "Reposted canceled notification: " + key);
+			} else {
+				Log.d(TAG, "Cancel notification: " + key);
+			}
 		} else if (SDK_INT >= O && reason == REASON_CHANNEL_BANNED && ! isChannelAvailable(getUser(key))) {
 			Log.w(TAG, "Channel lost, disable extra channels from now on.");
 			mUseExtraChannels = false;

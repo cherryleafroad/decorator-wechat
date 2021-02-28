@@ -28,7 +28,7 @@ public class ConversationManager {
 
 	private static final Person SENDER_PLACEHOLDER = new Person.Builder().setName(" ").build();	// Cannot be empty string, or it will be treated as null.
 
-	public static class Conversation implements Cloneable {
+	public static class Conversation {
 
 		static final int TYPE_UNKNOWN = 0;
 		static final int TYPE_DIRECT_MESSAGE = 1;
@@ -49,11 +49,6 @@ public class ConversationManager {
 		IconCompat icon;
 		private @Nullable Person.Builder sender;
 		@Nullable Notification.CarExtender.UnreadConversation ext;    // Of the latest notification
-
-		@Override
-		protected Conversation clone() throws CloneNotSupportedException {
-			return (Conversation)super.clone();
-		}
 
 		/** @return previous type */
 		int setType(final int type) {

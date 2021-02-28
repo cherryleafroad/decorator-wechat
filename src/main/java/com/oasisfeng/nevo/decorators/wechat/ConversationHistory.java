@@ -30,7 +30,7 @@ class ConversationHistory {
     private final static ArrayMap<String, Integer> mReplyFlag = new ArrayMap<>();
 
 
-    private static void handleRecalledMessage(String key, String message, Context context, String[] car_messages, boolean isGroupChat) {
+    private static void handleRecalledMessage(String key, String message, Context context, ArrayList<String> car_messages, boolean isGroupChat) {
         // this should ALWAYS succeed
         // Please note that it is IMPOSSIBLE to differentiate which message was recalled
         // when both messages content is exactly the same. This is an unfortunate side effect
@@ -39,7 +39,7 @@ class ConversationHistory {
         if (mConversationHistory.containsKey(key)) {
             // we MUST slice this to prevent previously returned history (that we aren't showing) from
             // influencing the data
-            List<String> history = new ArrayList<>((List<String>)mConversationHistory.get(key)).subList(0, mUnreadCount.get(key));
+            List<String> history = new ArrayList<>(mConversationHistory.get(key)).subList(0, Math.min(mUnreadCount.get(key), MAX_NUM_CONVERSATIONS));
             boolean visible = ((WeChatApp) context.getApplicationContext()).getSharedPreferences().getBoolean(context.getString(R.string.pref_recalled), false);
 
             String msg;
@@ -61,14 +61,7 @@ class ConversationHistory {
                     }
                 }
             } else {
-
-                List<String> messages = Arrays.asList(car_messages);
-                // the list is originally ordered from oldest->newest
-                // ours is newest->oldest. Best that they are both the same and exact same length
-                Collections.reverse(messages);
-                messages = messages.subList(0, Math.max(Math.min(messages.size(), history.size()-1), 0));
-
-                int m_size = messages.size();
+                int m_size = car_messages.size();
                 int h_size = history.size();
 
 
@@ -100,7 +93,7 @@ class ConversationHistory {
                 for (int i = 0; i < h_size; i++) {
                     // any history message contained in messages is invalid as it wasn't removed
                     // from messages. Also, already recalled message indexes are also invalid
-                    if (messages.contains(history.get(i)) ||
+                    if (car_messages.contains(history.get(i)) ||
                             history.get(i).startsWith(context.getString(R.string.recalled_message))) {
 
                         // remove invalid index
@@ -167,26 +160,27 @@ class ConversationHistory {
         mConversationHistory.put(key, conversation);
     }
 
-    public static String[] getConversationHistory(String key) {
-        if (mConversationHistory.containsKey(key)) {
-            return mConversationHistory.get(key).toArray(new String[0]);
-        } else {
-            return new String[0];
-        }
-    }
-
-    private static String[] extractNotificationMessages(List<StatusBarNotification> notifications) {
-        String[] messages = new String[notifications.size()];
+    private static List<String> extractNotificationMessages(List<StatusBarNotification> notifications, boolean isGroupChat) {
+        List<String> messages = new ArrayList<>();
         for (int i = 0; i < notifications.size(); i++) {
             final Notification notification = notifications.get(i).getNotification();
             final Bundle its_extras = notification.extras;
             final String its_text = its_extras.getString(EXTRA_TEXT);
             if (its_text == null) {
                 Log.w(TAG, "No text in archived notification.");
-                messages[i] = "[Unknown]";
+                messages.add("[Unknown]");
                 continue;
             }
-            messages[i] = its_text;
+
+            String[] split = splitSender(its_text);
+            String msg;
+            if (!isGroupChat) {
+                msg = split[1];
+            } else {
+                msg = split[0] + ": " + split[1];
+            }
+
+            messages.add(msg);
         }
 
         return messages;
@@ -218,27 +212,27 @@ class ConversationHistory {
         return message;
     }
 
-    // make edited conversation acceptable for processing
-    private static Conversation formatConversation(Conversation conversation, String message) {
-        conversation.summary = message;
-        conversation.ticker = removeUnreadCount(conversation.ticker);
-
-        return conversation;
-    }
-
     // The meat and bones right here. it maintains conversation history
     // adds the new one, replaces and fixes the carExtenders conversations
     // AND returns the fixed unreadConversation from the car extender
     //
     // The purpose of this class is to fix an issue where WeChat sends "[Message]"
     // when you do certain actions like quote a message, which makes it unusable
-    public static UnreadConversation getUnreadConversation(Context context, String key, UnreadConversation unreadConversation,
+    public static UnreadConversation getUnreadConversation(Context context, String key, final UnreadConversation unreadConversation,
                                                            Conversation conversation, List<StatusBarNotification> notificationHistory, boolean isRecalled) {
         if (conversation.ticker == null) {
             conversation.ticker = removeUnreadCount(conversation.summary);
         }
 
         boolean isReplying = ((WeChatApp)context.getApplicationContext()).getReplying();
+
+        boolean isRecasted = false;
+        if (((WeChatApp) context.getApplicationContext()).getIsRecasted()) {
+            // reset flag to false
+            ((WeChatApp)context.getApplicationContext()).setIsRecasted(false);
+
+            isRecasted = true;
+        }
 
         // create keys for new conversation if not here
         if (!mConversationHistory.containsKey(key)) {
@@ -254,17 +248,6 @@ class ConversationHistory {
             mReplyFlag.put(key, 0);
         }
 
-        Conversation newConversation;
-        try {
-            newConversation = conversation.clone();
-        } catch (Exception e) {
-            // simply return the original unreadConversation because this may fail otherwise
-            // if we need to read the notifications
-            Log.e(TAG, "Failed to clone conversation - aborted unreadConversation patch");
-            return unreadConversation;
-        }
-
-
         boolean isGroupChat = conversation.isGroupChat();
 
 
@@ -277,9 +260,9 @@ class ConversationHistory {
 
         // Don't create extra notifications when replying or recalling a message
         // this is a regular message
-        if (!isReplying && !isRecalled) {
+        if (!isReplying && !isRecalled && !isRecasted) {
             mUnreadCount.put(key, mUnreadCount.get(key) + 1);
-        } else if (!isReplying && isRecalled) {
+        } else if (!isReplying && isRecalled && !isRecasted) {
             mUnreadOffset.put(key, mUnreadOffset.get(key) + 1);
         }
 
@@ -290,7 +273,6 @@ class ConversationHistory {
         // only MAX is allowed
         int unreadCount = Math.min(mUnreadCount.get(key), MAX_NUM_CONVERSATIONS);
         conversation.count = unreadCount;
-
 
         // this part serves the purpose of :
         // fixing the conversation ticker and summary when isRecalled is true
@@ -310,8 +292,6 @@ class ConversationHistory {
             }
             // rebuild correct message
             conversation.ticker = senderT[0] + ": " + senderS[1];
-            newConversation.summary = conversation.summary;
-            newConversation.ticker = conversation.ticker;
         } else {
             // fix counter in messages
             String[] split;
@@ -326,51 +306,57 @@ class ConversationHistory {
         }
 
         // car extender messages are ordered from oldest to newest
-        String[] carExtenderMessages = unreadConversation.getMessages();
-        int lastIndex = carExtenderMessages.length - 1;
-        // carextender missing data for some reason? strange
-        if (lastIndex == -1) {
-            lastIndex = 0;
-            // we >Probably< have it in history, BUT if not...
-            if (mConversationHistory.get(key).size() > 0) {
-                carExtenderMessages = new String[] {mConversationHistory.get(key).get(0)};
-            } else {
-                String[] split = splitSender(conversation.ticker);
-                if (split[0] != null) {
-                    carExtenderMessages = new String[]{split[1]};
-                } else {
-                    carExtenderMessages = new String[]{"[Unknown]"};
-                }
+        ArrayList<String> carExtenderMessages = new ArrayList<>(Arrays.asList(unreadConversation.getMessages()));
+        // the length of messages should be mUnread - mOffset
+        // if messages have more than that, that means the car bundle returned more than it was
+        // supposed to, and we need to chop off the extra : oldest -> newest
+        if (!isRecasted) {
+            int extra = carExtenderMessages.size() - (mUnreadCount.get(key) - mUnreadOffset.get(key));
+            if (extra > 0) {
+                // only view the proper amount of data
+                carExtenderMessages = new ArrayList<>(carExtenderMessages.subList(extra, carExtenderMessages.size()));
             }
         }
+        // sort into newest -> oldest
+        Collections.reverse(carExtenderMessages);
+
+
+        // carextender missing data for some reason? strange
+        if (carExtenderMessages.isEmpty()) {
+            String[] split = splitSender(conversation.ticker);
+            if (split[0] != null) {
+                carExtenderMessages.add(0, split[1]);
+            } else {
+                carExtenderMessages.add(0, "[Unknown]");
+            }
+        }
+
         // if it's an erroneous message, go to fallback, otherwise use original
         // make sure to grab the latest which is the last one
         String msgCheck;
-        String real_message = isRecalled ? conversation.summary.toString() : carExtenderMessages[lastIndex];
-
         if (!isGroupChat) {
             // Single chat or Bot
-            msgCheck = real_message;
+            msgCheck = carExtenderMessages.get(0);
         } else {
             // this is a group chat
             // need to slice off -> Name: Msg -> Msg
-            msgCheck = splitSender(real_message)[1];
+            msgCheck = splitSender(carExtenderMessages.get(0))[1];
         }
 
         // Replying has a double entry, so don't add twice it if we're replying
         // this means we're only getting the history, not adding to it
         // And recalling messages do not have any extra message to add
-        if (!isReplying && !isRecalled) {
+        if (!isReplying && !isRecalled && !isRecasted) {
             if (!msgCheck.equals("[Message]")) {
                 // car extender has the correct msg in both cases
                 // Name: Msg, for groups
                 // for regular chat just, Msg
-                addConversationMessage(key, carExtenderMessages[lastIndex]);
+                addConversationMessage(key, carExtenderMessages.get(0));
             } else {
                 // fallback, real message is in the ticker
                 String msg;
                 if (!isGroupChat) {
-                    msg = WeChatMessage.getTickerMessage(formatConversation(newConversation, newConversation.summary.toString()));
+                    msg = splitSender(conversation.summary.toString())[1];
                 } else {
                     msg = conversation.ticker.toString();
                 }
@@ -378,74 +364,66 @@ class ConversationHistory {
             }
         }
 
-        boolean convertedNotifications = false;
-        String[] notificationMessages = new String[0];
+
         CarExtender.Builder builder = new CarExtender.Builder(EmojiTranslator.translate(unreadConversation.getParticipant()).toString());
-        // our array is ordered from newest to oldest, but needs to be inserted from oldest to newest
 
-        String[] messages = getConversationHistory(key);
-
-        boolean addBuffer = false;
-
-        // go through each of the calculated unread messages
-        int messages_last_index = messages.length-1;
-        String[] buffer = new String[unreadCount];
         // don't add regular messages when it was recalled (recalled won't need to recalculate data anyways)
         // because a recalled message requires a re-build due to changing message content
-        if (!isRecalled) {
-            for (int i = unreadCount - 1; i >= 0; i--) {
-                int forwardIndex = unreadCount - 1 - i;
+        if (!isRecalled || isRecasted) {
+            // our array is ordered from newest to oldest, but needs to be inserted from oldest to newest
+            List<String> notificationMessages = new ArrayList<>();
+            boolean convertedNotifications = false;
 
+            boolean addBuffer = false;
+            String[] buffer = new String[unreadCount];
+
+            String[] messages = mConversationHistory.get(key).toArray(new String[0]);
+            int carMessageIndex = carExtenderMessages.size()-1;
+            int messages_last_index = messages.length-1;
+
+            for (int i = unreadCount-1; i >= 0; i--) {
                 // first used cached messages
                 // guaranteed to have no [Message] nonsense
                 if (messages_last_index >= i) {
                     builder.addMessage(messages[i]);
-                    buffer[forwardIndex] = messages[i];
+                    buffer[i] = messages[i];
                 } else {
                     // we have to calculate it then...
                     addBuffer = true;
                     if (!msgCheck.equals("[Message]") &&
-                            carExtenderMessages.length - 1 >= forwardIndex) {
+                        carMessageIndex >= i) {
 
                         // valid message for both chats and groups
-                        builder.addMessage(carExtenderMessages[forwardIndex]);
+                        builder.addMessage(carExtenderMessages.get(i));
                         // add it to cache also
-                        buffer[forwardIndex] = carExtenderMessages[forwardIndex];
+                        buffer[i] = carExtenderMessages.get(i);
                         continue;
                     }
                     // deliberate fallthrough to try another method if the above fails
 
                     // lazy evaluation
                     if (!convertedNotifications) {
-                        notificationMessages = extractNotificationMessages(notificationHistory);
+                        notificationMessages = extractNotificationMessages(notificationHistory, isGroupChat);
+                        Collections.reverse(notificationMessages);
                         convertedNotifications = true;
                     }
 
                     // process the ticker message using WeChatMessage
-                    int index = notificationMessages.length - 1 - i;
-                    if (index < 0) {
+                    if (notificationMessages.size() < i) {
                         // we don't have this message sadly :(
                         // however this shouldn't happen often at all at least
                         if (!isGroupChat) {
                             builder.addMessage("[Unknown]");
-                            buffer[forwardIndex] = "[Unknown]";
+                            buffer[i] = "[Unknown]";
                         } else {
                             builder.addMessage("Unknown: [Unknown]");
-                            buffer[forwardIndex] = "Unknown: [Unknown]";
+                            buffer[i] = "Unknown: [Unknown]";
                         }
                         continue;
                     }
 
-                    newConversation = formatConversation(newConversation, notificationMessages[index]);
-                    String newMsg;
-                    if (!isGroupChat) {
-                        newMsg = WeChatMessage.getTickerMessage(newConversation);
-                    } else {
-                        newMsg = newConversation.ticker.toString();
-                    }
-
-                    builder.addMessage(newMsg);
-                    buffer[forwardIndex] = newMsg;
+                    builder.addMessage(notificationMessages.get(i));
+                    buffer[i] = notificationMessages.get(i);
                 }
             }
 
@@ -460,14 +438,14 @@ class ConversationHistory {
                     addConversationMessage(key, s);
                 }
             }
-        } else {
+        }
+        if (!isRecasted && isRecalled) {
             // this is a special case needing to be handled separately
             // handle it at the end to make sure all messages are added
             handleRecalledMessage(key, isGroupChat ? conversation.ticker.toString() : splitSender(conversation.ticker)[1], context, carExtenderMessages, isGroupChat);
 
             // builder doesn't reflect our changed messages, so we need to re-fill it
-            messages = mConversationHistory.get(key).toArray(new String[0]);
-            builder = new CarExtender.Builder(EmojiTranslator.translate(unreadConversation.getParticipant()).toString());
+            String[] messages = mConversationHistory.get(key).toArray(new String[0]);
 
             for (int i = unreadCount-1; i >= 0; i--) {
                 if (messages.length-1 >= i) {
