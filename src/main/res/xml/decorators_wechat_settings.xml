@@ -47,12 +47,6 @@
         android:summary="@string/pref_wear_summary" />
 
     <SwitchPreference
-        android:key="@string/pref_notification_mark_as_read"
-        android:title="@string/pref_notification_mark_as_read_title"
-        android:defaultValue="true"
-        android:summary="@string/pref_notification_mark_as_read_summary" />
-
-    <SwitchPreference
         android:key="@string/pref_mark_as_read"
         android:title="@string/pref_mark_as_read_title"
         android:defaultValue="false"
