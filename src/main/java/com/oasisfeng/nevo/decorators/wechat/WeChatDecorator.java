@@ -155,8 +155,16 @@ public class WeChatDecorator extends NevoDecoratorService {
 		if (n.tickerText == null/* Legacy misc. notifications */|| CHANNEL_MISC.equals(channel_id)) {
 			if (SDK_INT >= 0 && channel_id.equals(CHANNEL_MESSAGE)) {
 				// most likely a recalled message - treat it as one
-				isRecalled = true;
-				((WeChatApp)this.getApplicationContext()).setLastIsRecalled(true);
+				int unreadCount = ConversationHistory.getUnreadCount(evolving.getOriginalKey());
+				if (unreadCount > 0) {
+					isRecalled = true;
+					((WeChatApp) this.getApplicationContext()).setLastIsRecalled(true);
+				} else {
+					// recalled a message before our current unread history, just cancel it because it's not needed
+					Log.d(TAG, "Canceled recalled notification that occurred before unread history");
+					cancelNotification(evolving.getOriginalKey());
+					return false;
+				}
 			} else {
 				if (SDK_INT >= O && channel_id == null) n.setChannelId(CHANNEL_MISC);
 				n.setGroup(GROUP_MISC);             // Avoid being auto-grouped
@@ -335,7 +343,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 			// don't cancel notification if it was because of recalled message
 			if (((WeChatApp)this.getApplicationContext()).getLastIsRecalled()) {
 				mHandler.post(() -> recastNotification(key, null));
-				((WeChatApp)this.getApplicationContext()).setIsRecasted(true);
+				((WeChatApp)this.getApplicationContext()).setRecasted(true);
 				((WeChatApp)this.getApplicationContext()).setLastIsRecalled(false);
 				Log.d(TAG, "Reposted canceled notification: " + key);
 			} else {
