@@ -83,7 +83,11 @@ import static android.os.Build.VERSION_CODES.P;
 import static android.os.Build.VERSION_CODES.Q;
 import static android.service.notification.NotificationListenerService.REASON_APP_CANCEL;
 import static android.service.notification.NotificationListenerService.REASON_CANCEL;
+import static android.service.notification.NotificationListenerService.REASON_CANCEL_ALL;
 import static android.service.notification.NotificationListenerService.REASON_CHANNEL_BANNED;
+import static android.service.notification.NotificationListenerService.REASON_CLICK;
+import static android.service.notification.NotificationListenerService.REASON_LISTENER_CANCEL;
+import static android.service.notification.NotificationListenerService.REASON_SNOOZED;
 import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation.TYPE_BOT_MESSAGE;
 import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation.TYPE_DIRECT_MESSAGE;
 import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation.TYPE_GROUP_CHAT;
@@ -349,6 +353,8 @@ public class WeChatDecorator extends NevoDecoratorService {
 				((WeChatApp)this.getApplicationContext()).setLastIsRecalled(false);
 				Log.d(TAG, "Reposted canceled notification: " + key);
 			} else {
+				// should be that app was entered, so clear all
+				ConversationHistory.markAsRead(key);
 				Log.d(TAG, "Cancel notification: " + key);
 			}
 		} else if (SDK_INT >= O && reason == REASON_CHANNEL_BANNED && ! isChannelAvailable(getUser(key))) {
@@ -357,6 +363,9 @@ public class WeChatDecorator extends NevoDecoratorService {
 			mHandler.post(() -> recastNotification(key, null));
 		} else if (SDK_INT < O || reason == REASON_CANCEL) {	// Exclude the removal request by us in above case. (Removal-Aware is only supported on Android 8+)
 			mMessagingBuilder.markRead(key);
+		} else if (reason == REASON_CLICK || reason == REASON_CANCEL_ALL || reason == REASON_SNOOZED || reason == REASON_LISTENER_CANCEL) {
+			// make sure history is cleared on notification click
+			ConversationHistory.markAsRead(key);
 		}
 		return false;
 	}
