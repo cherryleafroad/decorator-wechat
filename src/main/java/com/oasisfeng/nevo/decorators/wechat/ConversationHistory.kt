@@ -324,11 +324,7 @@ internal object ConversationHistory {
         val isCarMessagesEmpty = carExtenderMessages.isEmpty()
         if (isCarMessagesEmpty && !isRecalled && !isRecasted) {
             val split = splitSender(conversation.ticker)
-            if (split[0] != null) {
-                carExtenderMessages.add(0, split[1])
-            } else {
-                carExtenderMessages.add(0, "[Unknown]")
-            }
+            carExtenderMessages.add(0, split[1] ?: "[Unknown]")
         }
 
         // the length of messages should be mUnread - mOffset
@@ -363,7 +359,7 @@ internal object ConversationHistory {
             // Replying has a double entry, so don't add twice it if we're replying
             // this means we're only getting the history, not adding to it
             // And recalling messages do not have any extra message to add
-            if (msgCheck != "[Message]") {
+            if (!msgCheck.equals("[Message]")) {
                 // car extender has the correct msg in both cases
                 // Name: Msg, for groups
                 // for regular chat just, Msg
@@ -405,7 +401,7 @@ internal object ConversationHistory {
                 } else {
                     // we have to calculate it then...
                     addBuffer = true
-                    if (msgCheck != "[Message]" &&
+                    if (!msgCheck.equals("[Message]") &&
                         carMessageIndex >= i
                     ) {
 
@@ -465,16 +461,12 @@ internal object ConversationHistory {
             )
 
             // builder doesn't reflect our changed messages, so we need to re-fill it
-            val messages = mConversationHistory[key]!!
+            val recallMessages = mConversationHistory[key]!!
 
             for (i in unreadCount - 1 downTo 0) {
-                if (messages.size - 1 >= i) {
-                    builder.addMessage(messages[i])
+                if (recallMessages.size - 1 >= i) {
+                    builder.addMessage(recallMessages[i])
                 }
-            }
-
-            if (messages.isEmpty()) {
-                builder.addMessage("foo")
             }
         }
 
