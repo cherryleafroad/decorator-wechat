@@ -365,7 +365,8 @@ public class WeChatDecorator extends NevoDecoratorService {
 			mMessagingBuilder.markRead(key);
 		} else if (reason == REASON_CLICK || reason == REASON_CANCEL_ALL || reason == REASON_SNOOZED || reason == REASON_LISTENER_CANCEL) {
 			// make sure history is cleared on notification click
-			ConversationHistory.markAsRead(key);
+			mMessagingBuilder.markRead(key);
+			//ConversationHistory.markAsRead(key);
 		}
 		return false;
 	}

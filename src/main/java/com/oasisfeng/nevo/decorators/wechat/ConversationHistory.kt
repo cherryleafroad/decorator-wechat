@@ -21,7 +21,7 @@ internal object ConversationHistory {
         key: String,
         message: String,
         context: Context,
-        car_messages: ArrayList<String?>,
+        car_messages: ArrayList<String>,
         isGroupChat: Boolean
     ) {
         // Please note that it is IMPOSSIBLE to differentiate which message was recalled
@@ -318,7 +318,7 @@ internal object ConversationHistory {
 
 
         // car extender messages are ordered from oldest to newest
-        var carExtenderMessages = ArrayList(listOf(*unreadConversation.messages))
+        val carExtenderMessages = arrayListOf<String>(*unreadConversation.messages)
 
         // carextender missing data for some reason? strange
         val isCarMessagesEmpty = carExtenderMessages.isEmpty()
@@ -330,14 +330,14 @@ internal object ConversationHistory {
         // the length of messages should be mUnread - mOffset
         // if messages have more than that, that means the car bundle returned more than it was
         // supposed to, and we need to chop off the extra : oldest -> newest
-        if (!isRecasted) {
+        /*if (!isRecasted) {
             val extra = carExtenderMessages.size - (mUnreadCount[key]!! - mUnreadOffset[key]!!)
-            if (extra > 0) {
+            if (extra > 0 && extra < carExtenderMessages.size) {
                 // only view the proper amount of data
                 carExtenderMessages =
                     ArrayList(carExtenderMessages.subList(extra, carExtenderMessages.size))
             }
-        }
+        }*/
         // sort into newest -> oldest
         carExtenderMessages.reverse()
 
@@ -451,14 +451,58 @@ internal object ConversationHistory {
             }
         } else {
             // this is a special case needing to be handled separately
-            // handle it at the end to make sure all messages are added
-            handleRecalledMessage(
-                key,
-                (if (isGroupChat) conversation.ticker.toString() else splitSender(conversation.ticker)[1])!!,
-                context,
-                carExtenderMessages,
-                isGroupChat
-            )
+            // no messages have been added, but one might change though (it was recalled!)
+
+            // check whether the recalled message was bogus or not
+            // a bogus recalled message occurs when it was recalled, but it's not within our
+            // unread history. this causes issues cause we expect it to be a valid recall!
+            var bogusRecalled = false
+
+            var confidence = 0
+            // this has been messed with above, we need a fresh set
+            val carMessages: MutableList<String> = arrayListOf(*unreadConversation.messages)
+
+            // chop it down to size, appropriate for the size as IF it hadn't been missing
+            //
+            // -1 because we added to the offset above, but if it was fake then the +1 offset before
+            // is not applicable
+            /*val extra = carMessages.size - (mUnreadCount[key]!! - (mUnreadOffset[key]!!-1))
+            if (extra > 0 && extra < carMessages.size) {
+                // only view the proper amount of data
+                carMessages = carMessages.subList(extra, carExtenderMessages.size)
+            }*/
+
+            // same amount of messages, even though one should've been recalled!
+            // Recalled message sus!
+            // -1 because we modified the offset count above
+            val size = mUnreadCount[key]!! - (mUnreadOffset[key]!!-1)
+            if (size == carMessages.size) confidence++
+
+            // it's possible the recalled message isn't even in our history, because it has other
+            // content.
+            /*for (message in carMessages) {
+                if (messages.contains(message)) confidence++ else confidence--
+            }*/
+
+            // 2 or higher is a good confidence that it's not our recalled message
+            if (confidence >= 1) {
+                bogusRecalled = true
+                // since it's a bogus message, fix the offset
+                mUnreadOffset[key] = mUnreadOffset[key]?.minus(1)
+            }
+            //
+            // End bogus recall message handling
+            //
+
+            if (!bogusRecalled) {
+                handleRecalledMessage(
+                    key,
+                    (if (isGroupChat) conversation.ticker.toString() else splitSender(conversation.ticker)[1])!!,
+                    context,
+                    carExtenderMessages,
+                    isGroupChat
+                )
+            }
 
             // builder doesn't reflect our changed messages, so we need to re-fill it
             val recallMessages = mConversationHistory[key]!!
