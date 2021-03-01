@@ -41,7 +41,7 @@ internal object ConversationHistory {
         if (isGroupChat) {
             // check back history
             for (i in history.indices) {
-                if (history[i].equals(message)) {
+                if (history[i] == message) {
                     val sender = splitSender(history[i])
 
                     msg = if (visible == true) {
@@ -88,9 +88,8 @@ internal object ConversationHistory {
                 if (car_messages.contains(history[i]) ||
                     history[i]!!.startsWith(context.getString(R.string.recalled_message))
                 ) {
-
                     // remove invalid index
-                    validIndexes.remove(Integer.valueOf(i))
+                    validIndexes.remove(i)
                 }
             }
 
@@ -173,7 +172,7 @@ internal object ConversationHistory {
             val msg: String? = if (!isGroupChat) {
                 split[1]
             } else {
-                split[0].toString() + ": " + split[1]
+                "${split[0].toString()}: ${split[1]}"
             }
             messages.add(msg)
         }
@@ -359,7 +358,7 @@ internal object ConversationHistory {
             // Replying has a double entry, so don't add twice it if we're replying
             // this means we're only getting the history, not adding to it
             // And recalling messages do not have any extra message to add
-            if (!msgCheck.equals("[Message]")) {
+            if (msgCheck != "[Message]") {
                 // car extender has the correct msg in both cases
                 // Name: Msg, for groups
                 // for regular chat just, Msg
@@ -401,7 +400,7 @@ internal object ConversationHistory {
                 } else {
                     // we have to calculate it then...
                     addBuffer = true
-                    if (!msgCheck.equals("[Message]") &&
+                    if (msgCheck != "[Message]" &&
                         carMessageIndex >= i
                     ) {
 
@@ -478,10 +477,23 @@ internal object ConversationHistory {
             val size = mUnreadCount[key]!! - (mUnreadOffset[key]!!-1)
             if (size == carMessages.size) confidence++
 
-            // it's possible the recalled message isn't even in our history, because it has other
-            // content.
-            /*for (message in carMessages) {
-                if (messages.contains(message)) confidence++ else confidence--
+            // sometimes there's a duplicate wrong message, but other unrecalled ones are right
+            // potential false positive
+            /*if (confidence == 1) {
+                var offset = 0
+                for (i in carMessages.indices) {
+                    if (!messages[i+offset]!!.startsWith(context.getString(R.string.recalled_message))) {
+                        // skip this one to maintain sync
+                        offset++
+                        continue
+
+                    }
+
+                    if (messages[i+offset]!! != carMessages[i]) {
+                        // found the duplicate!
+                        confidence--
+                    }
+                }
             }*/
 
             // 2 or higher is a good confidence that it's not our recalled message
