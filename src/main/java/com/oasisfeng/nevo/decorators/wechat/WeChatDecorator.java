@@ -88,6 +88,7 @@ import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversat
 import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation.TYPE_DIRECT_MESSAGE;
 import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation.TYPE_GROUP_CHAT;
 import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation.TYPE_UNKNOWN;
+import static com.oasisfeng.nevo.decorators.wechat.MessagingBuilder.EXTRA_SBN_KEY;
 
 /**
  * Bring state-of-art notification experience to WeChat.
@@ -122,6 +123,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 	private static final @ColorInt int PRIMARY_COLOR = 0xFF33B332;
 	private static final @ColorInt int LIGHT_COLOR = 0xFF00FF00;
 	static final String ACTION_SETTINGS_CHANGED = "SETTINGS_CHANGED";
+	public static final String ACTION_MARK_AS_READ = "MARK_AS_READ";
 	static final String PREFERENCES_NAME = "decorators-wechat";
 	private static final String EXTRA_SILENT_RECAST = "silent_recast";
 	private static final Bundle RECAST_SILENT = new Bundle(); static { RECAST_SILENT.putBoolean(EXTRA_SILENT_RECAST, true); }
@@ -447,13 +449,25 @@ public class WeChatDecorator extends NevoDecoratorService {
 		final IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_REMOVED); filter.addDataScheme("package");
 		registerReceiver(mPackageEventReceiver, filter);
 		registerReceiver(mSettingsChangedReceiver, new IntentFilter(ACTION_SETTINGS_CHANGED));
+
+		registerReceiver(mMarkAsReadBroadcastReceiver, new IntentFilter(ACTION_MARK_AS_READ));
 	}
 
 	@Override public void onDestroy() {
 		unregisterReceiver(mSettingsChangedReceiver);
 		unregisterReceiver(mPackageEventReceiver);
+		unregisterReceiver(mMarkAsReadBroadcastReceiver);
 		if (SDK_INT >= N_MR1) mAgentShortcuts.close();
 		mMessagingBuilder.close();
+	}
+
+	private final class MarkAsReadBroadcastReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context context, Intent proxy) {
+			String key = proxy.getStringExtra(EXTRA_SBN_KEY);
+			WeChatDecorator.this.mMessagingBuilder.markRead(key);
+			WeChatDecorator.this.cancelNotification(key);
+		}
 	}
 
 	private static UserHandle userHandleOf(final int user) {
@@ -492,6 +506,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 	}};
 
 	private final ConversationManager mConversationManager = new ConversationManager();
+	private final MarkAsReadBroadcastReceiver mMarkAsReadBroadcastReceiver = new MarkAsReadBroadcastReceiver();
 	private MessagingBuilder mMessagingBuilder;
 	private AgentShortcuts mAgentShortcuts;
 	private boolean mWeChatTargetingO;

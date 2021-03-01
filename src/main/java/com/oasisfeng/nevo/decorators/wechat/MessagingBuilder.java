@@ -53,6 +53,7 @@ import static androidx.core.app.NotificationCompat.EXTRA_CONVERSATION_TITLE;
 import static androidx.core.app.NotificationCompat.EXTRA_IS_GROUP_CONVERSATION;
 import static androidx.core.app.NotificationCompat.EXTRA_MESSAGES;
 import static androidx.core.app.NotificationCompat.EXTRA_SELF_DISPLAY_NAME;
+import static com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.ACTION_MARK_AS_READ;
 import static com.oasisfeng.nevo.decorators.wechat.WeChatMessage.SENDER_MESSAGE_SEPARATOR;
 import static java.util.Objects.requireNonNull;
 
@@ -66,11 +67,10 @@ class MessagingBuilder {
 	private static final int MAX_NUM_HISTORICAL_LINES = 10;
 
 	private static final String ACTION_REPLY = "REPLY";
-	private static final String ACTION_MARK_AS_READ = "MARK_AS_READ";
 	private static final String ACTION_LIKE = "LIKE";
 	private static final String SCHEME_KEY = "key";
 	private static final String EXTRA_REPLY_ACTION = "pending_intent";
-	private static final String EXTRA_SBN_KEY = "sbn_key";
+	public static final String EXTRA_SBN_KEY = "sbn_key";
 	private static final String EXTRA_RESULT_KEY = "result_key";
 	private static final String EXTRA_ORIGINAL_KEY = "original_key";
 	private static final String EXTRA_REPLY_PREFIX = "reply_prefix";
@@ -276,14 +276,6 @@ class MessagingBuilder {
 		return PendingIntent.getBroadcast(mContext, 0, proxy.setPackage(mContext.getPackageName()), FLAG_UPDATE_CURRENT);
 	}
 
-	private class MarkAsReadReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context context, Intent proxy) {
-			String key = proxy.getStringExtra(EXTRA_SBN_KEY);
-			MessagingBuilder.this.markRead(key);
-		}
-	}
-
 	private PendingIntent proxyLike(final int cid, final MutableStatusBarNotification sbn, final PendingIntent on_reply,
 									final RemoteInput remote_input, final @Nullable CharSequence[] input_history) {
 		// this is an identical method to proxy direct reply, except in this one we manually add the remote reply
@@ -434,13 +426,6 @@ class MessagingBuilder {
 
 		mPrefKeyMarkAsRead = mContext.getString(R.string.pref_mark_as_read);
 		mPrefKeyLike = mContext.getString(R.string.pref_like);
-
-		mMarkAsReadReceiver = new MarkAsReadReceiver();
-		// this must always be willing to receive, otherwise if we change setting later
-		// it will not receive until we restart the process
-		final IntentFilter markAsReadFilter = new IntentFilter(ACTION_MARK_AS_READ);
-		filter.addDataScheme(SCHEME_KEY);
-		context.registerReceiver(mMarkAsReadReceiver, markAsReadFilter);
 	}
 
 	private static Person buildPersonFromProfile(final Context context) {
@@ -449,11 +434,9 @@ class MessagingBuilder {
 
 	void close() {
 		try { mContext.unregisterReceiver(mReplyReceiver); } catch (final RuntimeException ignored) {}
-		try { mContext.unregisterReceiver(mMarkAsReadReceiver); } catch (final RuntimeException ignored) {}
 	}
 
 	private final Context mContext;
-	private final MarkAsReadReceiver mMarkAsReadReceiver;
 	private final SharedPreferences mSharedPreferences;
 	private final String mPrefKeyMarkAsRead;
 	private final String mPrefKeyLike;
