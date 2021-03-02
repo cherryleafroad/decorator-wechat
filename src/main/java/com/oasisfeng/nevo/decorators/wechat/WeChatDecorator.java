@@ -346,27 +346,26 @@ public class WeChatDecorator extends NevoDecoratorService {
 
 	@Override protected boolean onNotificationRemoved(final String key, final int reason) {
 		if (reason == REASON_APP_CANCEL) {		// For ongoing notification, or if "Removal-Aware" of Nevolution is activated
-			// don't cancel notification if it was because of recalled message
-			if (((WeChatApp)this.getApplicationContext()).getLastIsRecalled()) {
-				mHandler.post(() -> recastNotification(key, null));
-				((WeChatApp)this.getApplicationContext()).setRecasted(true);
-				((WeChatApp)this.getApplicationContext()).setLastIsRecalled(false);
-				Log.d(TAG, "Reposted canceled notification: " + key);
-			} else {
-				// should be that app was entered, so clear all
-				ConversationHistory.markAsRead(key);
-				Log.d(TAG, "Cancel notification: " + key);
-			}
+			// should be that app was entered, so clear all
+			((WeChatApp)this.getApplicationContext()).setAppRemovedNotif(true);
+			ConversationHistory.markAsRead(key);
+			Log.d(TAG, "Cancel notification: " + key);
 		} else if (SDK_INT >= O && reason == REASON_CHANNEL_BANNED && ! isChannelAvailable(getUser(key))) {
 			Log.w(TAG, "Channel lost, disable extra channels from now on.");
 			mUseExtraChannels = false;
 			mHandler.post(() -> recastNotification(key, null));
 		} else if (SDK_INT < O || reason == REASON_CANCEL) {	// Exclude the removal request by us in above case. (Removal-Aware is only supported on Android 8+)
 			mMessagingBuilder.markRead(key);
-		} else if (reason == REASON_CLICK || reason == REASON_CANCEL_ALL || reason == REASON_SNOOZED || reason == REASON_LISTENER_CANCEL) {
+		} else if (reason == REASON_CLICK || reason == REASON_CANCEL_ALL || reason == REASON_SNOOZED) {
 			// make sure history is cleared on notification click
 			mMessagingBuilder.markRead(key);
 			//ConversationHistory.markAsRead(key);
+		} else if (reason == REASON_LISTENER_CANCEL) {
+			if (!((WeChatApp)this.getApplicationContext()).getAppRemovedNotif()) {
+				((WeChatApp) this.getApplicationContext()).setRecasted(true);
+				mHandler.post(() -> recastNotification(key, null));
+			}
+			((WeChatApp)this.getApplicationContext()).setAppRemovedNotif(false);
 		}
 		return false;
 	}

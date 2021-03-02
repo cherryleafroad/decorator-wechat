@@ -8,4 +8,5 @@ class WeChatApp : Application() {
     var lastIsRecalled = false
     var isRecasted = false
     var sharedPreferences: SharedPreferences? = null
+    var appRemovedNotif = false
 }
