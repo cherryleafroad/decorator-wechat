@@ -225,7 +225,8 @@ internal object ConversationHistory {
         unreadConversation: Notification.CarExtender.UnreadConversation,
         conversation: ConversationManager.Conversation,
         notificationHistory: List<StatusBarNotification>,
-        isRecalled: Boolean
+        isRecalled: Boolean,
+        isDuplicate: Boolean
     ): Notification.CarExtender.UnreadConversation {
 
         if (conversation.ticker == null) {
@@ -233,12 +234,11 @@ internal object ConversationHistory {
         }
 
         val isReplying = (context.applicationContext as WeChatApp).replying
-        var isRecasted = false
-
+        var shouldSkip = isDuplicate
         if ((context.applicationContext as WeChatApp).isRecasted) {
             // reset flag to false
             (context.applicationContext as WeChatApp).isRecasted = false
-            isRecasted = true
+            shouldSkip = true
         }
 
         if ((context.applicationContext as WeChatApp).lastIsRecalled && !isRecalled) {
@@ -271,9 +271,9 @@ internal object ConversationHistory {
 
         // Don't create extra notifications when replying or recalling a message
         // this is a regular message
-        if (!isReplying && !isRecalled && !isRecasted) {
+        if (!isReplying && !isRecalled && !shouldSkip) {
             mUnreadCount[key] = mUnreadCount[key]?.plus(1)
-        } else if (!isReplying && isRecalled && !isRecasted) {
+        } else if (!isReplying && isRecalled && !shouldSkip) {
             mUnreadOffset[key] = mUnreadOffset[key]!! + 1
         }
 
@@ -321,7 +321,7 @@ internal object ConversationHistory {
 
         // carextender missing data for some reason? strange
         val isCarMessagesEmpty = carExtenderMessages.isEmpty()
-        if (isCarMessagesEmpty && !isRecalled && !isRecasted) {
+        if (isCarMessagesEmpty && !isRecalled && !shouldSkip) {
             val split = splitSender(conversation.ticker)
             carExtenderMessages.add(0, split[1] ?: "[Unknown]")
         }
@@ -345,7 +345,7 @@ internal object ConversationHistory {
         // if it's an erroneous message, go to fallback, otherwise use original
         // make sure to grab the latest which is the last one
         var msgCheck: String? = ""
-        if (!isCarMessagesEmpty && !isRecalled && !isRecasted && !isReplying) {
+        if (!isCarMessagesEmpty && !isRecalled && !shouldSkip && !isReplying) {
             msgCheck = if (!isGroupChat) {
                 // Single chat or Bot
                 carExtenderMessages[0]
@@ -380,7 +380,7 @@ internal object ConversationHistory {
 
         // don't add regular messages when it was recalled (recalled won't need to recalculate data anyways)
         // because a recalled message requires a re-build due to changing message content
-        if (!isRecalled || isRecasted) {
+        if (!isRecalled || shouldSkip) {
             // our array is ordered from newest to oldest, but needs to be inserted from oldest to newest
             var notificationMessages: MutableList<String?> = ArrayList()
 

@@ -46,6 +46,7 @@ import android.os.Process;
 import android.os.SharedMemory;
 import android.os.UserHandle;
 import android.provider.Settings;
+import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -184,6 +185,19 @@ public class WeChatDecorator extends NevoDecoratorService {
 		final CharSequence content_text = extras.getCharSequence(EXTRA_TEXT);
 		if (content_text == null) return true;
 
+		final String original_key = evolving.getOriginalKey();
+		boolean isDuplicate = false;
+		if (!mWhenNotificationTracker.containsKey(original_key)) {
+			mWhenNotificationTracker.put(original_key, n.when);
+		} else {
+			if (n.when < mWhenNotificationTracker.get(original_key) || n.when == mWhenNotificationTracker.get(original_key)) {
+				Log.d(TAG, "Received duplicate notification " + original_key);
+				isDuplicate = true;
+			} else {
+				mWhenNotificationTracker.put(original_key, n.when);
+			}
+		}
+
 		final CharSequence[] input_history = SDK_INT >= N ? extras.getCharSequenceArray(EXTRA_REMOTE_INPUT_HISTORY) : null;
 		if (input_history != null || extras.getBoolean(EXTRA_SILENT_RECAST))
 			n.flags |= Notification.FLAG_ONLY_ALERT_ONCE;
@@ -234,7 +248,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 		}
 		conversation.timestamp = n.when;
 		// patch the carExtender's bad data
-		final String original_key = evolving.getOriginalKey();
+
 		conversation.ext = IGNORE_CAR_EXTENDER ? null : ConversationHistory.getUnreadConversation(
 				this,
 				original_key,
@@ -244,7 +258,8 @@ public class WeChatDecorator extends NevoDecoratorService {
 						original_key,
 						ConversationHistory.MAX_NUM_CONVERSATIONS
 				),
-				isRecalled
+				isRecalled,
+				isDuplicate
 		);
 
 
@@ -361,7 +376,9 @@ public class WeChatDecorator extends NevoDecoratorService {
 			mMessagingBuilder.markRead(key);
 			//ConversationHistory.markAsRead(key);
 		} else if (reason == REASON_LISTENER_CANCEL) {
-			if (!((WeChatApp)this.getApplicationContext()).getAppRemovedNotif()) {
+			if (!((WeChatApp)this.getApplicationContext()).getAppRemovedNotif() &&
+				!((WeChatApp)this.getApplicationContext()).getReplying()) {
+
 				((WeChatApp) this.getApplicationContext()).setRecasted(true);
 				mHandler.post(() -> recastNotification(key, null));
 			}
@@ -514,6 +531,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 		editor.apply();
 	}};
 
+	private final ArrayMap<String, Long> mWhenNotificationTracker = new ArrayMap<>();
 	private final ConversationManager mConversationManager = new ConversationManager();
 	private final MarkAsReadBroadcastReceiver mMarkAsReadBroadcastReceiver = new MarkAsReadBroadcastReceiver();
 	private MessagingBuilder mMessagingBuilder;
