@@ -65,7 +65,7 @@
     <string name="action_continue">继续</string>
     <string name="action_mark_as_read">标记为已读</string>
     <string name="pref_mark_as_read_title">标记为已读</string>
-    <string name="pref_mark_as_read_summary">在通知中启用\"标记为已读\"按钮</string>
+    <string name="pref_mark_as_read_summary">在通知中启用\"标记为已读\"按钮。在冒泡模式下特别有用，因为诸如清除通知标的记为已读功能将运作不正常（Android限制）</string>
     <string name="action_like">点赞</string>
     <string name="pref_like_title">点赞按钮</string>
     <string name="pref_like_summary">在通知中启用\"点赞\"按钮</string>
