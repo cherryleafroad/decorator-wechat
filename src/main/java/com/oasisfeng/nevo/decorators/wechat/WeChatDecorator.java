@@ -188,10 +188,10 @@ public class WeChatDecorator extends NevoDecoratorService {
 		final String original_key = evolving.getOriginalKey();
 		boolean isDuplicate = false;
 
-		// value isn't set on
-		Long when = mWhenNotificationTracker.put(original_key, n.when);
+		// Check against message duplicates to prevent double messages
+		Long when = ((WeChatApp)this.getApplicationContext()).whenMap.put(original_key, n.when);
 		if (when != null && n.when <= when) {
-			Log.d(TAG, "Received duplicate notification " + original_key);
+			Log.d(TAG, "Received duplicate notification " + original_key + ": " + n.tickerText);
 			isDuplicate = true;
 		}
 
@@ -528,7 +528,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 		editor.apply();
 	}};
 
-	private final ArrayMap<String, Long> mWhenNotificationTracker = new ArrayMap<>();
 	private final ConversationManager mConversationManager = new ConversationManager();
 	private final MarkAsReadBroadcastReceiver mMarkAsReadBroadcastReceiver = new MarkAsReadBroadcastReceiver();
 	private MessagingBuilder mMessagingBuilder;
