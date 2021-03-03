@@ -46,7 +46,6 @@ import android.os.Process;
 import android.os.SharedMemory;
 import android.os.UserHandle;
 import android.provider.Settings;
-import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -128,6 +127,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 	private static final @ColorInt int PRIMARY_COLOR = 0xFF33B332;
 	private static final @ColorInt int LIGHT_COLOR = 0xFF00FF00;
 	static final String ACTION_SETTINGS_CHANGED = "SETTINGS_CHANGED";
+	static final String ACTION_LAUNCH_WECHAT = "LAUNCH_WECHAT";
 	public static final String ACTION_MARK_AS_READ = "MARK_AS_READ";
 	static final String PREFERENCES_NAME = "decorators-wechat";
 	private static final String EXTRA_SILENT_RECAST = "silent_recast";
@@ -358,10 +358,28 @@ public class WeChatDecorator extends NevoDecoratorService {
 
 	@Override protected boolean onNotificationRemoved(final String key, final int reason) {
 		if (reason == REASON_APP_CANCEL) {		// For ongoing notification, or if "Removal-Aware" of Nevolution is activated
-			// should be that app was entered, so clear all
-			((WeChatApp)this.getApplicationContext()).setAppRemovedNotif(true);
-			ConversationHistory.markAsRead(key);
-			Log.d(TAG, "Cancel notification: " + key);
+			// app launch guaranteed to be true early on - reliable trigger
+			boolean appLaunch = ((WeChatApp) this.getApplicationContext()).getAppLaunched();
+			boolean lastRecalled = ((WeChatApp)this.getApplicationContext()).getLastIsRecalled();
+			boolean appRemoved = ((WeChatApp) this.getApplicationContext()).getAppRemovedNotif();
+			if (appLaunch) {
+				// mark conversation as read to stop potential reply notification issues
+				// (messages in notifs will not include in-app replies - looks strange)
+				ConversationHistory.markAsRead(key);
+				((WeChatApp)this.getApplicationContext()).setAppLaunched(false);
+			} else if (lastRecalled) {
+				// don't let the notification die just yet
+				Log.d(TAG, "Recast notification: " + key);
+				((WeChatApp) this.getApplicationContext()).setRecasted(true);
+				mHandler.post(() -> recastNotification(key, null));
+			} else if (appRemoved) {
+				((WeChatApp) this.getApplicationContext()).setRecasted(true);
+				mHandler.post(() -> recastNotification(key, null));
+				((WeChatApp) this.getApplicationContext()).setAppRemovedNotif(false);
+			} else {
+				((WeChatApp)this.getApplicationContext()).setAppRemovedNotif(true);
+				Log.d(TAG, "Cancel notification: " + key);
+			}
 		} else if (SDK_INT >= O && reason == REASON_CHANNEL_BANNED && ! isChannelAvailable(getUser(key))) {
 			Log.w(TAG, "Channel lost, disable extra channels from now on.");
 			mUseExtraChannels = false;
@@ -373,13 +391,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 			mMessagingBuilder.markRead(key);
 			//ConversationHistory.markAsRead(key);
 		} else if (reason == REASON_LISTENER_CANCEL) {
-			if (!((WeChatApp)this.getApplicationContext()).getAppRemovedNotif() &&
-				!((WeChatApp)this.getApplicationContext()).getReplying()) {
-
-				((WeChatApp) this.getApplicationContext()).setRecasted(true);
-				mHandler.post(() -> recastNotification(key, null));
-			}
-			((WeChatApp)this.getApplicationContext()).setAppRemovedNotif(false);
+			((WeChatApp)this.getApplicationContext()).setAppRemovedNotif(true);
 		}
 		return false;
 	}
@@ -472,7 +484,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 		final IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_REMOVED); filter.addDataScheme("package");
 		registerReceiver(mPackageEventReceiver, filter);
 		registerReceiver(mSettingsChangedReceiver, new IntentFilter(ACTION_SETTINGS_CHANGED));
-
+		registerReceiver(mLaunchWeChatReceiver, new IntentFilter(ACTION_LAUNCH_WECHAT));
 		registerReceiver(mMarkAsReadBroadcastReceiver, new IntentFilter(ACTION_MARK_AS_READ));
 	}
 
@@ -480,6 +492,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 		unregisterReceiver(mSettingsChangedReceiver);
 		unregisterReceiver(mPackageEventReceiver);
 		unregisterReceiver(mMarkAsReadBroadcastReceiver);
+		unregisterReceiver(mLaunchWeChatReceiver);
 		if (SDK_INT >= N_MR1) mAgentShortcuts.close();
 		mMessagingBuilder.close();
 	}
@@ -526,6 +539,10 @@ public class WeChatDecorator extends NevoDecoratorService {
 		final SharedPreferences.Editor editor = mPreferences.edit();
 		for (final String key : keys) editor.putBoolean(key, extras.getBoolean(key)).apply();
 		editor.apply();
+	}};
+
+	private final BroadcastReceiver mLaunchWeChatReceiver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
+		((WeChatApp) WeChatDecorator.this.getApplicationContext()).setAppLaunched(true);
 	}};
 
 	private final ConversationManager mConversationManager = new ConversationManager();
