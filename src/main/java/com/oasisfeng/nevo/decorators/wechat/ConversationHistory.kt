@@ -317,7 +317,7 @@ internal object ConversationHistory {
 
 
         // car extender messages are ordered from oldest to newest
-        val carExtenderMessages = arrayListOf<String>(*unreadConversation.messages)
+        var carExtenderMessages = arrayListOf<String>(*unreadConversation.messages)
 
         // carextender missing data for some reason? strange
         val isCarMessagesEmpty = carExtenderMessages.isEmpty()
@@ -329,14 +329,14 @@ internal object ConversationHistory {
         // the length of messages should be mUnread - mOffset
         // if messages have more than that, that means the car bundle returned more than it was
         // supposed to, and we need to chop off the extra : oldest -> newest
-        /*if (!isRecasted) {
+        if (!shouldSkip) {
             val extra = carExtenderMessages.size - (mUnreadCount[key]!! - mUnreadOffset[key]!!)
             if (extra > 0 && extra < carExtenderMessages.size) {
                 // only view the proper amount of data
                 carExtenderMessages =
                     ArrayList(carExtenderMessages.subList(extra, carExtenderMessages.size))
             }
-        }*/
+        }
         // sort into newest -> oldest
         carExtenderMessages.reverse()
 
@@ -345,7 +345,7 @@ internal object ConversationHistory {
         // if it's an erroneous message, go to fallback, otherwise use original
         // make sure to grab the latest which is the last one
         var msgCheck: String? = ""
-        if (!isCarMessagesEmpty && !isRecalled && !shouldSkip && !isReplying) {
+        if (!isRecalled && !shouldSkip && !isReplying) {
             msgCheck = if (!isGroupChat) {
                 // Single chat or Bot
                 carExtenderMessages[0]
@@ -459,17 +459,19 @@ internal object ConversationHistory {
 
             var confidence = 0
             // this has been messed with above, we need a fresh set
-            val carMessages: MutableList<String> = arrayListOf(*unreadConversation.messages)
+            var carMessages: MutableList<String> = arrayListOf(*unreadConversation.messages)
 
-            // chop it down to size, appropriate for the size as IF it hadn't been missing
+            // chop it into pieces, this is my last resort...
+            // appropriate for the size as IF it hadn't been recalled
             //
             // -1 because we added to the offset above, but if it was fake then the +1 offset before
             // is not applicable
-            /*val extra = carMessages.size - (mUnreadCount[key]!! - (mUnreadOffset[key]!!-1))
+            val extra = carMessages.size - (mUnreadCount[key]!! - (mUnreadOffset[key]!!-1))
             if (extra > 0 && extra < carMessages.size) {
                 // only view the proper amount of data
-                carMessages = carMessages.subList(extra, carExtenderMessages.size)
-            }*/
+                carMessages = carMessages.subList(extra, carMessages.size)
+            }
+            carMessages.reverse()
 
             // same amount of messages, even though one should've been recalled!
             // Recalled message sus!
@@ -477,26 +479,34 @@ internal object ConversationHistory {
             val size = mUnreadCount[key]!! - (mUnreadOffset[key]!!-1)
             if (size == carMessages.size) confidence++
 
-            // sometimes there's a duplicate wrong message, but other unrecalled ones are right
-            // potential false positive
-            /*if (confidence == 1) {
-                var offset = 0
-                for (i in carMessages.indices) {
-                    if (!messages[i+offset]!!.startsWith(context.getString(R.string.recalled_message))) {
-                        // skip this one to maintain sync
-                        offset++
-                        continue
-
-                    }
-
-                    if (messages[i+offset]!! != carMessages[i]) {
-                        // found the duplicate!
-                        confidence--
-                    }
+            // the size may be the same and return previous
+            // elements (even though it was read). Furthermore, it's most likely the elements
+            // aren't the same data as our history anymore
+            val hist = ArrayList(mConversationHistory[key]!!.subList(0, mUnreadCount[key]!!.coerceAtMost(MAX_NUM_CONVERSATIONS)))
+            hist.removeAll { it?.startsWith(context.getString(R.string.recalled_message)) == true }
+            // we lost confidence if the message isn't even in our history
+            for (msg in carMessages) {
+                if (!hist.contains(msg)) {
+                    confidence--
                 }
-            }*/
+            }
 
-            // 2 or higher is a good confidence that it's not our recalled message
+            // Often it will also return duplicates which will make the above ^^ fail
+
+            // next compare frequency of elements
+            // if we have only 1 occurrence
+            for (msg in hist) {
+                val unrecalledCount = hist.count { it == msg }
+                val carMsgCount = carMessages.count { it == msg }
+
+                // we've lost confidence that this is reliably and in actuality incorrect
+                if (carMsgCount > unrecalledCount) {
+                    confidence--
+                }
+            }
+
+
+            // 1 or higher is a good confidence that it's not our recalled message
             if (confidence >= 1) {
                 bogusRecalled = true
                 // since it's a bogus message, fix the offset
@@ -516,13 +526,10 @@ internal object ConversationHistory {
                 )
             }
 
-            // builder doesn't reflect our changed messages, so we need to re-fill it
-            val recallMessages = mConversationHistory[key]!!
+            val history = mConversationHistory[key]!!.subList(0, unreadCount)
 
-            for (i in unreadCount - 1 downTo 0) {
-                if (recallMessages.size - 1 >= i) {
-                    builder.addMessage(recallMessages[i])
-                }
+            for (i in unreadCount-1 downTo 0) {
+                builder.addMessage(history[i])
             }
         }
 

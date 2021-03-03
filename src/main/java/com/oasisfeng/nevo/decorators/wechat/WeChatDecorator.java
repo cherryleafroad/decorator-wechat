@@ -187,15 +187,12 @@ public class WeChatDecorator extends NevoDecoratorService {
 
 		final String original_key = evolving.getOriginalKey();
 		boolean isDuplicate = false;
-		if (!mWhenNotificationTracker.containsKey(original_key)) {
-			mWhenNotificationTracker.put(original_key, n.when);
-		} else {
-			if (n.when < mWhenNotificationTracker.get(original_key) || n.when == mWhenNotificationTracker.get(original_key)) {
-				Log.d(TAG, "Received duplicate notification " + original_key);
-				isDuplicate = true;
-			} else {
-				mWhenNotificationTracker.put(original_key, n.when);
-			}
+
+		// value isn't set on
+		Long when = mWhenNotificationTracker.put(original_key, n.when);
+		if (when != null && n.when <= when) {
+			Log.d(TAG, "Received duplicate notification " + original_key);
+			isDuplicate = true;
 		}
 
 		final CharSequence[] input_history = SDK_INT >= N ? extras.getCharSequenceArray(EXTRA_REMOTE_INPUT_HISTORY) : null;
