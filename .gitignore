@@ -2,6 +2,8 @@
 local.properties
 /src/debug
 /src/release
+release
+build
 
 # Android Studio
 .idea
