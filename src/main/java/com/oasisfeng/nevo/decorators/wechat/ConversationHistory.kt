@@ -7,8 +7,6 @@ import android.text.TextUtils
 import android.util.ArrayMap
 import android.util.Log
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
-import java.lang.NumberFormatException
-import kotlin.collections.ArrayList
 
 internal object ConversationHistory {
     const val MAX_NUM_CONVERSATIONS = 10
@@ -34,7 +32,11 @@ internal object ConversationHistory {
             0, (mUnreadCount[key]!!).coerceAtMost(MAX_NUM_CONVERSATIONS)
         )
 
-        val visible = (context.applicationContext as WeChatApp).sharedPreferences?.getBoolean(context.getString(R.string.pref_recalled), false)
+        val visible = (context.applicationContext as WeChatApp).sharedPreferences?.getBoolean(
+            context.getString(
+                R.string.pref_recalled
+            ), false
+        )
 
         val msg: String
 
@@ -60,8 +62,14 @@ internal object ConversationHistory {
             //
             // Check for when there's only 1 message
             //
-            if (history.size == 1 && car_messages.size == 0 && !history[0]!!.startsWith(context.getString(R.string.recalled_message))) {
-                msg = if (visible == true) "${context.getString(R.string.recalled_message)} ${history[0]}" else context.getString(R.string.recalled_message)
+            if (history.size == 1 && car_messages.size == 0 && !history[0]!!.startsWith(
+                    context.getString(
+                        R.string.recalled_message
+                    )
+                )) {
+                msg = if (visible == true) "${context.getString(R.string.recalled_message)} ${history[0]}" else context.getString(
+                    R.string.recalled_message
+                )
                 history[0] = msg
                 mConversationHistory[key] = ArrayList(history)
                 return
@@ -75,11 +83,9 @@ internal object ConversationHistory {
             // then that's the correct one
             //
             // the remaining indexes in history that could be the potential recalled message
-            val validIndexes: MutableList<Int> = ArrayList()
+            val validIndices: MutableList<Int> = ArrayList()
             // initialize all potential indexes
-            for (i in history.indices) {
-                validIndexes.add(i)
-            }
+            validIndices.addAll(0 until history.size)
 
             // remove invalid indexes from List
             for (i in 0 until history.size) {
@@ -89,14 +95,16 @@ internal object ConversationHistory {
                     history[i]!!.startsWith(context.getString(R.string.recalled_message))
                 ) {
                     // remove invalid index
-                    validIndexes.remove(i)
+                    validIndices.remove(i)
                 }
             }
 
             // found the exact one!
-            if (validIndexes.size == 1) {
-                val index = validIndexes[0]
-                msg = if (visible == true) "${context.getString(R.string.recalled_message)} ${history[index]}" else context.getString(R.string.recalled_message)
+            if (validIndices.size == 1) {
+                val index = validIndices[0]
+                msg = if (visible == true) "${context.getString(R.string.recalled_message)} ${history[index]}" else context.getString(
+                    R.string.recalled_message
+                )
                 history[index] = msg
                 mConversationHistory[key] = ArrayList(history)
                 return
@@ -110,7 +118,17 @@ internal object ConversationHistory {
             // Two or more duplicate elements were found
             //
 
-            // TODO find a way to triangulate the one if there's multiple same messages
+            // get the duplicates indices
+            val dupIndices: MutableList<Int> = ArrayList()
+            // initialize all potential indices
+            dupIndices.addAll(0 until history.size)
+            // remove one's that don't match
+            for ((i, msg) in history.withIndex()) {
+                val c = history.count { it == msg }
+                if (c < 2) dupIndices.remove(i)
+            }
+
+
 
             ///
             /// /End
@@ -119,6 +137,19 @@ internal object ConversationHistory {
 
         // this point should never be reached
         Log.d(TAG, "handleRecalledMessage() reached unreachable point")
+    }
+
+    // modify in place
+    private fun <K, V> ArrayMap<K, V>.mapInPlace(transform: (V) -> V) {
+        for (k in this.keys) {
+            this[k] = transform(this[k]!!)
+        }
+    }
+
+    @JvmStatic
+    fun markReadAll() {
+        mUnreadCount.mapInPlace { 0 }
+        mUnreadOffset.mapInPlace { 0 }
     }
 
     @JvmStatic
@@ -239,10 +270,6 @@ internal object ConversationHistory {
             // reset flag to false
             (context.applicationContext as WeChatApp).isRecasted = false
             shouldSkip = true
-        }
-
-        if ((context.applicationContext as WeChatApp).lastIsRecalled && !isRecalled) {
-            (context.applicationContext as WeChatApp).lastIsRecalled = false
         }
 
         // create keys for new conversation if not here
@@ -482,7 +509,13 @@ internal object ConversationHistory {
             // the size may be the same and return previous
             // elements (even though it was read). Furthermore, it's most likely the elements
             // aren't the same data as our history anymore
-            val hist = ArrayList(mConversationHistory[key]!!.subList(0, mUnreadCount[key]!!.coerceAtMost(MAX_NUM_CONVERSATIONS)))
+            val hist = ArrayList(
+                mConversationHistory[key]!!.subList(
+                    0, mUnreadCount[key]!!.coerceAtMost(
+                        MAX_NUM_CONVERSATIONS
+                    )
+                )
+            )
             hist.removeAll { it?.startsWith(context.getString(R.string.recalled_message)) == true }
             // we lost confidence if the message isn't even in our history
             for (msg in carMessages) {
