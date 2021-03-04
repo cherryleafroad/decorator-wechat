@@ -3,12 +3,14 @@ package com.oasisfeng.nevo.decorators.wechat
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentProviderClient
+import android.content.Context
 import android.content.SharedPreferences
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.util.ArrayMap
 import android.util.Log
+import androidx.room.Room
 
 
 class WeChatApp : Application() {
@@ -23,6 +25,7 @@ class WeChatApp : Application() {
     var sharedPreferences: SharedPreferences? = null
     var settingSynchronousRemoval = false
     var settingInsiderMode = false
+    lateinit var db: AppDatabase
 
     private val resolver = SettingsObserver(Handler())
 
@@ -41,6 +44,15 @@ class WeChatApp : Application() {
         val synchronousRemoval = Uri.parse("/synchronous_removal")
         queryAndUpdateSetting(insiderMode)
         queryAndUpdateSetting(synchronousRemoval)
+
+        // I'd like to get rid of this if the feature is disabled
+        // but initializing it later is too much work, better to leave it ready
+        db = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java, "messages"
+        )
+            .enableMultiInstanceInvalidation()
+            .build()
     }
 
     @SuppressLint("Recycle")

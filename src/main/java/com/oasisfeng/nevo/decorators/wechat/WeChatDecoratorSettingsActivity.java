@@ -67,6 +67,10 @@ public class WeChatDecoratorSettingsActivity extends PreferenceActivity {
 		if (SDK_INT >= N) manager.setStorageDeviceProtected();
 		getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(mPreferencesChangeListener);
 		addPreferencesFromResource(R.xml.decorators_wechat_settings);
+
+		boolean state = getPreferenceManager().getSharedPreferences().getBoolean(getString(R.string.pref_chat_history), false);
+
+		findPreference(getString(R.string.pref_chat_history_activity)).setEnabled(state);
 	}
 
 	@Override protected void onResume() {
@@ -112,6 +116,17 @@ public class WeChatDecoratorSettingsActivity extends PreferenceActivity {
 				profiles.size() <= 2/* Just one Island space */? "" : android_auto_unavailable_in_profiles.toString()));
 		preference_extension.setOnPreferenceClickListener(! android_auto_available ? this::installExtension
                 : ! android_auto_unavailable_in_profiles.isEmpty() ? this::showExtensionInIsland : null);
+
+
+		Preference chat_history = findPreference(getString(R.string.pref_chat_history));
+		chat_history.setOnPreferenceChangeListener((preference, newValue) -> {
+			if ((boolean)newValue) {
+				findPreference(getString(R.string.pref_chat_history_activity)).setEnabled(true);
+			} else {
+				findPreference(getString(R.string.pref_chat_history_activity)).setEnabled(false);
+			}
+			return true;
+		});
 
 		final TwoStatePreference preference_compat_mode = (TwoStatePreference) findPreference(getString(R.string.pref_compat_mode));
 		if (android_auto_available && Settings.Global.getInt(getContentResolver(), Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) != 0) {

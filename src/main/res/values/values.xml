@@ -24,4 +24,8 @@
     <string name="pref_like" translatable="false">like</string>
     <string name="pref_recalled" translatable="false">recalled</string>
     <string name="action_like_text" translatable="false">👍</string>
+    <string name="pref_chat_history" translatable="false">chat_history</string>
+    <string name="pref_chat_history_activity" translatable="false">chat_history_activity</string>
+    <string name ="tag_sid" translatable="false">tag_sid</string>
+    <string name ="tag_title" translatable="false">tag_title</string>
 </resources>

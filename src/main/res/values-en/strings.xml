@@ -49,4 +49,14 @@
     <string name="recalled_message">[Recalled]</string>
     <string name="pref_recalled_title">Visible Recalled Messages</string>
     <string name="pref_recalled_summary">If enabled, you can see the recalled messages in notifications, otherwise the messages will be censored</string>
+    <string name="pref_chat_history_title">Chat History</string>
+    <string name="pref_chat_history_summary">Enable chat history to see your chat history, including recalled messages (if you enabled the Visible Recalled Messages feature)</string>
+    <string name="pref_chat_history_activity_summary">Enter chat history section</string>
+    <string name="clear_chat">Delete \"%s\" chat history</string>
+    <string name="clear_all">Delete all</string>
+    <string name="delete_chat">Delete \"%s\" Chat History?</string>
+    <string name="delete_chat_summary">Are you sure you want to delete it?\n\nChat history will be gone forever (only affects this app. WeChat itself is unaffected)</string>
+    <string name="delete_chat_all">Delete All History?</string>
+    <string name="delete_chat_all_summary">Are you sure you want to delete everything?\n\nChat history will be gone forever (only affects this app. WeChat itself is unaffected)</string>
+    <string name="delete_chat_none_name">None</string>
 </resources>

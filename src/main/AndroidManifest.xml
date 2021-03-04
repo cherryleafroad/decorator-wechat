@@ -34,7 +34,7 @@
         <service android:name=".WeChatDecorator"
                  android:directBootAware="true" tools:targetApi="N"
                  android:permission="com.oasisfeng.nevo.permission.BIND_DECORATOR_SERVICE"
-                 android:label="@string/decorator_wechat_title"
+            android:label="@string/decorator_wechat_title"
                  android:description="@string/decorator_wechat_description">
             <intent-filter android:priority="5">
                 <action android:name="com.oasisfeng.nevo.Decorator" />
@@ -47,8 +47,8 @@
 
         <receiver android:name=".WeChatDecoratorSettingsReceiver"
                   android:permission="com.oasisfeng.nevo.permission.BIND_DECORATOR_SERVICE"
-                  android:exported="true"
-                  android:process=":ui" />
+            android:exported="true"
+            android:process=":ui" />
 
         <activity
             android:name=".WeChatDecoratorSettingsActivity"
@@ -64,7 +64,16 @@
             </intent-filter>
         </activity>
 
-        <provider android:name=".AssetFileProvider"
+        <activity
+            android:name=".ChatHistoryActivity"
+            android:exported="false"
+            android:label="@string/pref_chat_history_title"
+            android:process=":ui"
+            android:taskAffinity=""
+            android:theme="@style/Theme.DayNight" />
+
+        <provider
+            android:name=".AssetFileProvider"
             android:authorities="com.oasisfeng.nevo.decorators.wechat.files"
             android:grantUriPermissions="true"
             android:exported="false"

@@ -7,6 +7,8 @@ import android.text.TextUtils
 import android.util.ArrayMap
 import android.util.Log
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
+import kotlinx.coroutines.*
+import kotlin.properties.Delegates
 
 internal object ConversationHistory {
     const val MAX_NUM_CONVERSATIONS = 10
@@ -14,13 +16,16 @@ internal object ConversationHistory {
     private val mUnreadCount = ArrayMap<String, Int>()
     private val mUnreadOffset = ArrayMap<String, Int>()
     private val mReplyFlag = ArrayMap<String, Int>()
+    private lateinit var mDb: AppDatabase
+    private var mChatHistoryEnabled by Delegates.notNull<Boolean>()
 
-    private fun handleRecalledMessage(
+    private suspend fun handleRecalledMessage(
         key: String,
         message: String,
         context: Context,
         car_messages: ArrayList<String>,
-        isGroupChat: Boolean
+        isGroupChat: Boolean,
+        user: User
     ) {
         // Please note that it is IMPOSSIBLE to differentiate which message was recalled
         // when both messages content is exactly the same. This is an unfortunate side effect
@@ -31,6 +36,11 @@ internal object ConversationHistory {
         val history = ArrayList(mConversationHistory[key]).subList(
             0, (mUnreadCount[key]!!).coerceAtMost(MAX_NUM_CONVERSATIONS)
         )
+        var dbHistory: List<Message?> = emptyList()
+        if (mChatHistoryEnabled) {
+            dbHistory =
+                mDb.messageDao().getAllMessagesByUserLimitDesc(user, mUnreadCount[key]!!)
+        }
 
         val visible = (context.applicationContext as WeChatApp).sharedPreferences?.getBoolean(
             context.getString(
@@ -55,6 +65,10 @@ internal object ConversationHistory {
 
                     history[i] = msg
                     mConversationHistory[key] = ArrayList(history)
+                    if (mChatHistoryEnabled) {
+                        dbHistory[i]!!.message = msg
+                        mDb.messageDao().update(dbHistory[i]!!)
+                    }
                     return
                 }
             }
@@ -72,6 +86,10 @@ internal object ConversationHistory {
                 )
                 history[0] = msg
                 mConversationHistory[key] = ArrayList(history)
+                if (mChatHistoryEnabled) {
+                    dbHistory[0]!!.message = msg
+                    mDb.messageDao().update(dbHistory[0]!!)
+                }
                 return
             } else if (history.size == 1 && car_messages.size == 0) {
                 // already has the recalled entry
@@ -107,6 +125,10 @@ internal object ConversationHistory {
                 )
                 history[index] = msg
                 mConversationHistory[key] = ArrayList(history)
+                if (mChatHistoryEnabled) {
+                    dbHistory[index]!!.message = msg
+                    mDb.messageDao().update(dbHistory[index]!!)
+                }
                 return
             }
             //
@@ -259,6 +281,15 @@ internal object ConversationHistory {
         isRecalled: Boolean,
         isDuplicate: Boolean
     ): Notification.CarExtender.UnreadConversation {
+        mChatHistoryEnabled =
+            (context.applicationContext as WeChatApp).sharedPreferences!!.getBoolean(
+                context.getString(R.string.pref_chat_history), false
+            )
+
+        // only get db if it's relevant
+        if (!this::mDb.isInitialized && mChatHistoryEnabled) {
+            mDb = (context.applicationContext as WeChatApp).db
+        }
 
         if (conversation.ticker == null) {
             conversation.ticker = removeUnreadCount(conversation.summary)
@@ -372,6 +403,12 @@ internal object ConversationHistory {
         // if it's an erroneous message, go to fallback, otherwise use original
         // make sure to grab the latest which is the last one
         var msgCheck: String? = ""
+        val username = if (!isGroupChat) {
+            EmojiTranslator.translate(splitSender(conversation.ticker)[0]).toString()
+        } else {
+            conversation.title.toString()
+        }
+
         if (!isRecalled && !shouldSkip && !isReplying) {
             msgCheck = if (!isGroupChat) {
                 // Single chat or Bot
@@ -398,6 +435,35 @@ internal object ConversationHistory {
                     conversation.ticker.toString()
                 }
                 addConversationMessage(key, msg)
+            }
+
+            if (mChatHistoryEnabled) {
+                // Add to database
+                GlobalScope.launch(Dispatchers.Main) {
+                    val user = User(
+                        sid = conversation.id!!,
+                        username = username
+                    )
+
+                    val userD = mDb.userDao().findBySid(conversation.id!!)
+                    if (userD == null) {
+                        mDb.userDao().insert(user)
+                    } else {
+                        // update username
+                        if (userD.username != username) {
+                            userD.username = username
+                            mDb.userDao().update(userD)
+                        }
+                    }
+
+                    val message = run {
+                        val msg =
+                            EmojiTranslator.translate(mConversationHistory[key]!![0]!!).toString()
+                        Message(user.sid, msg)
+                    }
+
+                    mDb.messageDao().insert(message)
+                }
             }
         }
 
@@ -550,13 +616,33 @@ internal object ConversationHistory {
             //
 
             if (!bogusRecalled) {
-                handleRecalledMessage(
-                    key,
-                    (if (isGroupChat) conversation.ticker.toString() else splitSender(conversation.ticker)[1])!!,
-                    context,
-                    carExtenderMessages,
-                    isGroupChat
+                val user = User(
+                    conversation.id!!,
+                    username
                 )
+
+                runBlocking {
+                    val msg = if (isGroupChat) {
+                        EmojiTranslator.translate(conversation.ticker).toString()
+                    } else {
+                        splitSender(
+                            conversation.ticker
+                        )[1].toString()
+                    }
+
+                    val job = GlobalScope.launch(Dispatchers.Main) {
+                        handleRecalledMessage(
+                            key,
+                            msg,
+                            context,
+                            carExtenderMessages,
+                            isGroupChat,
+                            user
+                        )
+                    }
+
+                    job.join()
+                }
             }
 
             val history = mConversationHistory[key]!!.subList(0, unreadCount)
