@@ -3,11 +3,11 @@ package com.oasisfeng.nevo.decorators.wechat
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentProviderClient
-import android.content.Context
 import android.content.SharedPreferences
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
+import android.os.Looper
 import android.util.ArrayMap
 import android.util.Log
 import androidx.room.Room
@@ -27,7 +27,7 @@ class WeChatApp : Application() {
     var settingInsiderMode = false
     lateinit var db: AppDatabase
 
-    private val resolver = SettingsObserver(Handler())
+    private val resolver = SettingsObserver(Handler(Looper.getMainLooper()))
 
 
     override fun onCreate() {
