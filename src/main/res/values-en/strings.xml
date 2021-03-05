@@ -55,7 +55,7 @@
     <string name="clear_chat">Delete \"%s\" chat history</string>
     <string name="clear_all">Delete all</string>
     <string name="delete_chat">Delete \"%s\" Chat History?</string>
-    <string name="delete_chat_summary">Are you sure you want to delete it?\n\nChat history will be gone forever (only affects this app. WeChat itself is unaffected)</string>
+    <string name="delete_chat_summary">Are you sure you want to delete?\n\nChat history will be gone forever (WeChat itself is unaffected)</string>
     <string name="delete_chat_all">Delete All History?</string>
     <string name="delete_chat_all_summary">Are you sure you want to delete everything?\n\nChat history will be gone forever (WeChat itself is unaffected)</string>
     <string name="delete_chat_none_name">None</string>
