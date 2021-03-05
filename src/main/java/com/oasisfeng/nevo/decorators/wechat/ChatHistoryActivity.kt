@@ -44,7 +44,7 @@ class ChatHistoryActivity : Activity() {
         val recycler = findViewById<RecyclerView>(R.id.bubble_recycler)
         recycler.adapter = mAdapter
         val layout = LinearLayoutManager(this@ChatHistoryActivity)
-        layout.stackFromEnd = true
+        layout.reverseLayout = true
         recycler.layoutManager = layout
     }
 
@@ -71,7 +71,7 @@ class ChatHistoryActivity : Activity() {
                     val sid = it.getTag(R.string.tag_sid) as String
                     val title = it.getTag(R.string.tag_title) as String
 
-                    val messages = mDb.messageDao().getAllBySidAsc(sid)
+                    val messages = mDb.messageDao().getAllBySidDesc(sid)
                     setTitle(title)
 
                     // fresh history
