@@ -12,6 +12,7 @@ data class User(
 data class Message(
     @ColumnInfo(name = "user_sid") val user_sid: String,
     @ColumnInfo(name = "message") var message: String,
+    @ColumnInfo(name = "is_self") var is_reply: Boolean = false,
     @PrimaryKey(autoGenerate = true) val id: Long = 0
 )
 

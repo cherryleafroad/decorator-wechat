@@ -70,7 +70,7 @@
             android:label="@string/pref_chat_history_title"
             android:process=":ui"
             android:taskAffinity=""
-            android:theme="@style/Theme.DayNight" />
+            android:theme="@style/Theme.DayNight.ChatHistoryActivity" />
 
         <provider
             android:name=".AssetFileProvider"

@@ -4,7 +4,7 @@
     <!--Shadow Layer-->
 
 
-    <item android:right="10dp">
+    <item>
         <shape android:shape="rectangle">
             <corners android:radius="5dp" />
             <padding
@@ -18,7 +18,7 @@
     <!--===============-->
 
 
-    <item android:right="10dp">
+    <item>
         <shape android:shape="rectangle">
             <corners android:radius="5dp" />
             <padding android:bottom="1px" />
@@ -29,7 +29,7 @@
     <!--===============-->
 
 
-    <item android:right="10dp">
+    <item>
         <shape android:shape="rectangle">
             <corners android:radius="5dp" />
             <padding
@@ -46,7 +46,7 @@
     <!--ForeGround-->
 
 
-    <item android:right="10dp">
+    <item>
         <shape android:shape="rectangle">
             <solid android:color="@color/chat_receiver_bubble_fg" />
             <corners android:bottomLeftRadius="5dp" android:radius="5dp" />

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="chat_receiver_bubble_fg">#3eb575</color>
+    <color name="chat_receiver_bubble_text">#06120b</color>
+    <color name="chat_sender_bubble_fg">#2c2c2c</color>
+    <color name="chat_sender_bubble_text">#d5d5d5</color>
+    <color name="chat_history_activity_bg">#111111</color>
+</resources>

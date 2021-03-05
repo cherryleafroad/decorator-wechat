@@ -50,6 +50,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
 
+        <!-- Chat title -->
         <TextView
             android:id="@+id/title"
             android:layout_width="match_parent"
@@ -58,33 +59,25 @@
             android:paddingBottom="10dp"
             android:textSize="24sp" />
 
-        <ScrollView
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:overScrollMode="always">
+            android:orientation="vertical"
+            android:overScrollMode="always"
+            tools:ignore="UselessLeaf">
 
-            <LinearLayout
-                android:id="@+id/bubble_layout"
+            <!-- Bubbles will be added to this dynamically -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/bubble_recycler"
+                android:scrollbars="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:overScrollMode="always"
-                tools:ignore="UselessLeaf">
+                android:layout_height="match_parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-                <!-- Bubbles will be added to this dynamically -->
-
-                <!--<TextView
-                    android:id="@+id/textView2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fadeScrollbars="true"
-                    android:overScrollMode="always"
-                    android:scrollbarAlwaysDrawHorizontalTrack="false"
-                    android:scrollHorizontally="false"
-                    android:textSize="6pt" />-->
-            </LinearLayout>
-        </ScrollView>
-
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -33,6 +33,7 @@ import androidx.core.app.NotificationCompat.MessagingStyle.Message;
 import androidx.core.app.Person;
 
 import com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation;
+import com.oasisfeng.nevo.decorators.wechat.chatui.DatabaseHelpers;
 import com.oasisfeng.nevo.sdk.MutableNotification;
 import com.oasisfeng.nevo.sdk.MutableStatusBarNotification;
 
@@ -73,6 +74,7 @@ class MessagingBuilder {
 	public static final String EXTRA_SBN_KEY = "sbn_key";
 	private static final String EXTRA_RESULT_KEY = "result_key";
 	private static final String EXTRA_ORIGINAL_KEY = "original_key";
+	private static final String EXTRA_USER_ID = "user_id";
 	private static final String EXTRA_REPLY_PREFIX = "reply_prefix";
 	private static final String EXTRA_CONVERSATION_ID = "cid";
 
@@ -154,7 +156,7 @@ class MessagingBuilder {
 		final RemoteInput remote_input;
 		if (SDK_INT >= N && on_reply != null && (remote_input = ext.getRemoteInput()) != null && conversation.isChat()) {
 			final CharSequence[] input_history = n.extras.getCharSequenceArray(EXTRA_REMOTE_INPUT_HISTORY);
-			final PendingIntent proxy = proxyDirectReply(conversation.nid, sbn, on_reply, remote_input, input_history);
+			final PendingIntent proxy = proxyDirectReply(conversation.nid, conversation.id, sbn, on_reply, remote_input, input_history);
 			final RemoteInput.Builder reply_remote_input = new RemoteInput.Builder(remote_input.getResultKey()).addExtras(remote_input.getExtras())
 					.setAllowFreeFormInput(true);
 			// Android Q and above has its own smart reply system
@@ -184,7 +186,7 @@ class MessagingBuilder {
 
 			boolean like = mSharedPreferences.getBoolean(mPrefKeyLike, false);
 			if (like) {
-				PendingIntent proxy_like = proxyLike(conversation.nid, sbn, on_reply, remote_input, input_history);
+				PendingIntent proxy_like = proxyLike(conversation.nid, conversation.id, sbn, on_reply, remote_input, input_history);
 				final Action.Builder like_action = new Action.Builder(null, mContext.getString(R.string.action_like), proxy_like);
 				if (SDK_INT >= P)
 					like_action.setSemanticAction(Action.SEMANTIC_ACTION_THUMBS_UP);
@@ -258,13 +260,14 @@ class MessagingBuilder {
 	}
 
 	/** Intercept the PendingIntent in RemoteInput to update the notification with replied message upon success. */
-	private PendingIntent proxyDirectReply(final int cid, final MutableStatusBarNotification sbn, final PendingIntent on_reply,
+	private PendingIntent proxyDirectReply(final int cid, final String id, final MutableStatusBarNotification sbn, final PendingIntent on_reply,
 										   final RemoteInput remote_input, final @Nullable CharSequence[] input_history) {
 		final Intent proxy = new Intent(ACTION_REPLY)		// Separate action to avoid PendingIntent overwrite.
 				.setData(Uri.fromParts(SCHEME_KEY, sbn.getKey(), null))
 				.putExtra(EXTRA_REPLY_ACTION, on_reply).putExtra(EXTRA_RESULT_KEY, remote_input.getResultKey())
 				.putExtra(EXTRA_ORIGINAL_KEY, sbn.getOriginalKey()).putExtra(EXTRA_CONVERSATION_ID, cid)
-				.putExtra(Intent.EXTRA_USER, sbn.getUser());
+				.putExtra(Intent.EXTRA_USER, sbn.getUser())
+				.putExtra(EXTRA_USER_ID, id);
 		if (SDK_INT >= N && input_history != null)
 			proxy.putCharSequenceArrayListExtra(EXTRA_REMOTE_INPUT_HISTORY, new ArrayList<>(Arrays.asList(input_history)));
 		return PendingIntent.getBroadcast(mContext, 0, proxy.setPackage(mContext.getPackageName()), FLAG_UPDATE_CURRENT);
@@ -276,14 +279,15 @@ class MessagingBuilder {
 		return PendingIntent.getBroadcast(mContext, 0, proxy.setPackage(mContext.getPackageName()), FLAG_UPDATE_CURRENT);
 	}
 
-	private PendingIntent proxyLike(final int cid, final MutableStatusBarNotification sbn, final PendingIntent on_reply,
+	private PendingIntent proxyLike(final int cid, final String id, final MutableStatusBarNotification sbn, final PendingIntent on_reply,
 									final RemoteInput remote_input, final @Nullable CharSequence[] input_history) {
 		// this is an identical method to proxy direct reply, except in this one we manually add the remote reply
 		final Intent proxy = new Intent(ACTION_LIKE)		// Separate action to avoid PendingIntent overwrite.
 				.setData(Uri.fromParts(SCHEME_KEY, sbn.getKey(), null))
 				.putExtra(EXTRA_REPLY_ACTION, on_reply).putExtra(EXTRA_RESULT_KEY, remote_input.getResultKey())
 				.putExtra(EXTRA_ORIGINAL_KEY, sbn.getOriginalKey()).putExtra(EXTRA_CONVERSATION_ID, cid)
-				.putExtra(Intent.EXTRA_USER, sbn.getUser());
+				.putExtra(Intent.EXTRA_USER, sbn.getUser())
+				.putExtra(EXTRA_USER_ID, id);;
 		if (SDK_INT >= N && input_history != null)
 			proxy.putCharSequenceArrayListExtra(EXTRA_REMOTE_INPUT_HISTORY, new ArrayList<>(Arrays.asList(input_history)));
 
@@ -300,6 +304,7 @@ class MessagingBuilder {
 		final String result_key = proxy.getStringExtra(EXTRA_RESULT_KEY), reply_prefix = proxy.getStringExtra(EXTRA_REPLY_PREFIX);
 		final Uri data = proxy.getData(); final Bundle results = RemoteInput.getResultsFromIntent(proxy);
 		final UserHandle user = proxy.getParcelableExtra(Intent.EXTRA_USER);
+		final String userId = proxy.getStringExtra(EXTRA_USER_ID);
 		final CharSequence input = results != null ? results.getCharSequence(result_key) : null;
 		if (data == null || reply_action == null || result_key == null || input == null || user == null) return; // Should never happen
 
@@ -325,6 +330,12 @@ class MessagingBuilder {
 			reply_action.send(mContext, 0, input_data, (pendingIntent, intent, _result_code, _result_data, _result_extras) -> {
 				if (BuildConfig.DEBUG) Log.d(TAG, "Reply sent: " + intent.toUri(0));
 				if (SDK_INT >= N) {
+					// add database reply to chat history section
+					boolean chatHistoryEnabled = ((WeChatApp)mContext.getApplicationContext()).getSharedPreferences().getBoolean(mContext.getString(R.string.pref_chat_history), false);
+					if (chatHistoryEnabled) {
+						DatabaseHelpers.addReply(mContext, userId, input.toString());
+					}
+
 					final Bundle addition = new Bundle(); final CharSequence[] inputs;
 					final boolean to_current_user = Process.myUserHandle().equals(pendingIntent.getCreatorUserHandle());
 					if (to_current_user && context.getPackageManager().queryBroadcastReceivers(intent, 0).isEmpty()) {

@@ -2,7 +2,6 @@ package com.oasisfeng.nevo.decorators.wechat
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
@@ -12,7 +11,11 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.children
-import com.oasisfeng.nevo.decorators.wechat.chatui.MessageBubbles
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.oasisfeng.nevo.decorators.wechat.chatui.ChatBubbleAdapter
+import com.oasisfeng.nevo.decorators.wechat.chatui.ChatBubbleReceiver
+import com.oasisfeng.nevo.decorators.wechat.chatui.ChatBubbleSender
 import kotlinx.coroutines.*
 
 class ChatHistoryActivity : Activity() {
@@ -34,18 +37,6 @@ class ChatHistoryActivity : Activity() {
                 }
             }
         }
-    }
-
-    private fun setChatbox(messages: List<Message?>) {
-        // allow scrolling
-        //this.findViewById<TextView>(R.id.textView2).movementMethod = ScrollingMovementMethod()
-        //val textview = this.findViewById<TextView>(R.id.textView2)
-        var string = ""
-        for (msg in messages) {
-            string = string.plus("-> ${msg!!.message}\n")
-        }
-
-        //textview.setText(string, TextView.BufferType.NORMAL)
     }
 
     private fun setTitle(title: String) {
@@ -71,16 +62,32 @@ class ChatHistoryActivity : Activity() {
                     val sid = it.getTag(R.string.tag_sid) as String
                     val title = it.getTag(R.string.tag_title) as String
 
-                    val messages = mDb.messageDao().getAllBySidDesc(sid)
-                    //setChatbox(messages)
+                    val messages = mDb.messageDao().getAllBySidAsc(sid)
                     setTitle(title)
 
-                    val layout = findViewById<LinearLayout>(R.id.bubble_layout)
-                    layout.removeAllViews()
+                    val bubbles = mutableListOf<Any>()
+
                     for (message in messages) {
-                        val bubble = MessageBubbles.createReceiverBubble(this@ChatHistoryActivity, message!!.message)
-                        layout.addView(bubble)
+                        val bubble: Any = if (!message!!.is_reply) {
+                            ChatBubbleReceiver(
+                                message.message
+                            )
+                        } else {
+                            ChatBubbleSender(
+                                message.message
+                            )
+                        }
+
+                        bubbles.add(bubble)
                     }
+
+                    val adapter = ChatBubbleAdapter(this@ChatHistoryActivity, bubbles)
+                    val recycler = findViewById<RecyclerView>(R.id.bubble_recycler)
+                    recycler.adapter = adapter
+                    val layout = LinearLayoutManager(this@ChatHistoryActivity)
+                    
+                    layout.stackFromEnd = true
+                    recycler.layoutManager = layout
 
                     mChatSelectedSid = sid
                     mChatSelectedTitle = title
@@ -108,14 +115,7 @@ class ChatHistoryActivity : Activity() {
             }
         }
 
-        //chatbox.setText("", TextView.BufferType.NORMAL)
         titleWidget.text = ""
-        // remove all bubbles
-        val layout = findViewById<LinearLayout>(R.id.bubble_layout)
-        layout.removeAllViews()
-
-        //mChatSelectedTitle = getString(R.string.delete_chat_none_name)
-        //invalidateOptionsMenu()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -175,15 +175,6 @@ class ChatHistoryActivity : Activity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-
-        /*if (this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()) {
-            menu!!.findItem(R.id.clear_chat).title =
-                getString(R.string.clear_chat).replace("%s", mChatSelectedTitle)
-        } else {
-            menu!!.findItem(R.id.clear_chat).title =
-                getString(R.string.clear_chat).replace("%s", getString(R.string.delete_chat_none_name))
-        }*/
-
         menu?.findItem(R.id.clear_chat)?.isEnabled = this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()
 
         return super.onPrepareOptionsMenu(menu)
