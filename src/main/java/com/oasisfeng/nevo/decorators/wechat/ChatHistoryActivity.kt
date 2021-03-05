@@ -76,8 +76,6 @@ class ChatHistoryActivity : Activity() {
 
                     mChatSelectedSid = sid
                     mChatSelectedTitle = title
-
-                    invalidateOptionsMenu()
                 }
             }
 
@@ -125,6 +123,7 @@ class ChatHistoryActivity : Activity() {
                                 mDb.messageDao().deleteAllBySid(mChatSelectedSid)
                                 mChatSelectedSid = ""
                                 mChatSelectedTitle = ""
+                                invalidateOptionsMenu()
                             }
 
                             resetScreen()
@@ -149,6 +148,7 @@ class ChatHistoryActivity : Activity() {
                             mDb.messageDao().deleteAll()
                             mChatSelectedSid = ""
                             mChatSelectedTitle = ""
+                            invalidateOptionsMenu()
                         }
 
                         resetScreen(false)
@@ -165,7 +165,7 @@ class ChatHistoryActivity : Activity() {
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
 
-        if (this::mChatSelectedSid.isInitialized) {
+        if (this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()) {
             menu!!.findItem(R.id.clear_chat).title =
                 getString(R.string.clear_chat).replace("%s", mChatSelectedTitle)
         } else {
@@ -173,7 +173,7 @@ class ChatHistoryActivity : Activity() {
                 getString(R.string.clear_chat).replace("%s", getString(R.string.delete_chat_none_name))
         }
 
-        menu!!.findItem(R.id.clear_chat).isEnabled = this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()
+        menu.findItem(R.id.clear_chat).isEnabled = this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()
 
         return super.onPrepareOptionsMenu(menu)
     }
