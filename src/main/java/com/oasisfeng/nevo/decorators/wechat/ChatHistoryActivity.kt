@@ -110,6 +110,9 @@ class ChatHistoryActivity : Activity() {
 
         //chatbox.setText("", TextView.BufferType.NORMAL)
         titleWidget.text = ""
+        // remove all bubbles
+        val layout = findViewById<LinearLayout>(R.id.bubble_layout)
+        layout.removeAllViews()
 
         mChatSelectedTitle = getString(R.string.delete_chat_none_name)
         invalidateOptionsMenu()
