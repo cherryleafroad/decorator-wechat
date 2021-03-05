@@ -22,6 +22,8 @@ class ChatHistoryActivity : Activity() {
     private lateinit var mDb: AppDatabase
     private lateinit var mChatSelectedSid: String
     private lateinit var mChatSelectedTitle: String
+    private var mAdapterData = mutableListOf<Any>()
+    private lateinit var mAdapter: ChatBubbleAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +39,13 @@ class ChatHistoryActivity : Activity() {
                 }
             }
         }
+
+        mAdapter = ChatBubbleAdapter(this@ChatHistoryActivity, mAdapterData)
+        val recycler = findViewById<RecyclerView>(R.id.bubble_recycler)
+        recycler.adapter = mAdapter
+        val layout = LinearLayoutManager(this@ChatHistoryActivity)
+        layout.stackFromEnd = true
+        recycler.layoutManager = layout
     }
 
     private fun setTitle(title: String) {
@@ -65,8 +74,8 @@ class ChatHistoryActivity : Activity() {
                     val messages = mDb.messageDao().getAllBySidAsc(sid)
                     setTitle(title)
 
-                    val bubbles = mutableListOf<Any>()
-
+                    // fresh history
+                    mAdapterData.clear()
                     for (message in messages) {
                         val bubble: Any = if (!message!!.is_reply) {
                             ChatBubbleReceiver(
@@ -78,16 +87,10 @@ class ChatHistoryActivity : Activity() {
                             )
                         }
 
-                        bubbles.add(bubble)
+                        mAdapterData.add(bubble)
                     }
 
-                    val adapter = ChatBubbleAdapter(this@ChatHistoryActivity, bubbles)
-                    val recycler = findViewById<RecyclerView>(R.id.bubble_recycler)
-                    recycler.adapter = adapter
-                    val layout = LinearLayoutManager(this@ChatHistoryActivity)
-                    
-                    layout.stackFromEnd = true
-                    recycler.layoutManager = layout
+                    mAdapter.notifyDataSetChanged()
 
                     mChatSelectedSid = sid
                     mChatSelectedTitle = title
@@ -116,6 +119,8 @@ class ChatHistoryActivity : Activity() {
         }
 
         titleWidget.text = ""
+        mAdapterData.clear()
+        mAdapter.notifyDataSetChanged()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
