@@ -87,6 +87,9 @@ interface MessageDao {
     @Query("SELECT * FROM message WHERE user_sid LIKE :user ORDER BY id DESC LIMIT :limit")
     suspend fun getAllMessagesByUserLimitDesc(user: User, limit: Int): MutableList<Message?>
 
+    @Query("SELECT * FROM message WHERE user_sid LIKE :user_sid ORDER BY id DESC LIMIT :limit")
+    suspend fun getLatestMessagesByUserLimit(user_sid: String, limit: Int): MutableList<Message?>
+
     @Update
     suspend fun update (message: Message)
 

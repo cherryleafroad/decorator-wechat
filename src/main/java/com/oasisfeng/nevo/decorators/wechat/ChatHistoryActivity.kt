@@ -2,6 +2,10 @@ package com.oasisfeng.nevo.decorators.wechat
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
@@ -25,6 +29,13 @@ class ChatHistoryActivity : Activity() {
     private var mAdapterData = mutableListOf<Any>()
     private lateinit var mAdapter: ChatBubbleAdapter
 
+    companion object {
+        @JvmField
+        val ACTION_NOTIFY_NEW_MESSAGE = "NOTIFY_NEW_MESSAGE"
+        @JvmField
+        val EXTRA_USER_ID = "user_id"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat_history)
@@ -46,6 +57,10 @@ class ChatHistoryActivity : Activity() {
         val layout = LinearLayoutManager(this@ChatHistoryActivity)
         layout.reverseLayout = true
         recycler.layoutManager = layout
+
+        val filter = IntentFilter()
+        filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
+        registerReceiver(mNewMessageReceiver, filter)
     }
 
     private fun setTitle(title: String) {
@@ -177,6 +192,36 @@ class ChatHistoryActivity : Activity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private val mNewMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val userId = intent?.getStringExtra(EXTRA_USER_ID)
+
+            if (this@ChatHistoryActivity::mChatSelectedSid.isInitialized && userId == mChatSelectedSid) {
+                GlobalScope.launch(Dispatchers.Main) {
+                    val message = mDb.messageDao().getLatestMessagesByUserLimit(userId, 1)
+                    val isReply = message[0]?.is_reply!!
+                    val bubble: Any = if (!isReply) {
+                        ChatBubbleReceiver(
+                            message[0]?.message!!
+                        )
+                    } else {
+                        ChatBubbleSender(
+                            message[0]?.message!!
+                        )
+                    }
+
+                    mAdapterData.add(0, bubble)
+                    mAdapter.notifyDataSetChanged()
+                }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(mNewMessageReceiver)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {

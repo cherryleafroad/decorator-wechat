@@ -2,10 +2,13 @@ package com.oasisfeng.nevo.decorators.wechat
 
 import android.app.Notification
 import android.content.Context
+import android.content.Intent
 import android.service.notification.StatusBarNotification
 import android.text.TextUtils
 import android.util.ArrayMap
 import android.util.Log
+import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_NEW_MESSAGE
+import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.EXTRA_USER_ID
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import kotlinx.coroutines.*
 import kotlin.properties.Delegates
@@ -463,6 +466,12 @@ internal object ConversationHistory {
                     }
 
                     mDb.messageDao().insert(message)
+
+                    // notify of any new messages if you're in the activity
+                    val intent = Intent(ACTION_NOTIFY_NEW_MESSAGE)
+                    intent.putExtra(EXTRA_USER_ID, user.sid)
+                    intent.setPackage(context.packageName)
+                    context.sendBroadcast(intent)
                 }
             }
         }
