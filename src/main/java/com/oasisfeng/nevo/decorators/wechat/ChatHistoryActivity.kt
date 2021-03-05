@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.children
+import com.oasisfeng.nevo.decorators.wechat.chatui.MessageBubbles
 import kotlinx.coroutines.*
 
 class ChatHistoryActivity : Activity() {
@@ -38,13 +39,13 @@ class ChatHistoryActivity : Activity() {
     private fun setChatbox(messages: List<Message?>) {
         // allow scrolling
         //this.findViewById<TextView>(R.id.textView2).movementMethod = ScrollingMovementMethod()
-        val textview = this.findViewById<TextView>(R.id.textView2)
+        //val textview = this.findViewById<TextView>(R.id.textView2)
         var string = ""
         for (msg in messages) {
             string = string.plus("-> ${msg!!.message}\n")
         }
 
-        textview.setText(string, TextView.BufferType.NORMAL)
+        //textview.setText(string, TextView.BufferType.NORMAL)
     }
 
     private fun setTitle(title: String) {
@@ -71,8 +72,15 @@ class ChatHistoryActivity : Activity() {
                     val title = it.getTag(R.string.tag_title) as String
 
                     val messages = mDb.messageDao().getAllBySidDesc(sid)
-                    setChatbox(messages)
+                    //setChatbox(messages)
                     setTitle(title)
+
+                    val layout = findViewById<LinearLayout>(R.id.bubble_layout)
+                    layout.removeAllViews()
+                    for (message in messages) {
+                        val bubble = MessageBubbles.createReceiverBubble(this@ChatHistoryActivity, message!!.message)
+                        layout.addView(bubble)
+                    }
 
                     mChatSelectedSid = sid
                     mChatSelectedTitle = title
@@ -85,7 +93,7 @@ class ChatHistoryActivity : Activity() {
 
     private fun resetScreen(deletedSingleChat: Boolean = true) {
         val buttonContainer = this.findViewById<LinearLayout>(R.id.buttonContainer)
-        val chatbox = this.findViewById<TextView>(R.id.textView2)
+        //val chatbox = this.findViewById<TextView>(R.id.textView2)
         val titleWidget = this.findViewById<TextView>(R.id.title)
 
         if (!deletedSingleChat) {
@@ -100,7 +108,7 @@ class ChatHistoryActivity : Activity() {
             }
         }
 
-        chatbox.setText("", TextView.BufferType.NORMAL)
+        //chatbox.setText("", TextView.BufferType.NORMAL)
         titleWidget.text = ""
 
         mChatSelectedTitle = getString(R.string.delete_chat_none_name)
