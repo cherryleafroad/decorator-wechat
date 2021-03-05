@@ -114,8 +114,8 @@ class ChatHistoryActivity : Activity() {
         val layout = findViewById<LinearLayout>(R.id.bubble_layout)
         layout.removeAllViews()
 
-        mChatSelectedTitle = getString(R.string.delete_chat_none_name)
-        invalidateOptionsMenu()
+        //mChatSelectedTitle = getString(R.string.delete_chat_none_name)
+        //invalidateOptionsMenu()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -124,7 +124,7 @@ class ChatHistoryActivity : Activity() {
                 if (this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()) {
                     AlertDialog.Builder(this)
                         .setTitle(getString(R.string.delete_chat).replace("%s", mChatSelectedTitle))
-                        .setMessage(getString(R.string.delete_chat_summary))
+                        .setMessage(getString(R.string.delete_chat_summary).replace("%s", mChatSelectedTitle))
 
                         .setPositiveButton(
                             android.R.string.ok
@@ -176,15 +176,15 @@ class ChatHistoryActivity : Activity() {
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
 
-        if (this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()) {
+        /*if (this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()) {
             menu!!.findItem(R.id.clear_chat).title =
                 getString(R.string.clear_chat).replace("%s", mChatSelectedTitle)
         } else {
             menu!!.findItem(R.id.clear_chat).title =
                 getString(R.string.clear_chat).replace("%s", getString(R.string.delete_chat_none_name))
-        }
+        }*/
 
-        menu.findItem(R.id.clear_chat).isEnabled = this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()
+        menu?.findItem(R.id.clear_chat)?.isEnabled = this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()
 
         return super.onPrepareOptionsMenu(menu)
     }

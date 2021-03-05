@@ -75,10 +75,10 @@
     <string name="pref_chat_history_title">聊天记录</string>
     <string name="pref_chat_history_summary">启用聊天记录就可以看看聊天记录，包括撤回的消息（如果启用了可见被撤回的消息功能）</string>
     <string name="pref_chat_history_activity_summary">进入聊天记录页面</string>
-    <string name="clear_chat">把\"%s\"的聊天记录删掉</string>
+    <string name="clear_chat">把聊天记录删掉</string>
     <string name="clear_all">把所有删除</string>
-    <string name="delete_chat">把\"%s\"的聊天记录删掉吗？</string>
-    <string name="delete_chat_summary">你确定要删除吗？\n\n聊天记录将永远消失（微信本身不受影响）</string>
+    <string name="delete_chat">把聊天记录删掉吗？</string>
+    <string name="delete_chat_summary">你确定要把\"%s\"的聊天记录删除吗？\n\n聊天记录将永远消失（微信本身不受影响）</string>
     <string name="delete_chat_all">删除所有聊天记录？</string>
     <string name="delete_chat_all_summary">你确定要删除所有内容吗？\n\n聊天记录将永远消失（微信本身不受影响）</string>
     <string name="delete_chat_none_name">没有人</string>
