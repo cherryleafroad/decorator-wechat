@@ -8,6 +8,7 @@ import android.text.TextUtils
 import android.util.ArrayMap
 import android.util.Log
 import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_NEW_MESSAGE
+import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_REFRESH_ALL
 import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.EXTRA_USER_ID
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import kotlinx.coroutines.*
@@ -71,6 +72,8 @@ internal object ConversationHistory {
                     if (mChatHistoryEnabled) {
                         dbHistory[i]!!.message = msg
                         mDb.messageDao().update(dbHistory[i]!!)
+
+                        notifyChatUiChangedMessage(context, user.sid, false)
                     }
                     return
                 }
@@ -92,6 +95,7 @@ internal object ConversationHistory {
                 if (mChatHistoryEnabled) {
                     dbHistory[0]!!.message = msg
                     mDb.messageDao().update(dbHistory[0]!!)
+                    notifyChatUiChangedMessage(context, user.sid, false)
                 }
                 return
             } else if (history.size == 1 && car_messages.size == 0) {
@@ -131,6 +135,7 @@ internal object ConversationHistory {
                 if (mChatHistoryEnabled) {
                     dbHistory[index]!!.message = msg
                     mDb.messageDao().update(dbHistory[index]!!)
+                    notifyChatUiChangedMessage(context, user.sid, false)
                 }
                 return
             }
@@ -266,6 +271,15 @@ internal object ConversationHistory {
             }
         }
         return message
+    }
+
+    private fun notifyChatUiChangedMessage(context: Context, id: String, newMessage: Boolean = true) {
+        // notify of any new messages if you're in the activity
+        val action = if (newMessage) ACTION_NOTIFY_NEW_MESSAGE else ACTION_NOTIFY_REFRESH_ALL
+        val intent = Intent(action)
+        intent.putExtra(EXTRA_USER_ID, id)
+        intent.setPackage(context.packageName)
+        context.sendBroadcast(intent)
     }
 
     // The meat and bones right here. it maintains conversation history
@@ -467,11 +481,7 @@ internal object ConversationHistory {
 
                     mDb.messageDao().insert(message)
 
-                    // notify of any new messages if you're in the activity
-                    val intent = Intent(ACTION_NOTIFY_NEW_MESSAGE)
-                    intent.putExtra(EXTRA_USER_ID, user.sid)
-                    intent.setPackage(context.packageName)
-                    context.sendBroadcast(intent)
+                    notifyChatUiChangedMessage(context, user.sid)
                 }
             }
         }

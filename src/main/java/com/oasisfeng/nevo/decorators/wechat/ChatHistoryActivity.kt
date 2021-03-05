@@ -33,6 +33,8 @@ class ChatHistoryActivity : Activity() {
         @JvmField
         val ACTION_NOTIFY_NEW_MESSAGE = "NOTIFY_NEW_MESSAGE"
         @JvmField
+        val ACTION_NOTIFY_REFRESH_ALL = "NOTIFY_REFRESH_ALL"
+        @JvmField
         val EXTRA_USER_ID = "user_id"
     }
 
@@ -60,6 +62,7 @@ class ChatHistoryActivity : Activity() {
 
         val filter = IntentFilter()
         filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
+        filter.addAction(ACTION_NOTIFY_REFRESH_ALL)
         registerReceiver(mNewMessageReceiver, filter)
     }
 
@@ -200,19 +203,45 @@ class ChatHistoryActivity : Activity() {
 
             if (this@ChatHistoryActivity::mChatSelectedSid.isInitialized && userId == mChatSelectedSid) {
                 GlobalScope.launch(Dispatchers.Main) {
-                    val message = mDb.messageDao().getLatestMessagesByUserLimit(userId, 1)
-                    val isReply = message[0]?.is_reply!!
-                    val bubble: Any = if (!isReply) {
-                        ChatBubbleReceiver(
-                            message[0]?.message!!
-                        )
-                    } else {
-                        ChatBubbleSender(
-                            message[0]?.message!!
-                        )
+
+                    when (intent.action) {
+                        ACTION_NOTIFY_NEW_MESSAGE -> {
+                            val message = mDb.messageDao().getLatestMessagesByUserLimit(userId, 1)
+
+                            val isReply = message[0]?.is_reply!!
+                            val bubble: Any = if (!isReply) {
+                                ChatBubbleReceiver(
+                                    message[0]?.message!!
+                                )
+                            } else {
+                                ChatBubbleSender(
+                                    message[0]?.message!!
+                                )
+                            }
+
+                            mAdapterData.add(0, bubble)
+                        }
+
+                        ACTION_NOTIFY_REFRESH_ALL -> {
+                            mAdapterData.clear()
+
+                            val messages = mDb.messageDao().getAllBySidDesc(userId)
+                            for (message in messages) {
+                                val bubble: Any = if (!message!!.is_reply) {
+                                    ChatBubbleReceiver(
+                                        message.message
+                                    )
+                                } else {
+                                    ChatBubbleSender(
+                                        message.message
+                                    )
+                                }
+
+                                mAdapterData.add(bubble)
+                            }
+                        }
                     }
 
-                    mAdapterData.add(0, bubble)
                     mAdapter.notifyDataSetChanged()
                 }
             }
