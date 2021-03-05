@@ -105,9 +105,6 @@ class ChatHistoryActivity : Activity() {
         chatbox.setText("", TextView.BufferType.NORMAL)
         titleWidget.text = ""
 
-        mChatSelectedSid = ""
-        mChatSelectedTitle = ""
-
         mChatSelectedTitle = getString(R.string.delete_chat_none_name)
         invalidateOptionsMenu()
     }
@@ -122,10 +119,12 @@ class ChatHistoryActivity : Activity() {
 
                         .setPositiveButton(
                             android.R.string.ok
-                        ) { _: DialogInterface, _: Int ->
+                        ) { _, _ ->
                             GlobalScope.launch(Dispatchers.Main) {
                                 mDb.userDao().deleteUserBySid(mChatSelectedSid)
                                 mDb.messageDao().deleteAllBySid(mChatSelectedSid)
+                                mChatSelectedSid = ""
+                                mChatSelectedTitle = ""
                             }
 
                             resetScreen()
@@ -144,10 +143,12 @@ class ChatHistoryActivity : Activity() {
 
                     .setPositiveButton(
                         android.R.string.ok
-                    ) { _: DialogInterface, _: Int ->
+                    ) { _, _ ->
                         GlobalScope.launch(Dispatchers.Main) {
                             mDb.userDao().deleteAll()
                             mDb.messageDao().deleteAll()
+                            mChatSelectedSid = ""
+                            mChatSelectedTitle = ""
                         }
 
                         resetScreen(false)
