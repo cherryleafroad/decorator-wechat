@@ -18,6 +18,7 @@ import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.WeChatApp
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.UserActivity.Companion.RESULT_REFRESH
 import kotlinx.coroutines.*
+import me.everything.android.ui.overscroll.OverScrollDecoratorHelper
 
 class ChatHistoryActivity : Activity() {
     private lateinit var mDb: AppDatabase
@@ -106,6 +107,7 @@ class ChatHistoryActivity : Activity() {
             mLayout = LinearLayoutManager(this@ChatHistoryActivity)
             mLayout.stackFromEnd = true
             mRecycler.layoutManager = mLayout
+            OverScrollDecoratorHelper.setUpOverScroll(mRecycler, OverScrollDecoratorHelper.ORIENTATION_VERTICAL)
         }
     }
 
