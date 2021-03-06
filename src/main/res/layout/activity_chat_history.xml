@@ -37,7 +37,8 @@
             android:background="@color/chat_history_toolbar"
             app:titleTextColor="@color/chat_history_toolbar_text"
             android:layout_width="match_parent"
-            android:layout_height="0dp">
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent">
         </android.widget.Toolbar>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
