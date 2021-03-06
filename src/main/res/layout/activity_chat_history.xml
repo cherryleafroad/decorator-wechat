@@ -1,83 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp"
-    tools:context=".chatHistoryUi.ChatHistoryActivity">
+    android:fitsSystemWindows="true">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="120dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:padding="10dp"
+        tools:context=".chatHistoryUi.ChatHistoryActivity">
 
-        <ScrollView
+        <!-- Bubbles will be added to this dynamically -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/bubble_recycler"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbars="none">
+            android:scrollbars="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="parent" />
 
-            <LinearLayout
-                android:id="@+id/buttonContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fadeScrollbars="true"
-                android:orientation="vertical"
-                android:overScrollMode="ifContentScrolls" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </ScrollView>
+    <android.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:background="@color/chat_history_toolbar"
+        app:titleTextColor="@color/chat_history_toolbar_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    </android.widget.Toolbar>
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/linearLayout2"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/linearLayout"
-        app:layout_constraintTop_toTopOf="parent">
-
-
-        <!-- Chat title -->
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:paddingBottom="10dp"
-            android:textSize="24sp" />
-
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:overScrollMode="always"
-            tools:ignore="UselessLeaf">
-
-            <!-- Bubbles will be added to this dynamically -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/bubble_recycler"
-                android:scrollbars="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

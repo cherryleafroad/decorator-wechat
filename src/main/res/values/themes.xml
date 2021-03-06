@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.DayNight" parent="@android:style/Theme.Material.Light" />
-    <style name="Theme.DayNight.ChatHistoryActivity" parent="@android:style/Theme.Material.Light">
+    <style name="Theme.DayNight.UserActivity" parent="@android:style/Theme.Material.Light">
+        <item name="android:windowBackground">@color/chat_history_activity_bg</item>
+    </style>
+    <style name="Theme.DayNight.ChatHistoryActivity" parent="@android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/chat_history_activity_bg</item>
     </style>
 </resources>

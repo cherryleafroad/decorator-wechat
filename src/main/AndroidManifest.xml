@@ -72,6 +72,14 @@
             android:taskAffinity=""
             android:theme="@style/Theme.DayNight.ChatHistoryActivity" />
 
+        <activity
+            android:name=".chatHistoryUi.UserActivity"
+            android:exported="false"
+            android:label="@string/pref_user_activity_title"
+            android:process=":ui"
+            android:taskAffinity=""
+            android:theme="@style/Theme.DayNight.UserActivity" />
+
         <provider
             android:name=".AssetFileProvider"
             android:authorities="com.oasisfeng.nevo.decorators.wechat.files"

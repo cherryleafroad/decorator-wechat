@@ -17,9 +17,12 @@
     <color name="navy">#000080</color>
     <color name="black">#000000</color>
 
-    <color name="chat_receiver_bubble_fg">#95ec69</color>
+    <color name="chat_history_toolbar">#ffffff</color>
+    <color name="chat_history_toolbar_text">#000000</color>
+
+    <color name="chat_receiver_bubble_fg">#ffffff</color>
     <color name="chat_receiver_bubble_text">#0f170a</color>
-    <color name="chat_sender_bubble_fg">#ffffff</color>
+    <color name="chat_sender_bubble_fg">#95ec69</color>
     <color name="chat_sender_bubble_text">#0f170a</color>
     <color name="chat_history_activity_bg">#ededed</color>
 </resources>
