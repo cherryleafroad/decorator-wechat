@@ -263,7 +263,7 @@ class ChatHistoryActivity : Activity() {
                             }
 
                             mAdapterData.add(0, bubble)
-                            mAdapter.notifyDataSetChanged()
+                            mAdapter.notifyItemInserted(0)
                         }
 
                         ACTION_NOTIFY_REFRESH_ALL -> {
