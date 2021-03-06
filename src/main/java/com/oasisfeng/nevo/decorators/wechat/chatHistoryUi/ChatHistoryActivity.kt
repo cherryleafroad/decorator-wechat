@@ -48,44 +48,64 @@ class ChatHistoryActivity : Activity() {
 
         mDb = (this.applicationContext as WeChatApp).db
 
-        mAdapter = ChatBubbleAdapter(this, mAdapterData)
-        mRecycler = findViewById(R.id.bubble_recycler)
-        mRecycler.adapter = mAdapter
-        mLayout = LinearLayoutManager(this)
-        mLayout.stackFromEnd = true
-        mRecycler.layoutManager = mLayout
-
-        val filter = IntentFilter()
-        filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
-        filter.addAction(ACTION_NOTIFY_REFRESH_ALL)
-        registerReceiver(mBroadcastReceiver, filter)
-
-        var userId = intent.getStringExtra(EXTRA_USER_ID)
-        var username = intent.getStringExtra(EXTRA_USERNAME)
         if (savedInstanceState != null) {
-            userId = savedInstanceState.getString(STATE_USER)
-            username = savedInstanceState.getString(STATE_TITLE)
+            val userId = savedInstanceState.getString(STATE_USER)
+            val username = savedInstanceState.getString(STATE_TITLE)
             val recycler: Parcelable = savedInstanceState.getParcelable(STATE_RECYCLER)!!
 
             mChatSelectedSid = userId!!
             mChatSelectedTitle = username!!
 
-            title = mChatSelectedTitle
-
             GlobalScope.launch(Dispatchers.Main) {
-                refreshMessageView(userId)
+                refreshData()
+
                 (mRecycler.layoutManager as LinearLayoutManager).onRestoreInstanceState(recycler)
             }
         } else {
+            // entering activity from user list
+            val userId = intent.getStringExtra(EXTRA_USER_ID)
+            val username = intent.getStringExtra(EXTRA_USERNAME)
+
             if (userId != null && username != null) {
                 mChatSelectedTitle = username
                 mChatSelectedSid = userId
-                title = mChatSelectedTitle
 
                 GlobalScope.launch(Dispatchers.Main) {
-                    refreshMessageView(mChatSelectedSid)
+                    refreshData()
+                    mRecycler.scrollToPosition(mAdapter.itemCount-1)
                 }
             }
+        }
+
+        val filter = IntentFilter()
+        filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
+        filter.addAction(ACTION_NOTIFY_REFRESH_ALL)
+        registerReceiver(mBroadcastReceiver, filter)
+    }
+
+    private suspend fun refreshData() {
+        val messages = mDb.messageDao().getAllBySidAsc(mChatSelectedSid)
+        for (message in messages) {
+            val bubble: Any = if (!message!!.is_reply) {
+                ChatBubbleReceiver(
+                    message.message
+                )
+            } else {
+                ChatBubbleSender(
+                    message.message
+                )
+            }
+
+            mAdapterData.add(bubble)
+        }
+
+        if (!this@ChatHistoryActivity::mAdapter.isInitialized) {
+            mAdapter = ChatBubbleAdapter(this@ChatHistoryActivity, mAdapterData)
+            mRecycler = findViewById(R.id.bubble_recycler)
+            mRecycler.adapter = mAdapter
+            mLayout = LinearLayoutManager(this@ChatHistoryActivity)
+            mLayout.stackFromEnd = true
+            mRecycler.layoutManager = mLayout
         }
     }
 
@@ -192,34 +212,16 @@ class ChatHistoryActivity : Activity() {
                         }
 
                         ACTION_NOTIFY_REFRESH_ALL -> {
-                            refreshMessageView(userId)
+                            GlobalScope.launch(Dispatchers.Main) {
+                                mAdapterData.clear()
+                                refreshData()
+                                mAdapter.notifyDataSetChanged()
+                            }
                         }
                     }
                 }
             }
         }
-    }
-
-    private suspend fun refreshMessageView(user_sid: String) {
-        mAdapterData.clear()
-
-        val messages = mDb.messageDao().getAllBySidAsc(user_sid)
-        for (message in messages) {
-            val bubble: Any = if (!message!!.is_reply) {
-                ChatBubbleReceiver(
-                    message.message
-                )
-            } else {
-                ChatBubbleSender(
-                    message.message
-                )
-            }
-
-            mAdapterData.add(bubble)
-        }
-
-        mAdapter.notifyItemRangeChanged(0, mAdapter.itemCount)
-        mRecycler.scrollToPosition(mAdapter.itemCount-1)
     }
 
     override fun onDestroy() {
