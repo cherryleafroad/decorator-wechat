@@ -56,6 +56,7 @@ class ChatHistoryActivity : Activity() {
 
             mChatSelectedSid = userId!!
             mChatSelectedTitle = username!!
+            actionBar?.title = username
 
             GlobalScope.launch(Dispatchers.Main) {
                 refreshData()
@@ -70,6 +71,7 @@ class ChatHistoryActivity : Activity() {
             if (userId != null && username != null) {
                 mChatSelectedTitle = username
                 mChatSelectedSid = userId
+                actionBar?.title = username
 
                 GlobalScope.launch(Dispatchers.Main) {
                     refreshData()
