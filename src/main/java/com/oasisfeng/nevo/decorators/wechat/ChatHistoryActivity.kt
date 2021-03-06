@@ -35,6 +35,8 @@ class ChatHistoryActivity : Activity() {
         @JvmField
         val ACTION_NOTIFY_REFRESH_ALL = "NOTIFY_REFRESH_ALL"
         @JvmField
+        val ACTION_NOTIFY_USER_CHANGE = "NOTIFY_USER_CHANGE"
+        @JvmField
         val EXTRA_USER_ID = "user_id"
 
         private const val STATE_USER = "user"
@@ -47,26 +49,20 @@ class ChatHistoryActivity : Activity() {
 
         mDb = (this.applicationContext as WeChatApp).db
 
-        GlobalScope.launch(Dispatchers.Main) {
-            val users = mDb.userDao().getAll()
-            if (users.isNotEmpty()) {
-                if (users.isNotEmpty()) {
-                    updateButtons(users)
-                }
-            }
-        }
+        updateButtons()
 
-        mAdapter = ChatBubbleAdapter(this@ChatHistoryActivity, mAdapterData)
+        mAdapter = ChatBubbleAdapter(this, mAdapterData)
         val recycler = findViewById<RecyclerView>(R.id.bubble_recycler)
         recycler.adapter = mAdapter
-        val layout = LinearLayoutManager(this@ChatHistoryActivity)
+        val layout = LinearLayoutManager(this)
         layout.reverseLayout = true
         recycler.layoutManager = layout
 
         val filter = IntentFilter()
         filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
         filter.addAction(ACTION_NOTIFY_REFRESH_ALL)
-        registerReceiver(mNewMessageReceiver, filter)
+        filter.addAction((ACTION_NOTIFY_USER_CHANGE))
+        registerReceiver(mBroadcastReceiver, filter)
 
         if (savedInstanceState != null) {
             val user = savedInstanceState.getString(STATE_USER, "")
@@ -95,6 +91,21 @@ class ChatHistoryActivity : Activity() {
         super.onSaveInstanceState(outState)
     }
 
+    private fun updateButtons() {
+        GlobalScope.launch(Dispatchers.Main) {
+            val buttonContainer = this@ChatHistoryActivity.findViewById<LinearLayout>(R.id.buttonContainer)
+            // remove all buttons to refresh it
+            buttonContainer.removeAllViews()
+
+            val users = mDb.userDao().getAll()
+            if (users.isNotEmpty()) {
+                if (users.isNotEmpty()) {
+                    updateButtons(users)
+                }
+            }
+        }
+    }
+
     private fun setTitle(title: String) {
         val titleWidget = this.findViewById<TextView>(R.id.title)
         titleWidget.setText(title, TextView.BufferType.NORMAL)
@@ -103,6 +114,14 @@ class ChatHistoryActivity : Activity() {
     private fun updateButtons(users: List<User?>) {
         val buttonContainer = this.findViewById<LinearLayout>(R.id.buttonContainer)
         for ((i, user) in users.withIndex()) {
+            if (this::mChatSelectedTitle.isInitialized && mChatSelectedTitle.isNotEmpty() &&
+                this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()) {
+
+                if (mChatSelectedSid == user?.sid && user.username != mChatSelectedTitle) {
+                    setTitle(user.username)
+                }
+            }
+
             val btnTag = Button(this)
             btnTag.layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -209,9 +228,16 @@ class ChatHistoryActivity : Activity() {
         }
     }
 
-    private val mNewMessageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val userId = intent?.getStringExtra(EXTRA_USER_ID)
+
+            when (intent?.action) {
+                ACTION_NOTIFY_USER_CHANGE -> {
+                    updateButtons()
+                    return
+                }
+            }
 
             if (this@ChatHistoryActivity::mChatSelectedSid.isInitialized && userId == mChatSelectedSid) {
                 GlobalScope.launch(Dispatchers.Main) {
@@ -267,7 +293,7 @@ class ChatHistoryActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(mNewMessageReceiver)
+        unregisterReceiver(mBroadcastReceiver)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {

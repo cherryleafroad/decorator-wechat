@@ -9,6 +9,7 @@ import android.util.ArrayMap
 import android.util.Log
 import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_NEW_MESSAGE
 import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_REFRESH_ALL
+import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_USER_CHANGE
 import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.EXTRA_USER_ID
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import kotlinx.coroutines.*
@@ -73,7 +74,7 @@ internal object ConversationHistory {
                         dbHistory[i]!!.message = msg
                         mDb.messageDao().update(dbHistory[i]!!)
 
-                        notifyChatUiChangedMessage(context, user.sid, false)
+                        notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_REFRESH_ALL)
                     }
                     return
                 }
@@ -95,7 +96,7 @@ internal object ConversationHistory {
                 if (mChatHistoryEnabled) {
                     dbHistory[0]!!.message = msg
                     mDb.messageDao().update(dbHistory[0]!!)
-                    notifyChatUiChangedMessage(context, user.sid, false)
+                    notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_REFRESH_ALL)
                 }
                 return
             } else if (history.size == 1 && car_messages.size == 0) {
@@ -135,7 +136,7 @@ internal object ConversationHistory {
                 if (mChatHistoryEnabled) {
                     dbHistory[index]!!.message = msg
                     mDb.messageDao().update(dbHistory[index]!!)
-                    notifyChatUiChangedMessage(context, user.sid, false)
+                    notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_REFRESH_ALL)
                 }
                 return
             }
@@ -273,9 +274,8 @@ internal object ConversationHistory {
         return message
     }
 
-    private fun notifyChatUiChangedMessage(context: Context, id: String, newMessage: Boolean = true) {
+    private fun notifyChatUiChangedData(context: Context, id: String, action: String) {
         // notify of any new messages if you're in the activity
-        val action = if (newMessage) ACTION_NOTIFY_NEW_MESSAGE else ACTION_NOTIFY_REFRESH_ALL
         val intent = Intent(action)
         intent.putExtra(EXTRA_USER_ID, id)
         intent.setPackage(context.packageName)
@@ -465,11 +465,13 @@ internal object ConversationHistory {
                     val userD = mDb.userDao().findBySid(conversation.id!!)
                     if (userD == null) {
                         mDb.userDao().insert(user)
+                        notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_USER_CHANGE)
                     } else {
                         // update username
                         if (userD.username != username) {
                             userD.username = username
                             mDb.userDao().update(userD)
+                            notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_USER_CHANGE)
                         }
                     }
 
@@ -481,7 +483,7 @@ internal object ConversationHistory {
 
                     mDb.messageDao().insert(message)
 
-                    notifyChatUiChangedMessage(context, user.sid)
+                    notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_NEW_MESSAGE)
                 }
             }
         }
