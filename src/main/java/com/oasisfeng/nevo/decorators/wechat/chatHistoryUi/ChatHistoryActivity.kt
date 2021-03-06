@@ -26,6 +26,7 @@ class ChatHistoryActivity : Activity() {
     private var mAdapterData = mutableListOf<Any>()
     private lateinit var mAdapter: ChatBubbleAdapter
     private lateinit var mRecycler: RecyclerView
+    private lateinit var mLayout: LinearLayoutManager
 
     companion object {
         const val ACTION_NOTIFY_NEW_MESSAGE = "NOTIFY_NEW_MESSAGE"
@@ -50,9 +51,9 @@ class ChatHistoryActivity : Activity() {
         mAdapter = ChatBubbleAdapter(this, mAdapterData)
         mRecycler = findViewById(R.id.bubble_recycler)
         mRecycler.adapter = mAdapter
-        val layout = LinearLayoutManager(this)
-        layout.reverseLayout = true
-        mRecycler.layoutManager = layout
+        mLayout = LinearLayoutManager(this)
+        mLayout.stackFromEnd = true
+        mRecycler.layoutManager = mLayout
 
         val filter = IntentFilter()
         filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
@@ -178,8 +179,16 @@ class ChatHistoryActivity : Activity() {
                                 )
                             }
 
-                            mAdapterData.add(0, bubble)
-                            mAdapter.notifyItemInserted(0)
+                            val state = mRecycler.layoutManager?.onSaveInstanceState()
+                            mAdapterData.add(bubble)
+                            mAdapter.notifyItemInserted(mAdapter.itemCount)
+                            val lastPos = mLayout.findLastCompletelyVisibleItemPosition()
+                            // don't scroll to new item unless we're at the bottom
+                            if (lastPos == mAdapter.itemCount-2) {
+                                mRecycler.scrollToPosition(mAdapter.itemCount - 1)
+                            } else {
+                                mRecycler.layoutManager?.onRestoreInstanceState(state)
+                            }
                         }
 
                         ACTION_NOTIFY_REFRESH_ALL -> {
@@ -194,7 +203,7 @@ class ChatHistoryActivity : Activity() {
     private suspend fun refreshMessageView(user_sid: String) {
         mAdapterData.clear()
 
-        val messages = mDb.messageDao().getAllBySidDesc(user_sid)
+        val messages = mDb.messageDao().getAllBySidAsc(user_sid)
         for (message in messages) {
             val bubble: Any = if (!message!!.is_reply) {
                 ChatBubbleReceiver(
@@ -209,7 +218,8 @@ class ChatHistoryActivity : Activity() {
             mAdapterData.add(bubble)
         }
 
-        mAdapter.notifyDataSetChanged()
+        mAdapter.notifyItemRangeChanged(0, mAdapter.itemCount)
+        mRecycler.scrollToPosition(mAdapter.itemCount-1)
     }
 
     override fun onDestroy() {
