@@ -10,28 +10,33 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="10dp"
         tools:context=".chatHistoryUi.ChatHistoryActivity">
 
         <!-- Bubbles will be added to this dynamically -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/bubble_recycler"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:clipToPadding="false"
             android:scrollbars="vertical"
+            app:layout_constraintHeight_default="wrap"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintVertical_bias="0" />
+
+        <android.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:background="@color/chat_history_toolbar"
+            app:titleTextColor="@color/chat_history_toolbar_text"
+            android:layout_width="match_parent"
+            android:layout_height="0dp">
+        </android.widget.Toolbar>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <android.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:background="@color/chat_history_toolbar"
-        app:titleTextColor="@color/chat_history_toolbar_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-    </android.widget.Toolbar>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
