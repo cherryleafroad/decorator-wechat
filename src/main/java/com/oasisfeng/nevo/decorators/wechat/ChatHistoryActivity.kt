@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -28,6 +29,7 @@ class ChatHistoryActivity : Activity() {
     private lateinit var mChatSelectedTitle: String
     private var mAdapterData = mutableListOf<Any>()
     private lateinit var mAdapter: ChatBubbleAdapter
+    private lateinit var mRecycler: RecyclerView
 
     companion object {
         @JvmField
@@ -41,6 +43,7 @@ class ChatHistoryActivity : Activity() {
 
         private const val STATE_USER = "user"
         private const val STATE_TITLE = "title"
+        private const val STATE_RECYCLER = "recycler"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,11 +55,11 @@ class ChatHistoryActivity : Activity() {
         updateButtons()
 
         mAdapter = ChatBubbleAdapter(this, mAdapterData)
-        val recycler = findViewById<RecyclerView>(R.id.bubble_recycler)
-        recycler.adapter = mAdapter
+        mRecycler = findViewById<RecyclerView>(R.id.bubble_recycler)
+        mRecycler.adapter = mAdapter
         val layout = LinearLayoutManager(this)
         layout.reverseLayout = true
-        recycler.layoutManager = layout
+        mRecycler.layoutManager = layout
 
         val filter = IntentFilter()
         filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
@@ -67,6 +70,7 @@ class ChatHistoryActivity : Activity() {
         if (savedInstanceState != null) {
             val user = savedInstanceState.getString(STATE_USER, "")
             val title = savedInstanceState.getString(STATE_TITLE, "")
+            val recycler: Parcelable = savedInstanceState.getParcelable(STATE_RECYCLER)!!
 
             // we were in a chat before! oh!
             if (user.isNotEmpty() && title.isNotEmpty()) {
@@ -77,6 +81,7 @@ class ChatHistoryActivity : Activity() {
 
                 GlobalScope.launch(Dispatchers.Main) {
                     refreshMessageView(user)
+                    (mRecycler.layoutManager as LinearLayoutManager).onRestoreInstanceState(recycler)
                 }
             }
         }
@@ -86,6 +91,7 @@ class ChatHistoryActivity : Activity() {
         if (this::mChatSelectedSid.isInitialized && this::mChatSelectedTitle.isInitialized) {
             outState.putString(STATE_USER, mChatSelectedSid)
             outState.putString(STATE_TITLE, mChatSelectedTitle)
+            outState.putParcelable(STATE_RECYCLER, mRecycler.layoutManager?.onSaveInstanceState())
         }
 
         super.onSaveInstanceState(outState)
