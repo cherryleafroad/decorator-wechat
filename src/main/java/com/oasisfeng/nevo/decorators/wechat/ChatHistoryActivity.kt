@@ -36,6 +36,9 @@ class ChatHistoryActivity : Activity() {
         val ACTION_NOTIFY_REFRESH_ALL = "NOTIFY_REFRESH_ALL"
         @JvmField
         val EXTRA_USER_ID = "user_id"
+
+        private const val STATE_USER = "user"
+        private const val STATE_TITLE = "title"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +67,32 @@ class ChatHistoryActivity : Activity() {
         filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
         filter.addAction(ACTION_NOTIFY_REFRESH_ALL)
         registerReceiver(mNewMessageReceiver, filter)
+
+        if (savedInstanceState != null) {
+            val user = savedInstanceState.getString(STATE_USER, "")
+            val title = savedInstanceState.getString(STATE_TITLE, "")
+
+            // we were in a chat before! oh!
+            if (user.isNotEmpty() && title.isNotEmpty()) {
+                mChatSelectedSid = user
+                mChatSelectedTitle = title
+
+                setTitle(mChatSelectedTitle)
+
+                GlobalScope.launch(Dispatchers.Main) {
+                    refreshMessageView(user)
+                }
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        if (this::mChatSelectedSid.isInitialized && this::mChatSelectedTitle.isInitialized) {
+            outState.putString(STATE_USER, mChatSelectedSid)
+            outState.putString(STATE_TITLE, mChatSelectedTitle)
+        }
+
+        super.onSaveInstanceState(outState)
     }
 
     private fun setTitle(title: String) {
@@ -89,26 +118,9 @@ class ChatHistoryActivity : Activity() {
                     val sid = it.getTag(R.string.tag_sid) as String
                     val title = it.getTag(R.string.tag_title) as String
 
-                    val messages = mDb.messageDao().getAllBySidDesc(sid)
                     setTitle(title)
 
-                    // fresh history
-                    mAdapterData.clear()
-                    for (message in messages) {
-                        val bubble: Any = if (!message!!.is_reply) {
-                            ChatBubbleReceiver(
-                                message.message
-                            )
-                        } else {
-                            ChatBubbleSender(
-                                message.message
-                            )
-                        }
-
-                        mAdapterData.add(bubble)
-                    }
-
-                    mAdapter.notifyDataSetChanged()
+                    refreshMessageView(sid)
 
                     mChatSelectedSid = sid
                     mChatSelectedTitle = title
@@ -220,32 +232,37 @@ class ChatHistoryActivity : Activity() {
                             }
 
                             mAdapterData.add(0, bubble)
+                            mAdapter.notifyDataSetChanged()
                         }
 
                         ACTION_NOTIFY_REFRESH_ALL -> {
-                            mAdapterData.clear()
-
-                            val messages = mDb.messageDao().getAllBySidDesc(userId)
-                            for (message in messages) {
-                                val bubble: Any = if (!message!!.is_reply) {
-                                    ChatBubbleReceiver(
-                                        message.message
-                                    )
-                                } else {
-                                    ChatBubbleSender(
-                                        message.message
-                                    )
-                                }
-
-                                mAdapterData.add(bubble)
-                            }
+                            refreshMessageView(userId)
                         }
                     }
-
-                    mAdapter.notifyDataSetChanged()
                 }
             }
         }
+    }
+
+    private suspend fun refreshMessageView(user_sid: String) {
+        mAdapterData.clear()
+
+        val messages = mDb.messageDao().getAllBySidDesc(user_sid)
+        for (message in messages) {
+            val bubble: Any = if (!message!!.is_reply) {
+                ChatBubbleReceiver(
+                    message.message
+                )
+            } else {
+                ChatBubbleSender(
+                    message.message
+                )
+            }
+
+            mAdapterData.add(bubble)
+        }
+
+        mAdapter.notifyDataSetChanged()
     }
 
     override fun onDestroy() {
