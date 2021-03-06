@@ -1,4 +1,4 @@
-package com.oasisfeng.nevo.decorators.wechat
+package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 import androidx.room.*
 
@@ -12,7 +12,7 @@ data class User(
 data class Message(
     @ColumnInfo(name = "user_sid") val user_sid: String,
     @ColumnInfo(name = "message") var message: String,
-    @ColumnInfo(name = "is_self") var is_reply: Boolean = false,
+    @ColumnInfo(name = "is_reply") var is_reply: Boolean = false,
     @PrimaryKey(autoGenerate = true) val id: Long = 0
 )
 

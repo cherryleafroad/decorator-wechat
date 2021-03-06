@@ -1,4 +1,4 @@
-package com.oasisfeng.nevo.decorators.wechat.chatui
+package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 import android.content.Context
 import android.content.Intent

@@ -7,11 +7,14 @@ import android.service.notification.StatusBarNotification
 import android.text.TextUtils
 import android.util.ArrayMap
 import android.util.Log
-import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_NEW_MESSAGE
-import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_REFRESH_ALL
-import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.ACTION_NOTIFY_USER_CHANGE
-import com.oasisfeng.nevo.decorators.wechat.ChatHistoryActivity.Companion.EXTRA_USER_ID
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.ACTION_NOTIFY_NEW_MESSAGE
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.ACTION_NOTIFY_REFRESH_ALL
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.ACTION_NOTIFY_USER_CHANGE
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USER_ID
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.AppDatabase
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.Message
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.User
 import kotlinx.coroutines.*
 import kotlin.properties.Delegates
 

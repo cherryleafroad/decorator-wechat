@@ -1,4 +1,4 @@
-package com.oasisfeng.nevo.decorators.wechat
+package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -18,9 +18,8 @@ import android.widget.TextView
 import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.oasisfeng.nevo.decorators.wechat.chatui.ChatBubbleAdapter
-import com.oasisfeng.nevo.decorators.wechat.chatui.ChatBubbleReceiver
-import com.oasisfeng.nevo.decorators.wechat.chatui.ChatBubbleSender
+import com.oasisfeng.nevo.decorators.wechat.R
+import com.oasisfeng.nevo.decorators.wechat.WeChatApp
 import kotlinx.coroutines.*
 
 class ChatHistoryActivity : Activity() {

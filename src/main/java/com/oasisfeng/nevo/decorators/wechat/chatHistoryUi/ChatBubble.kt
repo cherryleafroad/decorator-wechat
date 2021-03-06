@@ -1,4 +1,4 @@
-package com.oasisfeng.nevo.decorators.wechat.chatui
+package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 data class ChatBubbleReceiver(
     var message: String

@@ -11,6 +11,7 @@ import android.os.Looper
 import android.util.ArrayMap
 import android.util.Log
 import androidx.room.Room
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.AppDatabase
 
 
 class WeChatApp : Application() {

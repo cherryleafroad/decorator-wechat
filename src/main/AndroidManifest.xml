@@ -65,7 +65,7 @@
         </activity>
 
         <activity
-            android:name=".ChatHistoryActivity"
+            android:name=".chatHistoryUi.ChatHistoryActivity"
             android:exported="false"
             android:label="@string/pref_chat_history_title"
             android:process=":ui"
