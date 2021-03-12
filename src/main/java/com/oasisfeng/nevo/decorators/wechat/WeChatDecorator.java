@@ -62,6 +62,7 @@ import androidx.core.app.Person;
 import androidx.core.graphics.drawable.IconCompat;
 
 import com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation;
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.DatabaseHelpers;
 import com.oasisfeng.nevo.sdk.MutableNotification;
 import com.oasisfeng.nevo.sdk.MutableStatusBarNotification;
 import com.oasisfeng.nevo.sdk.NevoDecoratorService;
@@ -270,7 +271,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 		// cache the avatar for the chat ui
 		if (large_icon != null && conversation.id != null) {
 			Bitmap avatar = ((BitmapDrawable)large_icon.loadDrawable(this)).getBitmap();
-			((WeChatApp) this.getApplicationContext()).dbHelpers.checkAndUpdateAvatar(this, original_key, conversation.id, avatar);
+			DatabaseHelpers.checkAndUpdateAvatar(this, original_key, conversation.id, avatar);
 		}
 
 

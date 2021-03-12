@@ -518,6 +518,8 @@ internal object ConversationHistory {
                         Message(userD.u_id, msg, MessageType.RECEIVER, chatType, conversation.timestamp, groupChatUsername)
                     }
 
+                    // TODO: Implement date message type
+
                     mDb.messageDao().insert(message)
                     notifyChatUiChangedData(context, userD.u_id)
                 }

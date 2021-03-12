@@ -15,32 +15,31 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-class DatabaseHelpers {
+object DatabaseHelpers {
     var avatarMap = ArrayMap<String, Bitmap>()
 
-    companion object {
-        @JvmStatic
-        fun addReply(context: Context, id: String, isChat: Boolean, reply: String, timestamp: Long) {
-            val db = ((context.applicationContext as WeChatApp)).db
+    @JvmStatic
+    fun addReply(context: Context, id: String, isChat: Boolean, reply: String, timestamp: Long) {
+        val db = ((context.applicationContext as WeChatApp)).db
 
-            GlobalScope.launch(Dispatchers.IO) {
-                val chatType = if (isChat) ChatType.CHAT else ChatType.GROUP
+        GlobalScope.launch(Dispatchers.IO) {
+            val chatType = if (isChat) ChatType.CHAT else ChatType.GROUP
 
-                val user = db.userDao().findByUserId(id)!!
-                user.latest_message = timestamp
-                val message = Message(user.u_id, reply, MessageType.SENDER, chatType, System.currentTimeMillis())
-                db.messageDao().insert(message)
-                db.userDao().update(user)
+            val user = db.userDao().findByUserId(id)!!
+            user.latest_message = timestamp
+            val message = Message(user.u_id, reply, MessageType.SENDER, chatType, System.currentTimeMillis())
+            db.messageDao().insert(message)
+            db.userDao().update(user)
 
-                // notify userlist of new reply
-                val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
-                intent.putExtra(EXTRA_USER_ID, user.u_id)
-                intent.setPackage(context.packageName)
-                context.sendBroadcast(intent)
-            }
+            // notify userlist of new reply
+            val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
+            intent.putExtra(EXTRA_USER_ID, user.u_id)
+            intent.setPackage(context.packageName)
+            context.sendBroadcast(intent)
         }
     }
 
+    @JvmStatic
     fun checkAndUpdateAvatar(context: Context, key: String, id: String, avatar: Bitmap) {
         val db = ((context.applicationContext as WeChatApp)).db
 

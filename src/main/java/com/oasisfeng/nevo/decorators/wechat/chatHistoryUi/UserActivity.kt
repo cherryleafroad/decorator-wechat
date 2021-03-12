@@ -89,7 +89,7 @@ class UserActivity : Activity() {
             ) { _, _ ->
                 GlobalScope.launch(Dispatchers.IO) {
                     mDb.userDao().deleteByUid(uid)
-                    
+
                     val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
                     intent.putExtra(ChatHistoryActivity.EXTRA_USER_ID, uid)
                     intent.setPackage(this@UserActivity.packageName)

@@ -88,6 +88,9 @@ class ChatHistoryActivity : Activity(), LifecycleOwner {
             mDb.messageDao().getMessagesWithAvatarPaged(mChatSelectedId)
         }.liveData
 
+        // TODO: some kinda of livedata onfinished callback to load at bottom when activity finished
+        // TODO: and if user is at the bottom, move to the new message in-line
+
         // check if we can scroll to bottom
         /*var firstLoad = true
         lifecycleScope.launch {
