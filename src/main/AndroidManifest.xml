@@ -70,6 +70,7 @@
             android:label="@string/pref_chat_history_title"
             android:process=":ui"
             android:taskAffinity=""
+            android:configChanges="uiMode"
             android:theme="@style/Theme.DayNight.ChatHistoryActivity" />
 
         <activity

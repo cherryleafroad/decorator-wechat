@@ -60,4 +60,6 @@
     <string name="delete_chat_all_summary">Are you sure you want to delete everything?\n\nChat history will be gone forever (WeChat itself is unaffected)</string>
     <string name="delete_chat_none_name">None</string>
     <string name="pref_user_activity_title">Select a chat</string>
+    <string name="message_header_recalled_visible">\"%s\" tried to recall: %m</string>
+    <string name="message_header_recalled_invisible">\"%s\" recalled a message</string>
 </resources>

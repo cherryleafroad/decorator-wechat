@@ -25,4 +25,11 @@
     <color name="chat_sender_bubble_fg">#95ec69</color>
     <color name="chat_sender_bubble_text">#0f170a</color>
     <color name="chat_history_activity_bg">#ededed</color>
+    <color name="chat_center_bubble">#d9d9d9</color>
+    <color name="chat_center_bubble_text">#000000</color>
+    <color name="chat_group_username_text">#888888</color>
+    <color name="chat_userlist_bg">#ffffff</color>
+    <color name="chat_userlist_divider">#f0f0f0</color>
+    <color name="chat_userlist_username_text">#000000</color>
+    <color name="chat_userlist_message">#acacac</color>
 </resources>

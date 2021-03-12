@@ -12,6 +12,7 @@ import android.util.ArrayMap
 import android.util.Log
 import androidx.room.Room
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.AppDatabase
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.DatabaseHelpers
 
 
 class WeChatApp : Application() {
@@ -27,6 +28,7 @@ class WeChatApp : Application() {
     var settingSynchronousRemoval = false
     var settingInsiderMode = false
     lateinit var db: AppDatabase
+    lateinit var dbHelpers: DatabaseHelpers
 
     private val resolver = SettingsObserver(Handler(Looper.getMainLooper()))
 
@@ -45,6 +47,8 @@ class WeChatApp : Application() {
         val synchronousRemoval = Uri.parse("/synchronous_removal")
         queryAndUpdateSetting(insiderMode)
         queryAndUpdateSetting(synchronousRemoval)
+
+        dbHelpers = DatabaseHelpers()
 
         // I'd like to get rid of this if the feature is disabled
         // but initializing it later is too much work, better to leave it ready

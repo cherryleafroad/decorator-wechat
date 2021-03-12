@@ -2,148 +2,176 @@ package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.res.Configuration
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toolbar
+import androidx.lifecycle.*
+import androidx.paging.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.WeChatApp
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.UserActivity.Companion.RESULT_REFRESH
 import kotlinx.coroutines.*
-import me.everything.android.ui.overscroll.OverScrollDecoratorHelper
 
-class ChatHistoryActivity : Activity() {
+
+class ChatHistoryActivity : Activity(), LifecycleOwner {
     private lateinit var mDb: AppDatabase
-    private lateinit var mChatSelectedSid: String
+    private var mChatSelectedId: Long = -1
     private lateinit var mChatSelectedTitle: String
-    private var mAdapterData = mutableListOf<Any>()
     private lateinit var mAdapter: ChatBubbleAdapter
+    private var mLifecycleRegistry = LifecycleRegistry(this)
     private lateinit var mRecycler: RecyclerView
     private lateinit var mLayout: LinearLayoutManager
+    private var mThemeChangeBypass = false
+
+    init {
+        mLifecycleRegistry.currentState = Lifecycle.State.INITIALIZED
+    }
 
     companion object {
-        const val ACTION_NOTIFY_NEW_MESSAGE = "NOTIFY_NEW_MESSAGE"
-        const val ACTION_NOTIFY_REFRESH_ALL = "NOTIFY_REFRESH_ALL"
         const val EXTRA_USER_ID = "user_id"
         const val EXTRA_USERNAME = "username"
 
-        private const val STATE_USER = "user"
+        private const val STATE_USER_ID = "user"
         private const val STATE_TITLE = "title"
-        private const val STATE_RECYCLER = "recycler"
+        private const val STATE_CHANGED_THEME = "changed_theme"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat_history)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setActionBar(toolbar)
-
         mDb = (this.applicationContext as WeChatApp).db
 
+        mLifecycleRegistry = LifecycleRegistry(this)
+        mLifecycleRegistry.currentState = Lifecycle.State.CREATED
+
+        mAdapter = ChatBubbleAdapter(this@ChatHistoryActivity)
+        mRecycler = findViewById(R.id.bubble_recycler)
+        mRecycler.adapter = mAdapter
+        mLayout = LinearLayoutManager(this@ChatHistoryActivity)
+        mLayout.reverseLayout = true
+        mRecycler.layoutManager = mLayout
+
+        val userId: Long
+        val username: String
         if (savedInstanceState != null) {
-            val userId = savedInstanceState.getString(STATE_USER)
-            val username = savedInstanceState.getString(STATE_TITLE)
-            val recycler: Parcelable = savedInstanceState.getParcelable(STATE_RECYCLER)!!
-
-            mChatSelectedSid = userId!!
-            mChatSelectedTitle = username!!
-            actionBar?.title = username
-
-            GlobalScope.launch(Dispatchers.Main) {
-                refreshData()
-
-                (mRecycler.layoutManager as LinearLayoutManager).onRestoreInstanceState(recycler)
-            }
+            userId = savedInstanceState.getLong(STATE_USER_ID)
+            username = savedInstanceState.getString(STATE_TITLE)!!
+            mThemeChangeBypass = savedInstanceState.getBoolean(STATE_CHANGED_THEME)
         } else {
             // entering activity from user list
-            val userId = intent.getStringExtra(EXTRA_USER_ID)
-            val username = intent.getStringExtra(EXTRA_USERNAME)
-
-            if (userId != null && username != null) {
-                mChatSelectedTitle = username
-                mChatSelectedSid = userId
-                actionBar?.title = username
-
-                GlobalScope.launch(Dispatchers.Main) {
-                    refreshData()
-                    mRecycler.scrollToPosition(mAdapter.itemCount-1)
-                }
-            }
+            userId = intent.getLongExtra(EXTRA_USER_ID, -1)
+            username = intent.getStringExtra(EXTRA_USERNAME)!!
         }
 
-        val filter = IntentFilter()
-        filter.addAction(ACTION_NOTIFY_NEW_MESSAGE)
-        filter.addAction(ACTION_NOTIFY_REFRESH_ALL)
-        registerReceiver(mBroadcastReceiver, filter)
+        mChatSelectedTitle = username
+        mChatSelectedId = userId
+
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setActionBar(toolbar)
+        actionBar?.title = mChatSelectedTitle
+
+        val items = Pager(
+            PagingConfig(
+                initialLoadSize = 80,
+                pageSize = 40,
+                prefetchDistance = 50,
+                enablePlaceholders = false,
+                maxSize = 200
+            )
+        ) {
+            mDb.messageDao().getMessagesWithAvatarPaged(mChatSelectedId)
+        }.liveData
+
+        // check if we can scroll to bottom
+        /*var firstLoad = true
+        lifecycleScope.launch {
+            if (firstLoad) {
+                Log.d("Nevo.Decorator[WeChat]", "Can scroll? " + mRecycler.canScrollVertically(-1))
+
+                mRecycler.scrollToPosition(mAdapter.itemCount)
+                firstLoad = false
+            }
+        }*/
+
+        // now setup actual perpetual live data listener
+        items.observe(this@ChatHistoryActivity, Observer {
+            it ?: return@Observer
+
+            lifecycleScope.launch {
+                mAdapter.submitData(it)
+            }
+        })
     }
 
-    private suspend fun refreshData() {
-        val messages = mDb.messageDao().getAllBySidAsc(mChatSelectedSid)
-        for (message in messages) {
-            val bubble: Any = if (!message!!.is_reply) {
-                ChatBubbleReceiver(
-                    message.message
-                )
-            } else {
-                ChatBubbleSender(
-                    message.message
-                )
-            }
+    override fun onStart() {
+        super.onStart()
+        mLifecycleRegistry.currentState = Lifecycle.State.STARTED
+    }
 
-            mAdapterData.add(bubble)
-        }
+    override fun onResume() {
+        super.onResume()
+        mLifecycleRegistry.currentState = Lifecycle.State.RESUMED
+    }
 
-        if (!this@ChatHistoryActivity::mAdapter.isInitialized) {
-            mAdapter = ChatBubbleAdapter(this@ChatHistoryActivity, mAdapterData)
-            mRecycler = findViewById(R.id.bubble_recycler)
-            mRecycler.adapter = mAdapter
-            mLayout = LinearLayoutManager(this@ChatHistoryActivity)
-            mLayout.stackFromEnd = true
-            mRecycler.layoutManager = mLayout
-            OverScrollDecoratorHelper.setUpOverScroll(mRecycler, OverScrollDecoratorHelper.ORIENTATION_VERTICAL)
-        }
+    override fun onDestroy() {
+        super.onDestroy()
+        mLifecycleRegistry.currentState = Lifecycle.State.DESTROYED
     }
 
     override fun onBackPressed() {
-        setResult(RESULT_REFRESH)
+        if (!mThemeChangeBypass) {
+            setResult(RESULT_REFRESH)
+        }
         finish()
         super.onBackPressed()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putString(STATE_USER, mChatSelectedSid)
+        outState.putLong(STATE_USER_ID, mChatSelectedId)
         outState.putString(STATE_TITLE, mChatSelectedTitle)
-        outState.putParcelable(STATE_RECYCLER, mRecycler.layoutManager?.onSaveInstanceState())
+        outState.putBoolean(STATE_CHANGED_THEME, mThemeChangeBypass)
 
         super.onSaveInstanceState(outState)
+    }
+
+    // detect system theme change
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        // detect sysetm theme change in order to work around a bug which calls onCreate and
+        // setActivityResult both in userlist, causing double list
+        mThemeChangeBypass = true
+        //AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_FOLLOW_SYSTEM)
+        this.recreate()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.clear_chat -> {
-                if (this::mChatSelectedSid.isInitialized && mChatSelectedSid.isNotEmpty()) {
+                if (mChatSelectedId >= 0) {
                     AlertDialog.Builder(this)
                         .setTitle(getString(R.string.delete_chat).replace("%s", mChatSelectedTitle))
-                        .setMessage(getString(R.string.delete_chat_summary).replace("%s", mChatSelectedTitle))
+                        .setMessage(
+                            getString(R.string.delete_chat_summary).replace(
+                                "%s",
+                                mChatSelectedTitle
+                            )
+                        )
 
                         .setPositiveButton(
                             android.R.string.ok
                         ) { _, _ ->
-                            GlobalScope.launch(Dispatchers.Main) {
-                                mDb.userDao().deleteUserBySid(mChatSelectedSid)
-                                mDb.messageDao().deleteAllBySid(mChatSelectedSid)
-                                mChatSelectedSid = ""
-                                mChatSelectedTitle = ""
-                                setResult(RESULT_REFRESH)
+                            GlobalScope.launch(Dispatchers.IO) {
+                                mDb.userDao().deleteByUid(mChatSelectedId)
+                                if (!mThemeChangeBypass) {
+                                    setResult(RESULT_REFRESH)
+                                }
                                 finish()
                             }
                         }
@@ -162,12 +190,11 @@ class ChatHistoryActivity : Activity() {
                     .setPositiveButton(
                         android.R.string.ok
                     ) { _, _ ->
-                        GlobalScope.launch(Dispatchers.Main) {
+                        GlobalScope.launch(Dispatchers.IO) {
                             mDb.userDao().deleteAll()
-                            mDb.messageDao().deleteAll()
-                            mChatSelectedSid = ""
-                            mChatSelectedTitle = ""
-                            setResult(RESULT_REFRESH)
+                            if (!mThemeChangeBypass) {
+                                setResult(RESULT_REFRESH)
+                            }
                             finish()
                         }
                     }
@@ -181,61 +208,16 @@ class ChatHistoryActivity : Activity() {
         }
     }
 
-    private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val userId = intent?.getStringExtra(EXTRA_USER_ID)
 
-            if (this@ChatHistoryActivity::mChatSelectedSid.isInitialized && userId == mChatSelectedSid) {
-                GlobalScope.launch(Dispatchers.Main) {
 
-                    when (intent.action) {
-                        ACTION_NOTIFY_NEW_MESSAGE -> {
-                            val message = mDb.messageDao().getLatestMessagesByUserLimit(userId, 1)
-
-                            val isReply = message[0]?.is_reply!!
-                            val bubble: Any = if (!isReply) {
-                                ChatBubbleReceiver(
-                                    message[0]?.message!!
-                                )
-                            } else {
-                                ChatBubbleSender(
-                                    message[0]?.message!!
-                                )
-                            }
-
-                            val state = mRecycler.layoutManager?.onSaveInstanceState()
-                            mAdapterData.add(bubble)
-                            mAdapter.notifyItemInserted(mAdapter.itemCount)
-                            val lastPos = mLayout.findLastCompletelyVisibleItemPosition()
-                            // don't scroll to new item unless we're at the bottom
-                            if (lastPos == mAdapter.itemCount-2) {
-                                mRecycler.scrollToPosition(mAdapter.itemCount - 1)
-                            } else {
-                                mRecycler.layoutManager?.onRestoreInstanceState(state)
-                            }
-                        }
-
-                        ACTION_NOTIFY_REFRESH_ALL -> {
-                            GlobalScope.launch(Dispatchers.Main) {
-                                mAdapterData.clear()
-                                refreshData()
-                                mAdapter.notifyDataSetChanged()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(mBroadcastReceiver)
-    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.chat_history_menu, menu)
         return true
+    }
+
+    override fun getLifecycle(): Lifecycle {
+        return mLifecycleRegistry
     }
 }

@@ -7,13 +7,9 @@ import android.service.notification.StatusBarNotification
 import android.text.TextUtils
 import android.util.ArrayMap
 import android.util.Log
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.ACTION_NOTIFY_NEW_MESSAGE
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.ACTION_NOTIFY_REFRESH_ALL
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USER_ID
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.AppDatabase
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.Message
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.User
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.*
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.UserActivity.Companion.ACTION_NOTIFY_USER_CHANGE
 import kotlinx.coroutines.*
 import kotlin.properties.Delegates
@@ -27,7 +23,7 @@ internal object ConversationHistory {
     private lateinit var mDb: AppDatabase
     private var mChatHistoryEnabled by Delegates.notNull<Boolean>()
 
-    private suspend fun handleRecalledMessage(
+    private fun handleRecalledMessage(
         key: String,
         message: String,
         context: Context,
@@ -44,41 +40,12 @@ internal object ConversationHistory {
         val history = ArrayList(mConversationHistory[key]).subList(
             0, (mUnreadCount[key]!!).coerceAtMost(MAX_NUM_CONVERSATIONS)
         )
-        var dbHistory: List<Message?> = emptyList()
-        if (mChatHistoryEnabled) {
-            dbHistory =
-                mDb.messageDao().getAllMessagesByUserLimitDesc(user, mUnreadCount[key]!!)
-        }
-
-        val visible = (context.applicationContext as WeChatApp).sharedPreferences?.getBoolean(
-            context.getString(
-                R.string.pref_recalled
-            ), false
-        )
-
-        val msg: String
 
         if (isGroupChat) {
             // check back history
             for (i in history.indices) {
                 if (history[i] == message) {
-                    val sender = splitSender(history[i])
-
-                    msg = if (visible == true) {
-                        // [Recalled] Message
-                        "${sender[0]}: ${context.getString(R.string.recalled_message)} ${sender[1]}"
-                    } else {
-                        "${sender[0]}: ${context.getString(R.string.recalled_message)}"
-                    }
-
-                    history[i] = msg
-                    mConversationHistory[key] = ArrayList(history)
-                    if (mChatHistoryEnabled) {
-                        dbHistory[i]!!.message = msg
-                        mDb.messageDao().update(dbHistory[i]!!)
-
-                        notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_REFRESH_ALL)
-                    }
+                    saveRecalledMsg(context, key, history, i, user, isGroupChat)
                     return
                 }
             }
@@ -86,21 +53,8 @@ internal object ConversationHistory {
             //
             // Check for when there's only 1 message
             //
-            if (history.size == 1 && car_messages.size == 0 && !history[0]!!.startsWith(
-                    context.getString(
-                        R.string.recalled_message
-                    )
-                )) {
-                msg = if (visible == true) "${context.getString(R.string.recalled_message)} ${history[0]}" else context.getString(
-                    R.string.recalled_message
-                )
-                history[0] = msg
-                mConversationHistory[key] = ArrayList(history)
-                if (mChatHistoryEnabled) {
-                    dbHistory[0]!!.message = msg
-                    mDb.messageDao().update(dbHistory[0]!!)
-                    notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_REFRESH_ALL)
-                }
+            if (history.size == 1 && car_messages.size == 0 && !history[0]!!.startsWith(context.getString(R.string.recalled_message))) {
+                saveRecalledMsg(context, key, history, 0, user, isGroupChat)
                 return
             } else if (history.size == 1 && car_messages.size == 0) {
                 // already has the recalled entry
@@ -131,16 +85,7 @@ internal object ConversationHistory {
             // found the exact one!
             if (validIndices.size == 1) {
                 val index = validIndices[0]
-                msg = if (visible == true) "${context.getString(R.string.recalled_message)} ${history[index]}" else context.getString(
-                    R.string.recalled_message
-                )
-                history[index] = msg
-                mConversationHistory[key] = ArrayList(history)
-                if (mChatHistoryEnabled) {
-                    dbHistory[index]!!.message = msg
-                    mDb.messageDao().update(dbHistory[index]!!)
-                    notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_REFRESH_ALL)
-                }
+                saveRecalledMsg(context, key, history, index, user, isGroupChat)
                 return
             }
             //
@@ -171,6 +116,67 @@ internal object ConversationHistory {
 
         // this point should never be reached
         Log.d(TAG, "handleRecalledMessage() reached unreachable point")
+    }
+
+    private fun saveRecalledMsg(context: Context, key: String, history: MutableList<String?>, index: Int, user: User, isGroupChat: Boolean) {
+        val visible = (context.applicationContext as WeChatApp).sharedPreferences?.getBoolean(context.getString(R.string.pref_recalled), false)
+
+        val sender = splitSender(history[index])
+
+        val newMsg: String = if (visible == true) {
+            // [Recalled] Message
+            if (isGroupChat) {
+                "${sender[0]}: ${context.getString(R.string.recalled_message)} ${sender[1]}"
+            } else {
+                "${context.getString(R.string.recalled_message)} ${history[index]}"
+            }
+        } else {
+            if (isGroupChat) {
+                "${sender[0]}: ${context.getString(R.string.recalled_message)}"
+            } else {
+                context.getString(R.string.recalled_message)
+            }
+        }
+
+        var databaseMsg = history[index]!!
+        history[index] = newMsg
+        mConversationHistory[key] = ArrayList(history)
+
+        if (mChatHistoryEnabled) {
+            GlobalScope.launch(Dispatchers.IO) {
+                val username: String
+                if (visible == true) {
+                    if (isGroupChat) {
+                        databaseMsg = context.getString(R.string.message_header_recalled_visible)
+                            .replace("%s", sender[0].toString())
+                            .replace("%m", sender[1].toString())
+                        username = sender[0]!!
+                    } else {
+                        databaseMsg = context.getString(R.string.message_header_recalled_visible)
+                            .replace("%m", databaseMsg)
+                            .replace("%s", user.username)
+                        username = user.username
+                    }
+                } else {
+                    if (isGroupChat) {
+                        databaseMsg = context.getString(R.string.message_header_recalled_invisible).replace("%s", sender[0].toString())
+                        username = sender[0]!!
+                    } else {
+                        databaseMsg = context.getString(R.string.message_header_recalled_invisible).replace("%s", user.username)
+                        username = user.username
+                    }
+                }
+
+                val us = mDb.userDao().findByUsername(username)!!
+
+                val dbHistory = mDb.messageDao().getAllMessagesByUserLimitDesc(us, mUnreadCount[key]!!)
+                dbHistory[index].message = databaseMsg
+                dbHistory[index].message_type = MessageType.RECALLED
+                mDb.messageDao().update(dbHistory[index])
+
+                notifyChatUiChangedData(context, us.u_id)
+            }
+        }
     }
 
     // modify in place
@@ -277,10 +283,10 @@ internal object ConversationHistory {
         return message
     }
 
-    private fun notifyChatUiChangedData(context: Context, id: String, action: String) {
+    private fun notifyChatUiChangedData(context: Context, uid: Long) {
         // notify of any new messages if you're in the activity
-        val intent = Intent(action)
-        intent.putExtra(EXTRA_USER_ID, id)
+        val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
+        intent.putExtra(EXTRA_USER_ID, uid)
         intent.setPackage(context.packageName)
         context.sendBroadcast(intent)
     }
@@ -459,34 +465,61 @@ internal object ConversationHistory {
 
             if (mChatHistoryEnabled) {
                 // Add to database
-                GlobalScope.launch(Dispatchers.Main) {
-                    val user = User(
-                        sid = conversation.id!!,
-                        username = username
-                    )
-
-                    val userD = mDb.userDao().findBySid(conversation.id!!)
+                GlobalScope.launch(Dispatchers.IO) {
+                    var userD = mDb.userDao().findByUserId(conversation.id!!)
                     if (userD == null) {
-                        mDb.userDao().insert(user)
-                        notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_USER_CHANGE)
+                        val user = User(
+                            user_id = conversation.id!!,
+                            username = username,
+                            conversation.timestamp
+                        )
+
+                        val newUid = mDb.userDao().insert(user)
+                        // make sure there's always an avatar in the db, even if it's empty
+                        val avatar = Avatar(
+                            newUid,
+                            ""
+                        )
+                        // update user so we can use it
+                        userD = User(
+                            user_id = user.user_id,
+                            username = user.username,
+                            conversation.timestamp,
+                            newUid
+                        )
+                        mDb.avatarDao().insert(avatar)
                     } else {
                         // update username
                         if (userD.username != username) {
                             userD.username = username
-                            mDb.userDao().update(userD)
-                            notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_USER_CHANGE)
                         }
+
+                        userD.latest_message = conversation.timestamp
+                        mDb.userDao().update(userD)
                     }
 
                     val message = run {
-                        val msg =
-                            EmojiTranslator.translate(mConversationHistory[key]!![0]!!).toString()
-                        Message(user.sid, msg)
+                        val chatType: ChatType
+                        val groupChatUsername: String
+                        val msg: String
+
+
+                        if (!isGroupChat) {
+                            chatType = ChatType.CHAT
+                            groupChatUsername = ""
+                            msg = EmojiTranslator.translate(mConversationHistory[key]!![0]!!).toString()
+                        } else {
+                            val split = splitSender(EmojiTranslator.translate(conversation.ticker))
+                            chatType = ChatType.GROUP
+                            groupChatUsername = split[0].toString()
+                            msg = split[1].toString()
+                        }
+
+                        Message(userD.u_id, msg, MessageType.RECEIVER, chatType, conversation.timestamp, groupChatUsername)
                     }
 
                     mDb.messageDao().insert(message)
-
-                    notifyChatUiChangedData(context, user.sid, ACTION_NOTIFY_NEW_MESSAGE)
+                    notifyChatUiChangedData(context, userD.u_id)
                 }
             }
         }
@@ -645,28 +678,22 @@ internal object ConversationHistory {
                     username
                 )
 
-                runBlocking {
-                    val msg = if (isGroupChat) {
-                        EmojiTranslator.translate(conversation.ticker).toString()
-                    } else {
-                        splitSender(
-                            conversation.ticker
-                        )[1].toString()
-                    }
-
-                    val job = GlobalScope.launch(Dispatchers.Main) {
-                        handleRecalledMessage(
-                            key,
-                            msg,
-                            context,
-                            carExtenderMessages,
-                            isGroupChat,
-                            user
-                        )
-                    }
-
-                    job.join()
+                val msg = if (isGroupChat) {
+                    EmojiTranslator.translate(conversation.ticker).toString()
+                } else {
+                    splitSender(
+                        conversation.ticker
+                    )[1].toString()
                 }
+
+                handleRecalledMessage(
+                    key,
+                    msg,
+                    context,
+                    carExtenderMessages,
+                    isGroupChat,
+                    user
+                )
             }
 
             val history = mConversationHistory[key]!!.subList(0, unreadCount)

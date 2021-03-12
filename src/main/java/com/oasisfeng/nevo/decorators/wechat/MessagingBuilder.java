@@ -333,7 +333,8 @@ class MessagingBuilder {
 					// add database reply to chat history section
 					boolean chatHistoryEnabled = ((WeChatApp)mContext.getApplicationContext()).getSharedPreferences().getBoolean(mContext.getString(R.string.pref_chat_history), false);
 					if (chatHistoryEnabled) {
-						DatabaseHelpers.addReply(mContext, userId, input.toString());
+						final Conversation conversation = mController.getConversation(user, proxy.getIntExtra(EXTRA_CONVERSATION_ID, 0));
+						DatabaseHelpers.addReply(mContext, userId, conversation.isChat(), input.toString(), conversation.timestamp);
 					}
 
 					final Bundle addition = new Bundle(); final CharSequence[] inputs;

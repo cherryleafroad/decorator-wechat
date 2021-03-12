@@ -71,9 +71,11 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
-    def room_version = "2.2.6"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0"
+    implementation "androidx.cardview:cardview:1.0.0"
+
+    def room_version = "2.3.0-beta02"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1'
     // Kotlin Extensions and Coroutines support for Room
@@ -88,5 +90,11 @@ dependencies {
     implementation "androidx.fragment:fragment-ktx:1.3.0"
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
 
-    implementation 'me.everything:overscroll-decor-android:1.1.0'
+    def paging_version = "3.0.0-beta01"
+    implementation "androidx.paging:paging-runtime-ktx:$paging_version"
+
+    def livedata_version = "2.3.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$livedata_version"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$livedata_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$livedata_version"
 }

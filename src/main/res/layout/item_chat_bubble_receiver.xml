@@ -1,30 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools = "http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_gravity="start"
     android:layout_marginTop="5dp"
     android:layout_marginBottom="5dp"
-    android:layout_gravity="start"
-    android:layout_marginEnd="40dp"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginEnd="80dp"
     tools:context=".chatHistoryUi.ChatHistoryActivity">
 
     <TextView
-        android:gravity="start"
-        android:id="@+id/chat_bubble_receiver"
+        android:id="@+id/chat_group_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/chat_receiver_bubble"
-        android:lineSpacingExtra="2dp"
-        android:padding="10dp"
-        android:text="Receiver bubble"
-        android:textColor="@color/chat_receiver_bubble_text"
-        android:textSize="17sp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="10dp"
+        android:textSize="12sp"
+        android:text="Foobar123"
+        android:textColor="@color/chat_group_username_text"
+        android:paddingBottom="2dp"
+        android:paddingLeft="3dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/avatar_holder"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/bubble_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintStart_toEndOf="@id/avatar_holder"
+        app:layout_constraintTop_toBottomOf="@id/chat_group_username"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constrainedWidth="true"
+        tools:ignore="RtlSymmetry">
+
+        <TextView
+            android:id="@+id/chat_bubble_receiver"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/chat_receiver_bubble"
+            android:gravity="start"
+            android:lineSpacingExtra="4dp"
+            android:padding="10dp"
+            android:text="Receiver bubble this is some very long tesxt and stuff liek that"
+            android:textColor="@color/chat_receiver_bubble_text"
+            android:textSize="17dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constrainedWidth="true"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/avatar_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardElevation="0dp"
+        app:cardCornerRadius="5dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_max="wrap"
-        app:layout_constraintWidth_percent="0.8" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/avatar"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/blank_user"
+            android:contentDescription="avatar"
+            android:scaleType="centerInside" />
+
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

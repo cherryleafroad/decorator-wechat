@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 class UserActivity : Activity() {
     private lateinit var mDb: AppDatabase
-    private var mAdapterData = mutableListOf<UserItem>()
+    private var mAdapterData = mutableListOf<UserWithMessageAndAvatar>()
     private lateinit var mAdapter: UserAdapter
     private lateinit var mRecycler: RecyclerView
 
@@ -48,30 +48,59 @@ class UserActivity : Activity() {
     }
 
     private fun loadUsers() {
-        mAdapterData.clear()
         GlobalScope.launch(Dispatchers.Main) {
-            val users = mDb.userDao().getAll()
+            val job = GlobalScope.launch(Dispatchers.IO) {
+                mAdapterData.clear()
+                val users = mDb.userDao().getUsersWithMessageAndAvatar()
 
-            for (user in users) {
-                mAdapterData.add(
-                    UserItem(
-                        user!!.sid,
-                        user.username
+                for (user in users) {
+                    mAdapterData.add(
+                        user
                     )
-                )
+                }
             }
+            job.join()
 
             mAdapter.notifyDataSetChanged()
         }
     }
 
-    fun userOnClick(userId: String, username: String) {
+    fun userOnClick(uid: Long, username: String) {
         val intent = Intent(this, ChatHistoryActivity::class.java).apply {
-            putExtra(ChatHistoryActivity.EXTRA_USER_ID, userId)
+            putExtra(ChatHistoryActivity.EXTRA_USER_ID, uid)
             putExtra(ChatHistoryActivity.EXTRA_USERNAME, username)
         }
 
         startActivityForResult(intent, RESULT_REFRESH)
+    }
+
+    fun userLongOnClick(uid: Long, username: String): Boolean {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.delete_chat).replace("%s", username))
+            .setMessage(
+                getString(R.string.delete_chat_summary).replace(
+                    "%s",
+                    username
+                )
+            )
+
+            .setPositiveButton(
+                android.R.string.ok
+            ) { _, _ ->
+                GlobalScope.launch(Dispatchers.IO) {
+                    mDb.userDao().deleteByUid(uid)
+                    
+                    val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
+                    intent.putExtra(ChatHistoryActivity.EXTRA_USER_ID, uid)
+                    intent.setPackage(this@UserActivity.packageName)
+                    this@UserActivity.sendBroadcast(intent)
+                }
+            }
+
+            .setNegativeButton(android.R.string.no, null)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .show()
+        return true
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -94,9 +123,11 @@ class UserActivity : Activity() {
                         android.R.string.ok
                     ) { _, _ ->
                         GlobalScope.launch(Dispatchers.Main) {
-                            mDb.userDao().deleteAll()
-                            mDb.messageDao().deleteAll()
-                            mAdapterData.clear()
+                            val job = GlobalScope.launch(Dispatchers.IO) {
+                                mDb.userDao().deleteAll()
+                                mAdapterData.clear()
+                            }
+                            job.join()
                             mAdapter.notifyDataSetChanged()
                         }
                     }
@@ -129,17 +160,12 @@ class UserActivity : Activity() {
 
     private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            mAdapterData.clear()
-            GlobalScope.launch(Dispatchers.Main) {
-                this@UserActivity.loadUsers()
-            }
-
+            loadUsers()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-
         unregisterReceiver(mBroadcastReceiver)
     }
 }

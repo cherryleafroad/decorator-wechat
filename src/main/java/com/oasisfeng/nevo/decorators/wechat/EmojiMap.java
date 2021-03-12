@@ -148,7 +148,10 @@ class EmojiMap {
 			{ "福",			"Blessing",		"🌠" }, //wishing star is often used as a "blessing" or "wish"
 			{ "烟花",		"Fireworks",	"🎆" },
 			{ "爆竹",		"Firecracker",	"🧨" },
-		
+			// regulat ones, usually can be found in titles
+			{ null,			"Guitar",		"🎸" },
+			{ null,			"Noodles",		"🍜" },
+			{ null,			"Singing",		"🎤" },
 
 			// From WeChat for iOS
 			{ "强壮",		null,			"💪"},

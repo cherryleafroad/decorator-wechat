@@ -1,18 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
-    android:padding="10dp">
+    android:layout_height="wrap_content"
+    android:layout_gravity="start"
+    android:paddingEnd="17dp"
+    android:paddingStart="17dp"
+    android:background="?android:attr/selectableItemBackground"
+    tools:context=".chatHistoryUi.UserActivity">
 
-    <TextView
-        android:id="@+id/user_item"
-        android:background="@drawable/chat_receiver_bubble"
-        android:gravity="center"
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="14dp"
+        app:layout_constraintBottom_toTopOf="@id/content"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="User title"
-        android:textColor="@color/chat_receiver_bubble_text"
-        android:textSize="24sp" />
+        android:layout_gravity="start"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <TextView
+            android:id="@+id/username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="17sp"
+            android:layout_marginStart="10dp"
+            android:text="Foobar123"
+            android:textColor="@color/chat_userlist_username_text"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:paddingBottom="3dp"
+            android:paddingEnd="105dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/avatar_holder"/>
+
+        <TextView
+            android:id="@+id/message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:lineSpacingExtra="4dp"
+            android:text="I just sent ou a message, although it's long"
+            android:textColor="@color/chat_userlist_message"
+            android:textSize="14sp"
+            android:scrollHorizontally="true"
+            android:maxLines="1"
+            android:layout_marginStart="10dp"
+            android:paddingEnd="105dp"
+            android:ellipsize="end"
+            app:layout_constraintTop_toBottomOf="@id/username"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintStart_toEndOf="@id/avatar_holder"/>
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:lineSpacingExtra="4dp"
+            android:text="7:55AM"
+            android:textColor="@color/chat_userlist_message"
+            android:textSize="13sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/avatar_holder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="5dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:id="@+id/avatar"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:background="@drawable/blank_user"
+                android:contentDescription="avatar"
+                android:scaleType="centerInside" />
+
+        </androidx.cardview.widget.CardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="14dp"
+        app:layout_constraintTop_toBottomOf="@id/content"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="53dp"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/chat_userlist_divider"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

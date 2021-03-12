@@ -32,6 +32,10 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
 import android.net.Uri;
@@ -261,6 +265,13 @@ public class WeChatDecorator extends NevoDecoratorService {
 				isRecalled,
 				isDuplicate
 		);
+
+		// this relies on user entry inserted. MUST come after the above function
+		// cache the avatar for the chat ui
+		if (large_icon != null && conversation.id != null) {
+			Bitmap avatar = ((BitmapDrawable)large_icon.loadDrawable(this)).getBitmap();
+			((WeChatApp) this.getApplicationContext()).dbHelpers.checkAndUpdateAvatar(this, original_key, conversation.id, avatar);
+		}
 
 
 		MessagingStyle messaging = mMessagingBuilder.buildFromConversation(conversation, evolving);

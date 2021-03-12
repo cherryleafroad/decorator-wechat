@@ -8,4 +8,9 @@
     <color name="chat_sender_bubble_fg">#3eb575</color>
     <color name="chat_sender_bubble_text">#06120b</color>
     <color name="chat_history_activity_bg">#111111</color>
+    <color name="chat_center_bubble">#9c9c9c</color>
+    <color name="chat_userlist_bg">#191919</color>
+    <color name="chat_userlist_divider">#1d1d1d</color>
+    <color name="chat_userlist_username_text">#d2d2d2</color>
+    <color name="chat_userlist_message">#595959</color>
 </resources>

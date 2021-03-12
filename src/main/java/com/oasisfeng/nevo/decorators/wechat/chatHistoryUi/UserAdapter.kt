@@ -1,19 +1,20 @@
 package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 import android.content.Context
-import android.content.Intent
+import android.graphics.drawable.Drawable
+import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.oasisfeng.nevo.decorators.wechat.R
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USERNAME
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USER_ID
+import java.util.*
 
 class UserAdapter(
         private val context: Context,
-        private val adapterDataList: List<UserItem>
+        private val adapterDataList: List<UserWithMessageAndAvatar>
 ) : RecyclerView.Adapter<UserAdapter.UserItemViewHolder>() {
 
     inner class UserItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
@@ -28,12 +29,29 @@ class UserAdapter(
     }
 
     override fun onBindViewHolder(holder: UserItemViewHolder, position: Int) {
-        val textview = holder.itemView.findViewById(R.id.user_item) as TextView
+        val username = holder.itemView.findViewById<TextView>(R.id.username)
         val data = adapterDataList[position]
-        textview.text = data.username
+        username.text = data.user.username
 
-        textview.setOnClickListener {
-            (context as UserActivity).userOnClick(data.user_id, data.username)
+        val message = holder.itemView.findViewById<TextView>(R.id.message)
+        message.text = data.data.message.message
+
+        val dateText = holder.itemView.findViewById<TextView>(R.id.date)
+        val date = Date(data.data.message.timestamp)
+        val dateFmt = DateFormat.getDateFormat(context).format(date)
+        dateText.text = dateFmt
+
+        val avatar = Drawable.createFromPath(data.data.avatar.filename)
+        if (avatar != null) {
+            val imageview = holder.itemView.findViewById<ImageView>(R.id.avatar)
+            imageview.background = avatar
+        }
+
+        holder.itemView.setOnClickListener {
+            (context as UserActivity).userOnClick(data.user.u_id, data.user.username)
+        }
+        holder.itemView.setOnLongClickListener {
+            return@setOnLongClickListener (context as UserActivity).userLongOnClick(data.user.u_id, data.user.username)
         }
     }
 }
