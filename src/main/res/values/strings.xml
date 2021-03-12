@@ -85,4 +85,5 @@
     <string name="pref_user_activity_title">请选择聊天记录</string>
     <string name="message_header_recalled_visible">\"%s\"尝试撤回：%m</string>
     <string name="message_header_recalled_invisible">\"%s\"撤回一条信息</string>
+    <string name="yesterday">昨天</string>
 </resources>

@@ -2,12 +2,14 @@ package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import com.oasisfeng.nevo.decorators.wechat.R
 import java.util.*
@@ -28,6 +30,7 @@ class UserAdapter(
         return adapterDataList.size
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onBindViewHolder(holder: UserItemViewHolder, position: Int) {
         val username = holder.itemView.findViewById<TextView>(R.id.username)
         val data = adapterDataList[position]
@@ -37,9 +40,8 @@ class UserAdapter(
         message.text = data.data.message.message
 
         val dateText = holder.itemView.findViewById<TextView>(R.id.date)
-        val date = Date(data.data.message.timestamp)
-        val dateFmt = DateFormat.getDateFormat(context).format(date)
-        dateText.text = dateFmt
+        val dateString = DateConverter.toDateUserlist(context, data.data.message.timestamp)
+        dateText.text = dateString
 
         val avatar = Drawable.createFromPath(data.data.avatar.filename)
         if (avatar != null) {

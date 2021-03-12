@@ -2,6 +2,7 @@ package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.util.ArrayMap
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -89,10 +91,11 @@ class ChatBubbleAdapter(
     }
 
     inner class ChatBubbleDateHeaderViewHolder(itemView: View) : ChatBubbleViewHolder<MessageWithAvatar>(itemView) {
+        @RequiresApi(Build.VERSION_CODES.N)
         override fun bind(item: MessageWithAvatar, position: Int) {
             val constraint = ((this.itemView as FrameLayout).getChildAt(0) as ConstraintLayout)
             val textview = constraint.getViewById(R.id.chat_bubble_date_header) as TextView
-            textview.text = item.message.message
+            textview.text = DateConverter.toDateMessage(context, item.message.timestamp)
         }
     }
 
