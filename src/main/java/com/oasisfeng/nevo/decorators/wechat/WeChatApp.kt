@@ -57,6 +57,12 @@ class WeChatApp : Application() {
             .build()
     }
 
+    override fun onTerminate() {
+        super.onTerminate()
+
+        this.contentResolver.unregisterContentObserver(resolver)
+    }
+
     @SuppressLint("Recycle")
     private fun queryAndUpdateSetting(uri: Uri?) {
         val fullUri = Uri.parse("content://$SETTINGS_PROVIDER${uri?.path}")
@@ -73,6 +79,9 @@ class WeChatApp : Application() {
                 }
             }
 
+            // in case it was still null
+            res = res ?: false
+
             Log.d(WeChatDecorator.TAG, "Setting ${uri?.lastPathSegment} changed: $res")
             updateSetting(uri, res)
         } catch (ex: Exception) {
@@ -83,10 +92,10 @@ class WeChatApp : Application() {
         }
     }
 
-    private fun updateSetting(path: Uri?, res: Boolean?) {
+    private fun updateSetting(path: Uri?, res: Boolean) {
         when (path?.lastPathSegment) {
-            "synchronous_removal" -> settingSynchronousRemoval = res!!
-            "insider_mode" -> settingInsiderMode = res!!
+            "synchronous_removal" -> settingSynchronousRemoval = res
+            "insider_mode" -> settingInsiderMode = res
         }
     }
 
