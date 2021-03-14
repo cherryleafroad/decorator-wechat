@@ -11,6 +11,7 @@ import android.os.Looper
 import android.util.ArrayMap
 import android.util.Log
 import androidx.room.Room
+import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.AppDatabase
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.DatabaseHelpers
 
@@ -29,23 +30,30 @@ class WeChatApp : Application() {
     var settingInsiderMode = false
     lateinit var db: AppDatabase
 
-    private val resolver = SettingsObserver(Handler(Looper.getMainLooper()))
+    private lateinit var resolver: SettingsObserver
+    private var isUIProcess = false
 
 
     override fun onCreate() {
         super.onCreate()
 
-        val url = "content://$SETTINGS_PROVIDER/"
-        val data = Uri.parse(url)
-        // normally you would unregister this, but we expect this to update throughout the application
-        // lifetime. If the application gets killed, it will restart next time, so no biggie
-        this.contentResolver.registerContentObserver(data, true, resolver)
+        isUIProcess = getProcessName().substringAfter(':', "") == "ui"
 
-        // initial setup of setting values
-        val insiderMode = Uri.parse("/insider_mode")
-        val synchronousRemoval = Uri.parse("/synchronous_removal")
-        queryAndUpdateSetting(insiderMode)
-        queryAndUpdateSetting(synchronousRemoval)
+        // this feature is not used for UI process. It's redundant
+        if (!isUIProcess) {
+            resolver = SettingsObserver(Handler(Looper.getMainLooper()))
+
+            val url = "content://$SETTINGS_PROVIDER/"
+            val data = Uri.parse(url)
+
+            this.contentResolver.registerContentObserver(data, true, resolver)
+
+            // initial setup of setting values
+            val insiderMode = Uri.parse("/insider_mode")
+            val synchronousRemoval = Uri.parse("/synchronous_removal")
+            queryAndUpdateSetting(insiderMode)
+            queryAndUpdateSetting(synchronousRemoval)
+        }
 
         // I'd like to get rid of this if the feature is disabled
         // but initializing it later is too much work, better to leave it ready
@@ -60,7 +68,9 @@ class WeChatApp : Application() {
     override fun onTerminate() {
         super.onTerminate()
 
-        this.contentResolver.unregisterContentObserver(resolver)
+        if (!isUIProcess) {
+            this.contentResolver.unregisterContentObserver(resolver)
+        }
     }
 
     @SuppressLint("Recycle")
@@ -82,7 +92,7 @@ class WeChatApp : Application() {
             // in case it was still null
             res = res ?: false
 
-            Log.d(WeChatDecorator.TAG, "Setting ${uri?.lastPathSegment} changed: $res")
+            Log.d(TAG, "Setting ${uri?.lastPathSegment} changed: $res")
             updateSetting(uri, res)
         } catch (ex: Exception) {
             ex.printStackTrace()
