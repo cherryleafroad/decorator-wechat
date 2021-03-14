@@ -10,6 +10,8 @@ import android.util.Log
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USER_ID
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.*
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.ACTION_USERNAME_CHANGED
+import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USERNAME
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.UserActivity.Companion.ACTION_NOTIFY_USER_CHANGE
 import kotlinx.coroutines.*
 import kotlin.properties.Delegates
@@ -167,14 +169,14 @@ internal object ConversationHistory {
                     }
                 }
 
-                val us = mDb.userDao().findByUsername(username)!!
+                val us = mDb.userDao().findByUsername(user.username)!!
 
-                val dbHistory = mDb.messageDao().getAllMessagesByUserLimitDesc(us, mUnreadCount[key]!!)
+                val dbHistory = mDb.messageDao().getAllMessagesByUserLimitDescNoDateHeader(us.u_id, mUnreadCount[key]!!)
                 dbHistory[index].message = databaseMsg
                 dbHistory[index].message_type = MessageType.RECALLED
                 mDb.messageDao().update(dbHistory[index])
 
-                notifyChatUiChangedData(context, us.u_id)
+                notifyChatUiChangedData(context, ACTION_NOTIFY_USER_CHANGE)
             }
         }
     }
@@ -283,10 +285,12 @@ internal object ConversationHistory {
         return message
     }
 
-    private fun notifyChatUiChangedData(context: Context, uid: Long) {
-        // notify of any new messages if you're in the activity
-        val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
-        intent.putExtra(EXTRA_USER_ID, uid)
+    private fun notifyChatUiChangedData(context: Context, action: String, data: Any = Unit) {
+        val intent = Intent(action)
+        when (action) {
+            ACTION_USERNAME_CHANGED -> intent.putExtra(EXTRA_USERNAME, data as String)
+        }
+
         intent.setPackage(context.packageName)
         context.sendBroadcast(intent)
     }
@@ -466,62 +470,80 @@ internal object ConversationHistory {
             if (mChatHistoryEnabled) {
                 // Add to database
                 GlobalScope.launch(Dispatchers.IO) {
-                    var userD = mDb.userDao().findByUserId(conversation.id!!)
-                    if (userD == null) {
-                        val user = User(
-                            user_id = conversation.id!!,
+                    var user = mDb.userDao().findByUserId(conversation.id!!)
+                    if (user == null) {
+                        user = User(
+                            user_sid = conversation.id!!,
                             username = username,
-                            conversation.timestamp
+                            latest_message = conversation.timestamp
                         )
 
-                        val newUid = mDb.userDao().insert(user)
+                        user.u_id = mDb.userDao().insert(user)
                         // make sure there's always an avatar in the db, even if it's empty
                         val avatar = Avatar(
-                            newUid,
-                            ""
+                            user_id = user.u_id,
+                            filename = ""
                         )
-                        // update user so we can use it
-                        userD = User(
-                            user_id = user.user_id,
-                            username = user.username,
-                            conversation.timestamp,
-                            newUid
-                        )
+
                         mDb.avatarDao().insert(avatar)
                     } else {
                         // update username
-                        if (userD.username != username) {
-                            userD.username = username
+                        if (user.username != username) {
+                            user.username = username
+                            mDb.userDao().update(user)
+                            notifyChatUiChangedData(context, ACTION_USERNAME_CHANGED, user.username)
                         }
 
-                        userD.latest_message = conversation.timestamp
-                        mDb.userDao().update(userD)
+                        user.latest_message = conversation.timestamp
+                        mDb.userDao().update(user)
                     }
 
-                    val message = run {
+                    val exists = mDb.messageDao().checkTimestampExists(conversation.timestamp)
+                    if (!exists) {
                         val chatType: ChatType
                         val groupChatUsername: String
                         val msg: String
 
-
                         if (!isGroupChat) {
                             chatType = ChatType.CHAT
                             groupChatUsername = ""
-                            msg = EmojiTranslator.translate(mConversationHistory[key]!![0]!!).toString()
+                            msg = EmojiTranslator.translate(mConversationHistory[key]!![0]!!)
+                                .toString()
                         } else {
-                            val split = splitSender(EmojiTranslator.translate(conversation.ticker))
+                            val split = splitSender(EmojiTranslator.translate(mConversationHistory[key]!![0]!!))
                             chatType = ChatType.GROUP
                             groupChatUsername = split[0].toString()
                             msg = split[1].toString()
                         }
 
-                        Message(userD.u_id, msg, MessageType.RECEIVER, chatType, conversation.timestamp, groupChatUsername)
+                        // Insert date header if needed
+                        DatabaseHelpers.checkAndInsertDateHeader(
+                            context,
+                            user.u_id,
+                            chatType,
+                            conversation.timestamp
+                        )
+
+                        // ALL timestamps MUST be unique, however we potentially NEED
+                        // a date header, and I'd rather the date header have a
+                        // perfect timestamp since it's used for date display.
+                        // the timestamp on the message is only used for sorting and that's it
+                        // (no time display). So -1 on the timestamp won't hurt anything.
+                        //
+                        // ONLY decrease time IF date was inserted, otherwise leave it normal
+                        val message = Message(
+                            user.u_id,
+                            msg,
+                            MessageType.RECEIVER,
+                            chatType,
+                            conversation.timestamp,
+                            groupChatUsername
+                        )
+
+                        mDb.messageDao().insert(message)
                     }
 
-                    // TODO: Implement date message type
-
-                    mDb.messageDao().insert(message)
-                    notifyChatUiChangedData(context, userD.u_id)
+                    notifyChatUiChangedData(context, ACTION_NOTIFY_USER_CHANGE)
                 }
             }
         }

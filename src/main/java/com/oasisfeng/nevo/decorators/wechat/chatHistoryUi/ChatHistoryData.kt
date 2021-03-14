@@ -5,6 +5,7 @@ import android.util.ArrayMap
 import androidx.paging.PagingSource
 import androidx.room.*
 import androidx.room.ForeignKey.CASCADE
+import java.sql.Time
 
 enum class MessageType {
     RECEIVER,
@@ -21,14 +22,14 @@ enum class ChatType {
 
 @Entity(tableName = "users",
     indices = [
-        Index(value = ["user_id"], unique = true)
+        Index(value = ["user_sid"], unique = true)
     ]
 )
 data class User(
-    @ColumnInfo(name = "user_id") val user_id: String,
+    @ColumnInfo(name = "user_sid") val user_sid: String,
     @ColumnInfo(name = "username") var username: String,
     @ColumnInfo(name = "latest_message") var latest_message: Long = 0,
-    @PrimaryKey(autoGenerate = true) val u_id: Long = 0
+    @PrimaryKey(autoGenerate = true) var u_id: Long = 0
 )
 
 
@@ -38,7 +39,8 @@ data class User(
         childColumns = ["user_id"],
         onDelete = CASCADE)],
     indices = [
-        Index(value = ["timestamp"], unique = true),
+        // ordinarily timestamp is unique, but our date headers have the same timestamp
+        Index(value = ["timestamp"]),
         Index(value = ["user_id"])
     ]
 )
@@ -57,15 +59,11 @@ data class Message(
     foreignKeys = [ForeignKey(entity = User::class,
         parentColumns = ["u_id"],
         childColumns = ["user_id"],
-        onDelete = CASCADE)],
-    indices = [
-        Index(value = ["user_id"], unique = true)
-    ]
+        onDelete = CASCADE)]
 )
 data class Avatar(
-    @ColumnInfo(name = "user_id") val user_id: Long,
-    @ColumnInfo(name = "filename") val filename: String,
-    @PrimaryKey(autoGenerate = true) val a_id: Long = 0
+    @PrimaryKey val user_id: Long,
+    @ColumnInfo(name = "filename") val filename: String
 )
 
 // special data class for special query, and autoconversion to drawable
@@ -99,6 +97,10 @@ data class UserWithMessageAndAvatar(
     val data: MessageWithAvatar
 )
 
+data class Timestamp(
+    val timestamp: Long
+)
+
 
 @Dao
 interface UserDao {
@@ -109,7 +111,7 @@ interface UserDao {
     @Query("SELECT * FROM users ORDER BY latest_message DESC")
     suspend fun getUsersWithMessageAndAvatar(): List<UserWithMessageAndAvatar>
 
-    @Query("SELECT * FROM users WHERE user_id IN (:user_ids)")
+    @Query("SELECT * FROM users WHERE user_sid IN (:user_ids)")
     suspend fun getAllByUserIds(vararg user_ids: String): List<User>
 
     @Query("SELECT * FROM users WHERE username IN (:usernames)")
@@ -118,16 +120,16 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE username LIKE :username LIMIT 1")
     suspend fun findByUsername(username: String): User?
 
-    @Query("SELECT * FROM users WHERE user_id LIKE :user_id LIMIT 1")
+    @Query("SELECT * FROM users WHERE user_sid LIKE :user_id LIMIT 1")
     suspend fun findByUserId(user_id: String): User?
 
-    @Query("UPDATE users SET username = :username WHERE user_id LIKE :user")
+    @Query("UPDATE users SET username = :username WHERE user_sid LIKE :user")
     suspend fun updateUsername(user: User, username: String)
 
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getLatestUser(): User
 
-    @Query("SELECT u_id FROM users WHERE user_id LIKE :user_id")
+    @Query("SELECT u_id FROM users WHERE user_sid LIKE :user_id")
     suspend fun getUidFromUserId(user_id: String): Long?
 
     @Update
@@ -139,10 +141,10 @@ interface UserDao {
     @Query("DELETE FROM users")
     suspend fun deleteAll()
 
-    @Query("DELETE FROM users WHERE user_id LIKE :user_id")
+    @Query("DELETE FROM users WHERE user_sid LIKE :user_id")
     suspend fun deleteUserByUserId(user_id: String)
 
-    @Query("DELETE FROM users WHERE user_id LIKE :user")
+    @Query("DELETE FROM users WHERE user_sid LIKE :user")
     suspend fun deleteUser(user: User)
 
     @Query("DELETE FROM users WHERE u_id = :uid")
@@ -174,7 +176,7 @@ interface MessageDao {
 
     @Query("SELECT message, message_type, chat_type, timestamp, group_chat_username, avatars.filename AS avatar " +
             "FROM messages JOIN avatars ON avatars.user_id = messages.user_id " +
-            "WHERE messages.user_id = (SELECT u_id FROM users WHERE users.user_id LIKE :user)")
+            "WHERE messages.user_id = (SELECT u_id FROM users WHERE users.user_sid LIKE :user)")
     fun getMessagesWithAvatarPagedCustom(user: User): PagingSource<Int, MessageWithAvatarCustom>
 
     @Query("SELECT * FROM messages WHERE user_id LIKE :user ORDER BY timestamp DESC")
@@ -186,11 +188,24 @@ interface MessageDao {
     @Query("SELECT * FROM messages WHERE user_id LIKE :user ORDER BY timestamp ASC LIMIT :limit")
     suspend fun getAllMessagesByUserLimit(user: User, limit: Int): MutableList<Message>
 
-    @Query("SELECT * FROM messages WHERE user_id = (SELECT u_id FROM users WHERE users.user_id LIKE :user) ORDER BY m_id DESC LIMIT :limit")
+    @Query("SELECT * FROM messages WHERE user_id = (SELECT u_id FROM users WHERE users.user_sid LIKE :user) ORDER BY m_id DESC LIMIT :limit")
     suspend fun getAllMessagesByUserLimitDesc(user: User, limit: Int): MutableList<Message>
 
-    @Query("SELECT * FROM messages WHERE user_id LIKE :user_id ORDER BY timestamp DESC LIMIT :limit")
+    @Query("SELECT * FROM messages WHERE user_id = :uid AND message_type <> :message_type ORDER BY m_id DESC LIMIT :limit")
+    suspend fun getAllMessagesByUserLimitDescNoDateHeader(uid: Long, limit: Int, message_type: MessageType = MessageType.DATE_HEADER): MutableList<Message>
+
+    @Query("SELECT * FROM messages WHERE user_id = (SELECT u_id FROM users WHERE :user_id LIKE :user_id) ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getLatestMessagesByUserLimit(user_id: String, limit: Int): MutableList<Message>
+
+    //@Query("SELECT timestamp FROM messages WHERE user_id = :uid ORDER BY m_id DESC LIMIT :limit")
+    //suspend fun getLatestTimestampsByUser(uid: Long, limit: Int): List<Timestamp>
+
+    // get all records INCLUDING and after cetain message type
+    @Query("SELECT timestamp FROM messages WHERE m_id >= (SELECT MAX(m_id) FROM messages WHERE user_id = :uid AND message_type = :messageType)")
+    suspend fun getLatestTimestampsByUser(uid: Long, messageType: MessageType = MessageType.DATE_HEADER): List<Timestamp>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM messages WHERE timestamp = :timestamp)")
+    suspend fun checkTimestampExists(timestamp: Long): Boolean
 
     @Update
     suspend fun update (message: Message)
@@ -214,7 +229,7 @@ interface AvatarDao {
     @Query("SELECT * FROM avatars WHERE user_id LIKE :user LIMIT 1")
     suspend fun getAvatarUser(user: User): Avatar?
 
-    @Query("SELECT * FROM avatars INNER JOIN users ON users.user_id LIKE :user_id")
+    @Query("SELECT * FROM avatars INNER JOIN users ON users.user_sid LIKE :user_id")
     suspend fun getAvatarFromUserId(user_id: String): Avatar?
 
     @Query("SELECT * FROM avatars WHERE user_id = :uid")
@@ -230,7 +245,7 @@ interface AvatarDao {
     suspend fun delete(avatar: Avatar)
 }
 
-@Database(entities = [User::class, Message::class, Avatar::class], version = 1, exportSchema = false)
+@Database(entities = [User::class, Message::class, Avatar::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
@@ -241,7 +256,7 @@ abstract class AppDatabase : RoomDatabase() {
 class Converters {
     @TypeConverter
     fun fromUser(user: User): String {
-        return user.user_id
+        return user.user_sid
     }
 
     @TypeConverter

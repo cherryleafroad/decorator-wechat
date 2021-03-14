@@ -5,7 +5,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.ArrayMap
+import android.util.Log
 import com.oasisfeng.nevo.decorators.wechat.*
+import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USER_ID
 import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.UserActivity.Companion.ACTION_NOTIFY_USER_CHANGE
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +18,35 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 object DatabaseHelpers {
-    var avatarMap = ArrayMap<String, Bitmap>()
+    private var avatarMap = ArrayMap<String, Bitmap>()
+
+    suspend fun checkAndInsertDateHeader(context: Context, uid: Long, chatType: ChatType, timestamp: Long) {
+        val db = ((context.applicationContext as WeChatApp)).db
+        val latestMessages = db.messageDao().getLatestTimestampsByUser(uid)
+
+        if (latestMessages.isNotEmpty()) {
+            if (DateConverter.shouldInsertDateHeader(latestMessages, timestamp)) {
+                val message = Message(
+                    uid,
+                    "",
+                    MessageType.DATE_HEADER,
+                    chatType,
+                    timestamp
+                )
+                db.messageDao().insert(message)
+            }
+        } else {
+            // null record, always insert date
+            val message = Message(
+                uid,
+                "",
+                MessageType.DATE_HEADER,
+                chatType,
+                timestamp
+            )
+            db.messageDao().insert(message)
+        }
+    }
 
     @JvmStatic
     fun addReply(context: Context, id: String, isChat: Boolean, reply: String, timestamp: Long) {
@@ -25,17 +55,18 @@ object DatabaseHelpers {
         GlobalScope.launch(Dispatchers.IO) {
             val chatType = if (isChat) ChatType.CHAT else ChatType.GROUP
 
-            val user = db.userDao().findByUserId(id)!!
-            user.latest_message = timestamp
-            val message = Message(user.u_id, reply, MessageType.SENDER, chatType, System.currentTimeMillis())
-            db.messageDao().insert(message)
-            db.userDao().update(user)
+            val uid = db.userDao().getUidFromUserId(id)
+            if (uid != null) {
+                val message =
+                    Message(uid, reply, MessageType.SENDER, chatType, System.currentTimeMillis())
+                db.messageDao().insert(message)
 
-            // notify userlist of new reply
-            val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
-            intent.putExtra(EXTRA_USER_ID, user.u_id)
-            intent.setPackage(context.packageName)
-            context.sendBroadcast(intent)
+                // notify userlist of new reply
+                val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
+                intent.putExtra(EXTRA_USER_ID, uid)
+                intent.setPackage(context.packageName)
+                context.sendBroadcast(intent)
+            }
         }
     }
 
@@ -66,8 +97,10 @@ object DatabaseHelpers {
                         saveAvatar(context, id, key, avatar, db)
                     } else {
                         avatarMap[key] = bitmap
-                        val uid = db.userDao().getUidFromUserId(id)!!
-                        db.avatarDao().insert(Avatar(uid, file.absolutePath))
+                        val uid = db.userDao().getUidFromUserId(id)
+                        if (uid != null) {
+                            db.avatarDao().insert(Avatar(uid, file.absolutePath))
+                        }
                     }
                 } else {
                     saveAvatar(context, id, key, avatar, db)
@@ -87,8 +120,10 @@ object DatabaseHelpers {
             out.flush()
             out.close()
 
-            val uid = db.userDao().getUidFromUserId(id)!!
-            db.avatarDao().insert(Avatar(uid, file.absolutePath))
+            val uid = db.userDao().getUidFromUserId(id)
+            if (uid != null) {
+                db.avatarDao().insert(Avatar(uid, file.absolutePath))
+            }
         } catch (e: IOException) {
             e.printStackTrace()
         }

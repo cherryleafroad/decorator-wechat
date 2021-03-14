@@ -573,5 +573,5 @@ public class WeChatDecorator extends NevoDecoratorService {
 	private final Handler mHandler = new Handler(Looper.myLooper());
 	private final @Nullable Parcelable mActivityBlocker = buildParcelableWithFileDescriptor();
 
-	static final String TAG = "Nevo.Decorator[WeChat]";
+	public static final String TAG = "Nevo.Decorator[WeChat]";
 }

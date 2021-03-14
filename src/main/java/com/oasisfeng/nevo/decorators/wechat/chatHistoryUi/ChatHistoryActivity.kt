@@ -2,6 +2,10 @@ package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.Menu
@@ -35,6 +39,7 @@ class ChatHistoryActivity : Activity(), LifecycleOwner {
     companion object {
         const val EXTRA_USER_ID = "user_id"
         const val EXTRA_USERNAME = "username"
+        const val ACTION_USERNAME_CHANGED = "username_changed"
 
         private const val STATE_USER_ID = "user"
         private const val STATE_TITLE = "title"
@@ -71,6 +76,10 @@ class ChatHistoryActivity : Activity(), LifecycleOwner {
 
         mChatSelectedTitle = username
         mChatSelectedId = userId
+
+        val filter = IntentFilter()
+        filter.addAction(ACTION_USERNAME_CHANGED)
+        registerReceiver(mUsernameChanged, filter)
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setActionBar(toolbar)
@@ -125,6 +134,14 @@ class ChatHistoryActivity : Activity(), LifecycleOwner {
     override fun onDestroy() {
         super.onDestroy()
         mLifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+        unregisterReceiver(mUsernameChanged)
+    }
+
+    private val mUsernameChanged: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            mChatSelectedTitle = intent.getStringExtra(EXTRA_USERNAME)!!
+            actionBar?.title = mChatSelectedTitle
+        }
     }
 
     override fun onBackPressed() {
@@ -211,9 +228,6 @@ class ChatHistoryActivity : Activity(), LifecycleOwner {
         }
     }
 
-
-
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.chat_history_menu, menu)
@@ -222,5 +236,9 @@ class ChatHistoryActivity : Activity(), LifecycleOwner {
 
     override fun getLifecycle(): Lifecycle {
         return mLifecycleRegistry
+    }
+
+    fun <T : Any> T?.notNull(f: (it: T) -> Unit) {
+        if (this != null) f(this)
     }
 }

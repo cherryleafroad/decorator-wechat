@@ -91,7 +91,7 @@ class ChatBubbleAdapter(
     }
 
     inner class ChatBubbleDateHeaderViewHolder(itemView: View) : ChatBubbleViewHolder<MessageWithAvatar>(itemView) {
-        @RequiresApi(Build.VERSION_CODES.N)
+        @RequiresApi(Build.VERSION_CODES.O)
         override fun bind(item: MessageWithAvatar, position: Int) {
             val constraint = ((this.itemView as FrameLayout).getChildAt(0) as ConstraintLayout)
             val textview = constraint.getViewById(R.id.chat_bubble_date_header) as TextView

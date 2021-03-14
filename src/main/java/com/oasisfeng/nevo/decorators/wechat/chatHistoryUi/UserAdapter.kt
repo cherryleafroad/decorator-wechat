@@ -30,7 +30,7 @@ class UserAdapter(
         return adapterDataList.size
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: UserItemViewHolder, position: Int) {
         val username = holder.itemView.findViewById<TextView>(R.id.username)
         val data = adapterDataList[position]
@@ -40,11 +40,12 @@ class UserAdapter(
         message.text = data.data.message.message
 
         val dateText = holder.itemView.findViewById<TextView>(R.id.date)
-        val dateString = DateConverter.toDateUserlist(context, data.data.message.timestamp)
+        val dateString = DateConverter.toDateUserlist(context, data.user.latest_message)
         dateText.text = dateString
 
-        val avatar = Drawable.createFromPath(data.data.avatar.filename)
-        if (avatar != null) {
+        val filename = data.data.avatar.filename
+        if (filename.isNotEmpty()) {
+            val avatar = Drawable.createFromPath(data.data.avatar.filename)
             val imageview = holder.itemView.findViewById<ImageView>(R.id.avatar)
             imageview.background = avatar
         }
