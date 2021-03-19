@@ -33,9 +33,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
 import android.net.Uri;
@@ -62,7 +60,7 @@ import androidx.core.app.Person;
 import androidx.core.graphics.drawable.IconCompat;
 
 import com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation;
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.DatabaseHelpers;
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.DatabaseHelpers;
 import com.oasisfeng.nevo.sdk.MutableNotification;
 import com.oasisfeng.nevo.sdk.MutableStatusBarNotification;
 import com.oasisfeng.nevo.sdk.NevoDecoratorService;
@@ -132,7 +130,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 	private static final @ColorInt int PRIMARY_COLOR = 0xFF33B332;
 	private static final @ColorInt int LIGHT_COLOR = 0xFF00FF00;
 	static final String ACTION_SETTINGS_CHANGED = "SETTINGS_CHANGED";
-	static final String ACTION_LAUNCH_WECHAT = "LAUNCH_WECHAT";
 	public static final String ACTION_MARK_AS_READ = "MARK_AS_READ";
 	static final String PREFERENCES_NAME = "decorators-wechat";
 	private static final String EXTRA_SILENT_RECAST = "silent_recast";
@@ -173,7 +170,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 				} else {
 					// recalled a message before our current unread history, just cancel it because it's not needed
 					Log.d(TAG, "Canceled recalled notification that occurred before unread history");
-					isCanceling = true;
 					cancelNotification(evolving.getOriginalKey());
 					return false;
 				}
@@ -191,9 +187,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 		if (content_text == null) return true;
 
 		final String original_key = evolving.getOriginalKey();
-		if (!mKeys.contains(original_key)) {
-			mKeys.add(original_key);
-		}
 		boolean isDuplicate = false;
 
 		// Check against message duplicates to prevent double messages
@@ -373,34 +366,18 @@ public class WeChatDecorator extends NevoDecoratorService {
 
 	@Override protected boolean onNotificationRemoved(final String key, final int reason) {
 		if (reason == REASON_APP_CANCEL) {		// For ongoing notification, or if "Removal-Aware" of Nevolution is activated
-			boolean isRecasted = ((WeChatApp) this.getApplicationContext()).isRecasted();
-			if (!isRecasted) {
-				mKeys.remove(key);
-				Log.d(TAG, "Cancel notification: " + key);
-			}
+			Log.d(TAG, "Cancel notification: " + key);
+			// make sure history is cleared on notification click
+			mMessagingBuilder.markRead(key);
 		} else if (SDK_INT >= O && reason == REASON_CHANNEL_BANNED && ! isChannelAvailable(getUser(key))) {
 			Log.w(TAG, "Channel lost, disable extra channels from now on.");
 			mUseExtraChannels = false;
 			mHandler.post(() -> recastNotification(key, null));
 		} else if (SDK_INT < O || reason == REASON_CANCEL) {	// Exclude the removal request by us in above case. (Removal-Aware is only supported on Android 8+)
 			mMessagingBuilder.markRead(key);
-			mKeys.remove(key);
 		} else if (reason == REASON_CLICK || reason == REASON_CANCEL_ALL || reason == REASON_SNOOZED) {
 			// make sure history is cleared on notification click
 			mMessagingBuilder.markRead(key);
-			mKeys.remove(key);
-			//ConversationHistory.markAsRead(key);
-		} else if (reason == REASON_LISTENER_CANCEL) {
-			// this could be caused by a notification crash, or simply canceling the notification
-			if (!isCanceling) {
-				// then assume it was a crash
-
-				// don't let the notification die just yet
-				Log.d(TAG, "Recast notification: " + key);
-				((WeChatApp) this.getApplicationContext()).setRecasted(true);
-				mHandler.post(() -> recastNotification(key, null));
-				isCanceling = false;
-			} // control flow -> cancel goes from 10->8
 		}
 		return false;
 	}
@@ -493,7 +470,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 		final IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_REMOVED); filter.addDataScheme("package");
 		registerReceiver(mPackageEventReceiver, filter);
 		registerReceiver(mSettingsChangedReceiver, new IntentFilter(ACTION_SETTINGS_CHANGED));
-		registerReceiver(mLaunchWeChatReceiver, new IntentFilter(ACTION_LAUNCH_WECHAT));
 		registerReceiver(mMarkAsReadBroadcastReceiver, new IntentFilter(ACTION_MARK_AS_READ));
 	}
 
@@ -501,7 +477,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 		unregisterReceiver(mSettingsChangedReceiver);
 		unregisterReceiver(mPackageEventReceiver);
 		unregisterReceiver(mMarkAsReadBroadcastReceiver);
-		unregisterReceiver(mLaunchWeChatReceiver);
 		if (SDK_INT >= N_MR1) mAgentShortcuts.close();
 		mMessagingBuilder.close();
 	}
@@ -509,7 +484,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 	private final BroadcastReceiver mMarkAsReadBroadcastReceiver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent proxy) {
 			String key = proxy.getStringExtra(EXTRA_SBN_KEY);
 			mMessagingBuilder.markRead(key);
-			isCanceling = true;
 			cancelNotification(key);
 	}};
 
@@ -548,21 +522,6 @@ public class WeChatDecorator extends NevoDecoratorService {
 		editor.apply();
 	}};
 
-	private final BroadcastReceiver mLaunchWeChatReceiver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent intent) {
-		// to keep consistency, only mark as read and remove notifications IF we have these modes enabled
-		Boolean insider_mode = ((WeChatApp)WeChatDecorator.this.getApplicationContext()).getSettingInsiderMode();
-		Boolean synchronous_removal = ((WeChatApp)WeChatDecorator.this.getApplicationContext()).getSettingSynchronousRemoval();
-		if (insider_mode || synchronous_removal) {
-			ConversationHistory.markReadAll();
-			for (String key : mKeys) {
-				isCanceling = true;
-				cancelNotification(key);
-			}
-		}
-	}};
-
-	private Boolean isCanceling = false;
-	private final ArrayList<String> mKeys = new ArrayList<>();
 	private final ConversationManager mConversationManager = new ConversationManager();
 	private MessagingBuilder mMessagingBuilder;
 	private AgentShortcuts mAgentShortcuts;

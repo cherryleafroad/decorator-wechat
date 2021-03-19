@@ -63,4 +63,7 @@
     <string name="message_header_recalled_visible">\"%s\" tried to recall: %m</string>
     <string name="message_header_recalled_invisible">\"%s\" recalled a message</string>
     <string name="yesterday">Yesterday</string>
+    <string name="wechat_title">WeChat Chat History</string>
+    <string name="show_recalled">Show recalled messages</string>
+    <string name="chat_settings">Settings</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
+package com.oasisfeng.nevo.decorators.wechat.chatHistory
 
 import android.content.Context
 import android.icu.text.SimpleDateFormat
@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Timestamp
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -66,16 +67,16 @@ object DateConverter {
                 it >= 3 -> {
                     // check that last time header was inserted wasn't more than cutoff (prevents against successive
                     // messages causing date header to not insert
-                    val lastHeaderDiff = (nowTimestamp - timestamps[0].timestamp).toDouble() / 1000 / 60
+                    /*val lastHeaderDiff = (nowTimestamp - timestamps[0].timestamp).toDouble() / 1000 / 60
                     if (lastHeaderDiff >= CUTOFF_DATE_HEADER) {
                         return true
-                    }
+                    }*/
 
                     var currDiff = (nowTimestamp - timestamps[timestamps.lastIndex].timestamp).toDouble() / 1000 / 60
                     // check for difference of more than CUTOFF. Anything past that needs a date header
-                    if (currDiff >= CUTOFF) {
+                    /*if (currDiff >= CUTOFF) {
                         return true
-                    }
+                    }*/
 
                     // messages before the CUTOFF can be a little tricky to determine
                     // get the average

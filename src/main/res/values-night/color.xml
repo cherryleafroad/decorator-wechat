@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="chat_history_toolbar">#212121</color>
-    <color name="chat_history_toolbar_text">#ffffff</color>
+    <color name="chat_history_toolbar">#111111</color>
+    <color name="chat_history_toolbar_text">#c7c7c7</color>
 
     <color name="chat_receiver_bubble_fg">#2c2c2c</color>
     <color name="chat_receiver_bubble_text">#d5d5d5</color>
@@ -13,4 +13,7 @@
     <color name="chat_userlist_divider">#1d1d1d</color>
     <color name="chat_userlist_username_text">#d2d2d2</color>
     <color name="chat_userlist_message">#595959</color>
+    <color name="chat_top_divider">#111111</color>
+    <color name="chat_bottom_divider">#1e1e1e</color>
+    <color name="navbar_color">#1e1e1e</color>
 </resources>

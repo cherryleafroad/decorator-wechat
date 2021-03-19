@@ -7,13 +7,20 @@ import android.service.notification.StatusBarNotification
 import android.text.TextUtils
 import android.util.ArrayMap
 import android.util.Log
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USER_ID
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.*
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.ACTION_USERNAME_CHANGED
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USERNAME
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.UserActivity.Companion.ACTION_NOTIFY_USER_CHANGE
-import kotlinx.coroutines.*
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.AppDatabase
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.DatabaseHelpers
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Avatar
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Message
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.User
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.ChatFragment.Companion.ACTION_USERNAME_CHANGED
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.ChatFragment.Companion.EXTRA_USERNAME
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.UserListFragment.Companion.ACTION_NOTIFY_USER_CHANGE
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
 internal object ConversationHistory {
@@ -146,26 +153,22 @@ internal object ConversationHistory {
 
         if (mChatHistoryEnabled) {
             GlobalScope.launch(Dispatchers.IO) {
-                val username: String
-                if (visible == true) {
+
+                databaseMsg = if (visible == true) {
                     if (isGroupChat) {
-                        databaseMsg = context.getString(R.string.message_header_recalled_visible)
+                        context.getString(R.string.message_header_recalled_visible)
                             .replace("%s", sender[0].toString())
                             .replace("%m", sender[1].toString())
-                        username = sender[0]!!
                     } else {
-                        databaseMsg = context.getString(R.string.message_header_recalled_visible)
+                        context.getString(R.string.message_header_recalled_visible)
                             .replace("%m", databaseMsg)
                             .replace("%s", user.username)
-                        username = user.username
                     }
                 } else {
                     if (isGroupChat) {
-                        databaseMsg = context.getString(R.string.message_header_recalled_invisible).replace("%s", sender[0].toString())
-                        username = sender[0]!!
+                        context.getString(R.string.message_header_recalled_invisible).replace("%s", sender[0].toString())
                     } else {
-                        databaseMsg = context.getString(R.string.message_header_recalled_invisible).replace("%s", user.username)
-                        username = user.username
+                        context.getString(R.string.message_header_recalled_invisible).replace("%s", user.username)
                     }
                 }
 
@@ -318,7 +321,7 @@ internal object ConversationHistory {
 
         // only get db if it's relevant
         if (!this::mDb.isInitialized && mChatHistoryEnabled) {
-            mDb = (context.applicationContext as WeChatApp).db
+            mDb = AppDatabase.get(context.applicationContext)
         }
 
         if (conversation.ticker == null) {
@@ -326,12 +329,6 @@ internal object ConversationHistory {
         }
 
         val isReplying = (context.applicationContext as WeChatApp).replying
-        var shouldSkip = isDuplicate
-        if ((context.applicationContext as WeChatApp).isRecasted) {
-            // reset flag to false
-            (context.applicationContext as WeChatApp).isRecasted = false
-            shouldSkip = true
-        }
 
         // create keys for new conversation if not here
         if (!mConversationHistory.containsKey(key)) {
@@ -359,9 +356,9 @@ internal object ConversationHistory {
 
         // Don't create extra notifications when replying or recalling a message
         // this is a regular message
-        if (!isReplying && !isRecalled && !shouldSkip) {
+        if (!isReplying && !isRecalled && !isDuplicate) {
             mUnreadCount[key] = mUnreadCount[key]?.plus(1)
-        } else if (!isReplying && isRecalled && !shouldSkip) {
+        } else if (!isReplying && isRecalled && !isDuplicate) {
             mUnreadOffset[key] = mUnreadOffset[key]!! + 1
         }
 
@@ -409,7 +406,7 @@ internal object ConversationHistory {
 
         // carextender missing data for some reason? strange
         val isCarMessagesEmpty = carExtenderMessages.isEmpty()
-        if (isCarMessagesEmpty && !isRecalled && !shouldSkip) {
+        if (isCarMessagesEmpty && !isRecalled && !isDuplicate) {
             val split = splitSender(conversation.ticker)
             carExtenderMessages.add(0, split[1] ?: "[Unknown]")
         }
@@ -417,7 +414,7 @@ internal object ConversationHistory {
         // the length of messages should be mUnread - mOffset
         // if messages have more than that, that means the car bundle returned more than it was
         // supposed to, and we need to chop off the extra : oldest -> newest
-        if (!shouldSkip) {
+        if (!isDuplicate) {
             val extra = carExtenderMessages.size - (mUnreadCount[key]!! - mUnreadOffset[key]!!)
             if (extra > 0 && extra < carExtenderMessages.size) {
                 // only view the proper amount of data
@@ -439,7 +436,7 @@ internal object ConversationHistory {
             conversation.title.toString()
         }
 
-        if (!isRecalled && !shouldSkip && !isReplying) {
+        if (!isRecalled && !isDuplicate && !isReplying) {
             msgCheck = if (!isGroupChat) {
                 // Single chat or Bot
                 carExtenderMessages[0]
@@ -554,7 +551,7 @@ internal object ConversationHistory {
 
         // don't add regular messages when it was recalled (recalled won't need to recalculate data anyways)
         // because a recalled message requires a re-build due to changing message content
-        if (!isRecalled || shouldSkip) {
+        if (!isRecalled || isDuplicate) {
             // our array is ordered from newest to oldest, but needs to be inserted from oldest to newest
             var notificationMessages: MutableList<String?> = ArrayList()
 

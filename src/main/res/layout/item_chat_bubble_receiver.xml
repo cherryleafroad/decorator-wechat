@@ -9,7 +9,7 @@
     android:layout_marginTop="5dp"
     android:layout_marginBottom="5dp"
     android:layout_marginEnd="80dp"
-    tools:context=".chatHistoryUi.ChatHistoryActivity">
+    tools:context=".chatHistory.activity.ChatHistoryActivity">
 
     <TextView
         android:id="@+id/chat_group_username"

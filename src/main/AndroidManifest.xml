@@ -36,7 +36,7 @@
                  android:permission="com.oasisfeng.nevo.permission.BIND_DECORATOR_SERVICE"
             android:label="@string/decorator_wechat_title"
                  android:description="@string/decorator_wechat_description">
-            <intent-filter android:priority="5">
+            <intent-filter android:priority="5" >
                 <action android:name="com.oasisfeng.nevo.Decorator" />
             </intent-filter>
             <meta-data android:name="packages" android:value="com.tencent.mm" />
@@ -65,21 +65,12 @@
         </activity>
 
         <activity
-            android:name=".chatHistoryUi.ChatHistoryActivity"
+            android:name=".chatHistory.activity.ChatHistoryFragmentActivity"
             android:exported="false"
-            android:label="@string/pref_chat_history_title"
             android:process=":ui"
             android:taskAffinity=""
-            android:configChanges="uiMode"
-            android:theme="@style/Theme.DayNight.ChatHistoryActivity" />
-
-        <activity
-            android:name=".chatHistoryUi.UserActivity"
-            android:exported="false"
-            android:label="@string/pref_user_activity_title"
-            android:process=":ui"
-            android:taskAffinity=""
-            android:theme="@style/Theme.DayNight.UserActivity" />
+            android:theme="@style/Theme.DayNight.ChatHistoryActivity"
+            android:screenOrientation="portrait"/>
 
         <provider
             android:name=".AssetFileProvider"

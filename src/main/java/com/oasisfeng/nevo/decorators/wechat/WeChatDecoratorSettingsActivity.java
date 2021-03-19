@@ -73,6 +73,7 @@ public class WeChatDecoratorSettingsActivity extends PreferenceActivity {
 		findPreference(getString(R.string.pref_chat_history_activity)).setEnabled(state);
 	}
 
+	@SuppressLint("StringFormatInvalid")
 	@Override protected void onResume() {
 		super.onResume();
 		final Preference preference_activate = findPreference(getString(R.string.pref_activate));
@@ -120,11 +121,7 @@ public class WeChatDecoratorSettingsActivity extends PreferenceActivity {
 
 		Preference chat_history = findPreference(getString(R.string.pref_chat_history));
 		chat_history.setOnPreferenceChangeListener((preference, newValue) -> {
-			if ((boolean)newValue) {
-				findPreference(getString(R.string.pref_chat_history_activity)).setEnabled(true);
-			} else {
-				findPreference(getString(R.string.pref_chat_history_activity)).setEnabled(false);
-			}
+			findPreference(getString(R.string.pref_chat_history_activity)).setEnabled((boolean) newValue);
 			return true;
 		});
 

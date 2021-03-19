@@ -1,15 +1,17 @@
-package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
+package com.oasisfeng.nevo.decorators.wechat.chatHistory.database
 
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.ArrayMap
-import android.util.Log
 import com.oasisfeng.nevo.decorators.wechat.*
-import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.ChatHistoryActivity.Companion.EXTRA_USER_ID
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.UserActivity.Companion.ACTION_NOTIFY_USER_CHANGE
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Avatar
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Message
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.UserListFragment.Companion.ACTION_NOTIFY_USER_CHANGE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -19,9 +21,8 @@ import java.io.IOException
 
 object DatabaseHelpers {
     private var avatarMap = ArrayMap<String, Bitmap>()
-
     suspend fun checkAndInsertDateHeader(context: Context, uid: Long, chatType: ChatType, timestamp: Long) {
-        val db = ((context.applicationContext as WeChatApp)).db
+        val db = AppDatabase.get(context.applicationContext)
         val latestMessages = db.messageDao().getLatestTimestampsByUser(uid)
 
         if (latestMessages.isNotEmpty()) {
@@ -50,7 +51,7 @@ object DatabaseHelpers {
 
     @JvmStatic
     fun addReply(context: Context, id: String, isChat: Boolean, reply: String, timestamp: Long) {
-        val db = ((context.applicationContext as WeChatApp)).db
+        val db = AppDatabase.get(context.applicationContext)
 
         GlobalScope.launch(Dispatchers.IO) {
             val chatType = if (isChat) ChatType.CHAT else ChatType.GROUP
@@ -63,7 +64,6 @@ object DatabaseHelpers {
 
                 // notify userlist of new reply
                 val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
-                intent.putExtra(EXTRA_USER_ID, uid)
                 intent.setPackage(context.packageName)
                 context.sendBroadcast(intent)
             }
@@ -72,7 +72,7 @@ object DatabaseHelpers {
 
     @JvmStatic
     fun checkAndUpdateAvatar(context: Context, key: String, id: String, avatar: Bitmap) {
-        val db = ((context.applicationContext as WeChatApp)).db
+        val db = AppDatabase.get(context.applicationContext)
 
         GlobalScope.launch(Dispatchers.IO) {
             // fill it in if it's empty

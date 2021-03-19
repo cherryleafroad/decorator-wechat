@@ -6,14 +6,13 @@ import android.content.ContentProviderClient
 import android.content.SharedPreferences
 import android.database.ContentObserver
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.ArrayMap
 import android.util.Log
-import androidx.room.Room
+import androidx.annotation.RequiresApi
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.AppDatabase
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.DatabaseHelpers
 
 
 class WeChatApp : Application() {
@@ -24,20 +23,21 @@ class WeChatApp : Application() {
     @JvmField
     var whenMap: ArrayMap<String, Long> = ArrayMap()
     var replying = false
-    var isRecasted = false
     var sharedPreferences: SharedPreferences? = null
     var settingSynchronousRemoval = false
     var settingInsiderMode = false
-    lateinit var db: AppDatabase
 
     private lateinit var resolver: SettingsObserver
     private var isUIProcess = false
 
 
+    //@RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate() {
         super.onCreate()
 
-        isUIProcess = getProcessName().substringAfter(':', "") == "ui"
+        //isUIProcess = getProcessName().substringAfter(':', "") == "ui"
+        // for now, never run
+        isUIProcess = true
 
         // this feature is not used for UI process. It's redundant
         if (!isUIProcess) {
@@ -54,15 +54,6 @@ class WeChatApp : Application() {
             queryAndUpdateSetting(insiderMode)
             queryAndUpdateSetting(synchronousRemoval)
         }
-
-        // I'd like to get rid of this if the feature is disabled
-        // but initializing it later is too much work, better to leave it ready
-        db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java, "messages"
-        )
-            .enableMultiInstanceInvalidation()
-            .build()
     }
 
     override fun onTerminate() {

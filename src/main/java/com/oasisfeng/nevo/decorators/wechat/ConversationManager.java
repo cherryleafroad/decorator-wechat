@@ -15,7 +15,6 @@ import androidx.core.graphics.drawable.IconCompat;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Map;
-import java.lang.Cloneable;
 
 import static java.util.Objects.requireNonNull;
 

@@ -1,27 +1,29 @@
-package com.oasisfeng.nevo.decorators.wechat.chatHistoryUi
+package com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter
 
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.ArrayMap
 import android.view.LayoutInflater
-import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.annotation.RequiresApi
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.oasisfeng.nevo.decorators.wechat.R
+import androidx.viewbinding.ViewBinding
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageWithAvatar
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
+import com.oasisfeng.nevo.decorators.wechat.databinding.*
 
 
 class ChatBubbleAdapter(
     private val context: Context
-) : PagingDataAdapter<MessageWithAvatar, ChatBubbleAdapter.ChatBubbleViewHolder<MessageWithAvatar>>(DIFF_CALLBACK) {
+) : PagingDataAdapter<MessageWithAvatar, ChatBubbleAdapter.ChatBubbleViewHolder<MessageWithAvatar>>(
+    DIFF_CALLBACK
+) {
 
     private lateinit var avatar: Drawable
     private lateinit var groupAvatars: ArrayMap<String, Drawable>
@@ -29,7 +31,7 @@ class ChatBubbleAdapter(
     companion object {
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<MessageWithAvatar>() {
             override fun areContentsTheSame(oldItem: MessageWithAvatar, newItem: MessageWithAvatar): Boolean {
-                return oldItem.message.timestamp == newItem.message.timestamp
+                return oldItem.message.message == newItem.message.message
             }
 
             override fun areItemsTheSame(oldItem: MessageWithAvatar, newItem: MessageWithAvatar): Boolean {
@@ -38,20 +40,17 @@ class ChatBubbleAdapter(
         }
     }
 
-    abstract class ChatBubbleViewHolder<MessageWithAvatar>(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    abstract class ChatBubbleViewHolder<MessageWithAvatar>(binding: ViewBinding) : RecyclerView.ViewHolder(binding.root) {
         abstract fun bind(item: MessageWithAvatar, position: Int)
     }
 
-    inner class ChatBubbleReceiverViewHolder(itemView: View) : ChatBubbleViewHolder<MessageWithAvatar>(itemView) {
+    inner class ChatBubbleReceiverViewHolder(private val binding: ItemChatBubbleReceiverBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         override fun bind(item: MessageWithAvatar, position: Int) {
-            val layout = (this.itemView as ConstraintLayout)
-            val textview = layout.findViewById<TextView>(R.id.chat_bubble_receiver)
-            textview.text = item.message.message
+            binding.chatBubbleReceiver.text = item.message.message
 
             val avFilename = item.avatar.filename
             if (item.message.chat_type == ChatType.CHAT) {
                 if (avFilename.isNotEmpty()) {
-                    val imageview = layout.findViewById<ImageView>(R.id.avatar)
                     val drawable: Drawable? = if (this@ChatBubbleAdapter::avatar.isInitialized) {
                         avatar
                     } else {
@@ -60,67 +59,59 @@ class ChatBubbleAdapter(
 
                     // file not exist - maybe user cleared cache? it will be updated later then
                     if (drawable != null) {
-                        imageview.background = drawable
+                        binding.avatar.background = drawable
                     }
                 }
             } else if (item.message.chat_type == ChatType.GROUP) {
-                val groupusername = layout.findViewById<TextView>(R.id.chat_group_username)
-                groupusername.text = item.message.group_chat_username
-                groupusername.visibility = VISIBLE
+                binding.chatGroupUsername.apply {
+                    text = item.message.group_chat_username
+                    visibility = VISIBLE
+                }
 
                 // TODO implement some kind of special handling for group chat avatars based off of username
             }
         }
     }
 
-    inner class ChatBubbleSenderViewHolder(itemView: View) : ChatBubbleViewHolder<MessageWithAvatar>(itemView) {
+    inner class ChatBubbleSenderViewHolder(private val binding: ItemChatBubbleSenderBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         override fun bind(item: MessageWithAvatar, position: Int) {
-            val constraint = this.itemView as ConstraintLayout
-            val textview = constraint.findViewById<TextView>(R.id.chat_bubble_sender)
-            //val imageview = constraint.getViewById(R.id.avatar) as ImageView
-            textview.text = item.message.message
+            binding.chatBubbleSender.text = item.message.message
         }
     }
 
-    inner class ChatBubbleRecalledViewHolder(itemView: View) : ChatBubbleViewHolder<MessageWithAvatar>(itemView) {
+    inner class ChatBubbleRecalledViewHolder(private val binding: ItemBubbleRecalledBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         override fun bind(item: MessageWithAvatar, position: Int) {
-            val constraint = ((this.itemView as FrameLayout).getChildAt(0) as ConstraintLayout)
-            val textview = constraint.getViewById(R.id.chat_bubble_recalled) as TextView
-            textview.text = item.message.message
+            binding.chatBubbleRecalled.text = item.message.message
         }
     }
 
-    inner class ChatBubbleDateHeaderViewHolder(itemView: View) : ChatBubbleViewHolder<MessageWithAvatar>(itemView) {
+    inner class ChatBubbleDateHeaderViewHolder(private val binding: ItemBubbleDateHeaderBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         @RequiresApi(Build.VERSION_CODES.O)
         override fun bind(item: MessageWithAvatar, position: Int) {
-            val constraint = ((this.itemView as FrameLayout).getChildAt(0) as ConstraintLayout)
-            val textview = constraint.getViewById(R.id.chat_bubble_date_header) as TextView
-            textview.text = DateConverter.toDateMessage(context, item.message.timestamp)
+            binding.chatBubbleDateHeader.text = DateConverter.toDateMessage(context, item.message.timestamp)
         }
     }
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatBubbleViewHolder<MessageWithAvatar> {
+        val layoutInflater = LayoutInflater.from(parent.context)
+
         return when (viewType) {
             MessageType.RECEIVER.ordinal -> {
-                val view = LayoutInflater.from(context)
-                    .inflate(R.layout.item_chat_bubble_receiver, parent, false)
-                ChatBubbleReceiverViewHolder(view)
+                val binding = ItemChatBubbleReceiverBinding.inflate(layoutInflater, parent, false)
+                ChatBubbleReceiverViewHolder(binding)
             }
             MessageType.SENDER.ordinal -> {
-                val view = LayoutInflater.from(context)
-                    .inflate(R.layout.item_chat_bubble_sender, parent, false)
-                ChatBubbleSenderViewHolder(view)
+                val binding = ItemChatBubbleSenderBinding.inflate(layoutInflater, parent, false)
+                ChatBubbleSenderViewHolder(binding)
             }
             MessageType.RECALLED.ordinal -> {
-                val view = LayoutInflater.from(context)
-                    .inflate(R.layout.item_bubble_recalled, parent, false)
-                ChatBubbleRecalledViewHolder(view)
+                val binding = ItemBubbleRecalledBinding.inflate(layoutInflater, parent, false)
+                ChatBubbleRecalledViewHolder(binding)
             }
             MessageType.DATE_HEADER.ordinal -> {
-                val view = LayoutInflater.from(context)
-                    .inflate(R.layout.item_bubble_date_header, parent, false)
-                ChatBubbleDateHeaderViewHolder(view)
+                val binding = ItemBubbleDateHeaderBinding.inflate(layoutInflater, parent, false)
+                ChatBubbleDateHeaderViewHolder(binding)
             }
             else -> throw IllegalArgumentException("Invalid view type")
         }

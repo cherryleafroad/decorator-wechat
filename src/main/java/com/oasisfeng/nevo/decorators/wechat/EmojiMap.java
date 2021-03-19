@@ -211,8 +211,11 @@ class EmojiMap {
 			{ null,			"Rabbit",		"🐰" },
 			{ null,			"Cow",			"🐮" },
 			{ null,			"Boar",			"🐗" },
-
-
+			{ null,			"Horse",		"🐴" },
+			{ null,			"Frog",			"🐸" },
+			{ null,			"Snake",		"🐍" },
+			{ null,			"Chicken",		"🐔" },
+			{ null,			"Pigeon",		"🐦" },
 
 					// From WeChat for iOS
 			{ "强壮",		null,			"💪"},

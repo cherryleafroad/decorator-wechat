@@ -86,4 +86,7 @@
     <string name="message_header_recalled_visible">\"%s\"尝试撤回：%m</string>
     <string name="message_header_recalled_invisible">\"%s\"撤回一条信息</string>
     <string name="yesterday">昨天</string>
+    <string name="wechat_title">微信聊天记录</string>
+    <string name="show_recalled">看看撤回的信息</string>
+    <string name="chat_settings">设置</string>
 </resources>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.DayNight" parent="@android:style/Theme.Material" />
     <style name="Theme.DayNight.ChatHistoryActivity" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:navigationBarColor">@color/navbar_color</item>
         <item name="colorPrimaryDark">@color/chat_history_toolbar</item>
     </style>
 </resources>

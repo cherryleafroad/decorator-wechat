@@ -33,7 +33,7 @@ import androidx.core.app.NotificationCompat.MessagingStyle.Message;
 import androidx.core.app.Person;
 
 import com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation;
-import com.oasisfeng.nevo.decorators.wechat.chatHistoryUi.DatabaseHelpers;
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.DatabaseHelpers;
 import com.oasisfeng.nevo.sdk.MutableNotification;
 import com.oasisfeng.nevo.sdk.MutableStatusBarNotification;
 

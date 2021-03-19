@@ -9,7 +9,7 @@
     android:layout_marginBottom="5dp"
     android:layout_gravity="end"
     android:layout_marginStart="70dp"
-    tools:context=".chatHistoryUi.ChatHistoryActivity">
+    tools:context=".chatHistory.activity.ChatHistoryActivity">
 
     <TextView
         android:gravity="start"
