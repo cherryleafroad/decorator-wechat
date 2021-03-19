@@ -69,6 +69,8 @@ class ChatFragment : Fragment() {
             }
         }
 
+        // disable for first opening of chat
+        mBinding.bubbleRecycler.setVerticalScrollBarEnabled(false)
         mAdapter = ChatBubbleAdapter(requireContext())
         mLayout = LinearLayoutManager(requireContext())
         mLayout.reverseLayout = true
@@ -87,6 +89,7 @@ class ChatFragment : Fragment() {
 
                 val atBottom = recyclerView.canScrollVertically(-1) && !recyclerView.canScrollVertically(1)
                 atEnd = atBottom && newState == RecyclerView.SCROLL_STATE_IDLE
+                mBinding.bubbleRecycler.setVerticalScrollBarEnabled(true)
             }
         })
 
