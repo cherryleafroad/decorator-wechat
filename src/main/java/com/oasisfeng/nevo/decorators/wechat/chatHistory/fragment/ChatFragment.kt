@@ -131,7 +131,7 @@ class ChatFragment : Fragment() {
                             parentFragmentManager.popBackStack()
                         }
 
-                        .setNegativeButton(android.R.string.no, null)
+                        .setNegativeButton(android.R.string.cancel, null)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .show()
                 true
@@ -158,12 +158,6 @@ class ChatFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         requireActivity().unregisterReceiver(mUsernameChanged)
-    }
-
-    override fun onStop() {
-        // restart at 0 next start - prevents showing scrolling when entering
-        mBinding.bubbleRecycler.scrollToPosition(0)
-        super.onStop()
     }
 
     override fun onDestroyView() {

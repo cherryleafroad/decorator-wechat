@@ -9,7 +9,7 @@
     android:paddingEnd="17dp"
     android:paddingStart="17dp"
     android:background="?android:attr/selectableItemBackground"
-    tools:context=".chatHistory.activity.UserActivity">
+    tools:context=".chatHistory.fragment.UserListFragment">
 
     <Space
         android:layout_width="match_parent"

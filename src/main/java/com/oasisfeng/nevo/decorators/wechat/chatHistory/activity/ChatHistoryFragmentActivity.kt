@@ -1,6 +1,5 @@
 package com.oasisfeng.nevo.decorators.wechat.chatHistory.activity
 
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider

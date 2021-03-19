@@ -9,7 +9,7 @@
     android:layout_marginTop="5dp"
     android:layout_marginBottom="5dp"
     android:layout_marginEnd="80dp"
-    tools:context=".chatHistory.activity.ChatHistoryActivity">
+    tools:context=".chatHistory.fragment.ChatFragment">
 
     <TextView
         android:id="@+id/chat_group_username"
@@ -20,10 +20,11 @@
         android:text="Foobar123"
         android:textColor="@color/chat_group_username_text"
         android:paddingBottom="2dp"
-        android:paddingLeft="3dp"
+        android:paddingStart="3dp"
         android:visibility="gone"
         app:layout_constraintStart_toEndOf="@id/avatar_holder"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText,RtlSymmetry" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bubble_container"

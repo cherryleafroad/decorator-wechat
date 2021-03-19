@@ -9,7 +9,7 @@
     android:layout_marginBottom="5dp"
     android:layout_gravity="end"
     android:layout_marginStart="70dp"
-    tools:context=".chatHistory.activity.ChatHistoryActivity">
+    tools:context=".chatHistory.fragment.ChatFragment">
 
     <TextView
         android:gravity="start"
@@ -24,6 +24,7 @@
         android:textSize="17sp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constrainedWidth="true" />
+        app:layout_constrainedWidth="true"
+        tools:ignore="HardcodedText" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

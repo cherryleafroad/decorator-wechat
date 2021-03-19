@@ -45,7 +45,8 @@
         android:textSize="18sp"
         android:textColor="@color/chat_history_toolbar_text"
         app:layout_constraintTop_toTopOf="@id/toolbar"
-        app:layout_constraintBottom_toBottomOf="@id/toolbar" />
+        app:layout_constraintBottom_toBottomOf="@id/toolbar"
+        tools:ignore="HardcodedText" />
 
     <View
         android:id="@+id/divider2"

@@ -92,7 +92,7 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
                         }
                     }
 
-                    .setNegativeButton(android.R.string.no, null)
+                    .setNegativeButton(android.R.string.cancel, null)
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .show()
                 true
@@ -124,7 +124,7 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
                 }
             }
 
-            .setNegativeButton(android.R.string.no, null)
+            .setNegativeButton(android.R.string.cancel, null)
             .setIcon(android.R.drawable.ic_dialog_alert)
             .show()
         return true
