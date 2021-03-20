@@ -139,6 +139,9 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
     override fun onResume() {
         super.onResume()
 
+        // refresh when switching back
+        mSharedModel.refreshUserList()
+
         val filter = IntentFilter()
         filter.addAction(ACTION_NOTIFY_USER_CHANGE)
         requireActivity().registerReceiver(mUserlistChanged, filter)
