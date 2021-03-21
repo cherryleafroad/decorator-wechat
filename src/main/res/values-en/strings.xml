@@ -66,4 +66,6 @@
     <string name="wechat_title">WeChat Chat History</string>
     <string name="show_recalled">Show recalled messages</string>
     <string name="chat_settings">Settings</string>
+    <string name="send">Send</string>
+    <string name="drafts">[Drafts]</string>
 </resources>

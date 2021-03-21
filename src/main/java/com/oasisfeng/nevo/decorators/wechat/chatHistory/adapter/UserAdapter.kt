@@ -3,6 +3,9 @@ package com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
@@ -10,6 +13,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.activity.ChatHistoryFragmentActivity
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.UserWithMessageAndAvatar
 import com.oasisfeng.nevo.decorators.wechat.databinding.ItemUserBinding
 import java.util.*
@@ -24,6 +28,7 @@ class UserAdapter(
     private val callbacks: UserAdapterOnClickListener,
     private val adapterDataList: List<UserWithMessageAndAvatar>
 ) : RecyclerView.Adapter<UserAdapter.UserItemViewHolder>() {
+    val activity = context as ChatHistoryFragmentActivity
 
     inner class UserItemViewHolder(val binding: ItemUserBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -51,10 +56,22 @@ class UserAdapter(
 
         holder.binding.apply {
             username.text = data.user.username
-            message.text = data.data.message.message
-            date.text = dateString
             avatar.background = userAvatar ?: ResourcesCompat.getDrawable(context.resources, R.drawable.blank_user, null)
         }
+
+        holder.binding.message.text = if (activity.mSharedViewModel.drafts.contains(data.user.u_id)) {
+            val ssb = SpannableStringBuilder(context.getString(R.string.drafts))
+
+            val color = ForegroundColorSpan(context.getColor(R.color.draft_label))
+            ssb.setSpan(color, 0, ssb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+            ssb.append(" ${activity.mSharedViewModel.drafts[data.user.u_id]}")
+            ssb
+        } else {
+             data.data.message.message
+        }
+
+        holder.binding.date.text = dateString
 
         holder.itemView.apply {
             setOnClickListener {

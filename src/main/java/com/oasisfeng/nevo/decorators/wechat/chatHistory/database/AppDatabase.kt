@@ -4,10 +4,14 @@ import android.app.Application
 import android.content.Context
 import android.graphics.drawable.Drawable
 import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.AvatarDao
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.DraftDao
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.MessageDao
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.UserDao
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Avatar
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Draft
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Message
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.User
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
@@ -34,7 +38,8 @@ private object AppDatabaseInstance {
     }
 }
 
-@Database(entities = [User::class, Message::class, Avatar::class], version = 2, exportSchema = false)
+
+@Database(entities = [User::class, Message::class, Avatar::class, Draft::class], version = 3, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     companion object {
@@ -50,6 +55,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun messageDao(): MessageDao
     abstract fun avatarDao(): AvatarDao
+    abstract fun draftDao(): DraftDao
 }
 
 class Converters {

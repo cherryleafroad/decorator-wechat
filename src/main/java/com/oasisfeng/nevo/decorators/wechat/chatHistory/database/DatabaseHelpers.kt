@@ -1,5 +1,7 @@
 package com.oasisfeng.nevo.decorators.wechat.chatHistory.database
 
+import android.app.PendingIntent
+import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -7,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.util.ArrayMap
 import com.oasisfeng.nevo.decorators.wechat.*
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Avatar
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Message
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
@@ -47,6 +50,32 @@ object DatabaseHelpers {
             )
             db.messageDao().insert(message)
         }
+    }
+
+    @JvmStatic
+    fun addReplyServiceIntent(context: Context, userSid: String, on_reply: Intent, remoteInput: RemoteInput) {
+        GlobalScope.launch(Dispatchers.IO) {
+            val app = (context.applicationContext as WeChatApp)
+            val id = getUserUid(context, userSid)!!
+
+            // store pending intent into queue for when we open UI to receive them
+            val replyData = ReplyIntent(
+                id,
+                on_reply,
+                remoteInput
+            )
+
+            app.replyMap[id] = replyData
+            val isRunning = app.isMessengerServiceRunning
+            if (isRunning) {
+                app.replyIntentEvent.postValue(replyData)
+            }
+        }
+    }
+
+    suspend fun getUserUid(context: Context, userSid: String): Long? {
+        val db = AppDatabase.get(context.applicationContext)
+        return db.userDao().getUidFromUserId(userSid)
     }
 
     @JvmStatic

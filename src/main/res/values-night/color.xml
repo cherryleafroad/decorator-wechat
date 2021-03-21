@@ -16,4 +16,13 @@
     <color name="chat_top_divider">#111111</color>
     <color name="chat_bottom_divider">#1e1e1e</color>
     <color name="navbar_color">#1e1e1e</color>
+
+    <color name="chat_input">#292929</color>
+    <color name="chat_input_bar_bg">#1e1e1e</color>
+    <color name="input_text">#d4d4d4</color>
+    <color name="send_button_enabled">#07c160</color>
+    <color name="send_button_pressed">#20c770</color>
+    <color name="send_button_disabled">#323233</color>
+    <color name="send_button_text_enabled">#cdf3df</color>
+    <color name="send_button_text_disabled">#d5d5d5</color>
 </resources>

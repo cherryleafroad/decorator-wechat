@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.PagingSource
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.AppDatabase
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Draft
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageWithAvatar
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.UserWithMessageAndAvatar
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,19 @@ class DatabaseRepository(private val database: AppDatabase) {
         GlobalScope.launch(Dispatchers.IO) {
             refreshUserlist()
         }
+    }
+
+    suspend fun getAllDrafts(): List<Draft> {
+        return database.draftDao().getAllDrafts()
+    }
+
+    suspend fun saveDraft(uid: Long, message: String) {
+        val draft = Draft(uid, message)
+        database.draftDao().save(draft)
+    }
+
+    suspend fun deleteDraft(uid: Long) {
+        database.draftDao().delete(uid)
     }
 
     fun getMessages(uid: Long): PagingSource<Int, MessageWithAvatar> {

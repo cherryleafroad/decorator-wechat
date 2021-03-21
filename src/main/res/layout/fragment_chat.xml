@@ -12,6 +12,90 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/input_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/chat_input_bar_bg"
+            android:padding="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:ignore="RtlSymmetry">
+
+            <View
+                android:id="@+id/input_indicator"
+                android:layout_width="2dp"
+                android:layout_height="40dp"
+                android:background="@drawable/chat_input_indicator_disabled"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintVertical_bias="0" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/text_input_container"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp"
+                app:cardCornerRadius="5dp"
+                app:cardElevation="0dp"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/send_button_container"
+                app:layout_constraintStart_toEndOf="@id/input_indicator">
+
+                <EditText
+                    android:id="@+id/text_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:autofillHints="textMultiLine"
+                    android:background="@color/chat_input"
+                    android:textColor="@color/input_text"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:ems="10"
+                    android:inputType="textMultiLine|textNoSuggestions|textCapSentences"
+                    android:maxLines="5"
+                    android:textCursorDrawable="@drawable/chat_cursor"
+                    tools:ignore="HardcodedText,LabelFor" />
+            </androidx.cardview.widget.CardView>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/send_button_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:layout_marginStart="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/text_input_container">
+
+                <Button
+                    android:id="@+id/send_button"
+                    android:layout_width="63dp"
+                    android:layout_height="35dp"
+                    android:background="@drawable/chat_send_button"
+                    android:elevation="0dp"
+                    android:enabled="false"
+                    android:text="@string/send"
+                    android:textAllCaps="false"
+                    android:textColor="@drawable/chat_send_button"
+                    android:textSize="16sp"
+                    android:textStyle="normal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <!-- Bubbles will be added to this dynamically -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/bubble_recycler"
@@ -24,7 +108,7 @@
             android:clipToPadding="false"
             android:scrollbars="vertical"
             android:scrollbarStyle="outsideOverlay"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/input_bar"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/toolbar" />
@@ -62,7 +146,7 @@
             android:layout_width="match_parent"
             android:layout_height="0.8dp"
             android:background="@color/chat_bottom_divider"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintBottom_toTopOf="@id/input_bar"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -89,4 +89,6 @@
     <string name="wechat_title">微信聊天记录</string>
     <string name="show_recalled">看看撤回的信息</string>
     <string name="chat_settings">设置</string>
+    <string name="send">发送</string>
+    <string name="drafts">[草稿]</string>
 </resources>

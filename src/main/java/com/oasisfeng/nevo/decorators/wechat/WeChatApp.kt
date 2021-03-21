@@ -2,7 +2,9 @@ package com.oasisfeng.nevo.decorators.wechat
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.arch.lifecycle.SingleLiveEvent
 import android.content.ContentProviderClient
+import android.content.Intent
 import android.content.SharedPreferences
 import android.database.ContentObserver
 import android.net.Uri
@@ -13,6 +15,8 @@ import android.util.ArrayMap
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.MessengerService
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 
 
 class WeChatApp : Application() {
@@ -21,7 +25,15 @@ class WeChatApp : Application() {
     }
 
     @JvmField
-    var whenMap: ArrayMap<String, Long> = ArrayMap()
+    val whenMap: ArrayMap<String, Long> = ArrayMap()
+    @JvmField
+    val replyMap: ArrayMap<Long, ReplyIntent> = ArrayMap()
+    @JvmField
+    var isMessengerServiceRunning = false
+    @JvmField
+    var isUiOpen = false
+    @JvmField
+    val replyIntentEvent: SingleLiveEvent<ReplyIntent> = SingleLiveEvent()
     var replying = false
     var sharedPreferences: SharedPreferences? = null
     var settingSynchronousRemoval = false
@@ -31,16 +43,23 @@ class WeChatApp : Application() {
     private var isUIProcess = false
 
 
-    //@RequiresApi(Build.VERSION_CODES.P)
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate() {
         super.onCreate()
 
-        //isUIProcess = getProcessName().substringAfter(':', "") == "ui"
+        val isUI = getProcessName().substringAfter(':', "") == "ui"
+
+        if (!isUI) {
+            val intent = Intent(this, MessengerService::class.java)
+            startService(intent)
+        }
+
         // for now, never run
-        isUIProcess = true
+        //isUIProcess = false
 
         // this feature is not used for UI process. It's redundant
-        if (!isUIProcess) {
+        //if (!isUIProcess) {
+        if (isUIProcess) {
             resolver = SettingsObserver(Handler(Looper.getMainLooper()))
 
             val url = "content://$SETTINGS_PROVIDER/"

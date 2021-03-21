@@ -1,15 +1,19 @@
 package com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel
 
+import android.annotation.SuppressLint
 import android.app.Application
+import android.arch.lifecycle.SingleLiveEvent
+import android.util.ArrayMap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import androidx.paging.*
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.AppDatabase
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageWithAvatar
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.repository.DatabaseRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 data class ChatData(
@@ -23,10 +27,18 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
     val userList = databaseRepository.userlist
 
-    val chatData: LiveData<ChatData>
+    // saving drafts for the user
+    val drafts = ArrayMap<Long, String>()
+
+    // single event used for getting intent AFTER observation if it's not in the map
+    val chatReplyIntent = SingleLiveEvent<ReplyIntent>()
+    val replyIntents = ArrayMap<Long, ReplyIntent>()
+
+
+    val chatData: LiveData<ChatData?>
         get() = _chatData
     // Data for the selected chat we will pass to ChatFragment
-    private var _chatData: MutableLiveData<ChatData> = MutableLiveData()
+    private var _chatData: MutableLiveData<ChatData?> = MutableLiveData()
 
     private var config: PagingConfig = PagingConfig(
         initialLoadSize = 30,
@@ -36,6 +48,30 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         maxSize = 150
     )
 
+
+    init {
+        refreshUserList()
+        loadDrafts()
+    }
+
+    private fun loadDrafts() {
+        viewModelScope.launch(Dispatchers.IO) {
+            databaseRepository.getAllDrafts().forEach { drafts[it.user_id] = it.message }
+        }
+    }
+
+    fun saveDraft(uid: Long, message: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            databaseRepository.saveDraft(uid, message)
+        }
+    }
+
+    fun deleteDraft(uid: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            databaseRepository.deleteDraft(uid)
+        }
+    }
+
     fun setChatData(uid: Long, title: String) {
         val items = Pager(config) {
             databaseRepository.getMessages(uid)
@@ -44,24 +80,33 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         _chatData.value = ChatData(title, uid, items)
     }
 
+    @SuppressLint("NullSafeMutableLiveData")
     fun clearChatData() {
         _chatData.value = null
     }
 
     fun deleteUser(uid: Long) {
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             databaseRepository.deleteUser(uid)
-            refreshUserList()
+            _refreshUserList()
         }
     }
 
-    suspend fun deleteAllUsers() {
-        databaseRepository.deleteAllUsers()
+    fun deleteAllUsers() {
+        viewModelScope.launch(Dispatchers.IO) {
+            databaseRepository.deleteAllUsers()
+            _refreshUserList()
+        }
     }
 
     fun refreshUserList() {
-        GlobalScope.launch(Dispatchers.IO) {
-            databaseRepository.refreshUserlist()
+        viewModelScope.launch(Dispatchers.IO) {
+            _refreshUserList()
         }
+    }
+
+    @Suppress("FunctionName")
+    private suspend fun _refreshUserList() {
+        databaseRepository.refreshUserlist()
     }
 }

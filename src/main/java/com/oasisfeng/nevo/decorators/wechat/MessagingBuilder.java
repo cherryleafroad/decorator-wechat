@@ -1,6 +1,7 @@
 package com.oasisfeng.nevo.decorators.wechat;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.Notification.Action;
 import android.app.Notification.BigTextStyle;
@@ -33,6 +34,8 @@ import androidx.core.app.NotificationCompat.MessagingStyle.Message;
 import androidx.core.app.Person;
 
 import com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation;
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.MessengerService;
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent;
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.DatabaseHelpers;
 import com.oasisfeng.nevo.sdk.MutableNotification;
 import com.oasisfeng.nevo.sdk.MutableStatusBarNotification;
@@ -157,6 +160,12 @@ class MessagingBuilder {
 		if (SDK_INT >= N && on_reply != null && (remote_input = ext.getRemoteInput()) != null && conversation.isChat()) {
 			final CharSequence[] input_history = n.extras.getCharSequenceArray(EXTRA_REMOTE_INPUT_HISTORY);
 			final PendingIntent proxy = proxyDirectReply(conversation.nid, conversation.id, sbn, on_reply, remote_input, input_history);
+
+			if (conversation.id != null) {
+				// store pending intent into queue for when we open UI to receive them
+				DatabaseHelpers.addReplyServiceIntent(mContext, conversation.id, proxyUiReplyBuilder(conversation.nid, conversation.id, sbn, on_reply, remote_input, input_history), remote_input);
+			}
+
 			final RemoteInput.Builder reply_remote_input = new RemoteInput.Builder(remote_input.getResultKey()).addExtras(remote_input.getExtras())
 					.setAllowFreeFormInput(true);
 			// Android Q and above has its own smart reply system
@@ -287,7 +296,7 @@ class MessagingBuilder {
 				.putExtra(EXTRA_REPLY_ACTION, on_reply).putExtra(EXTRA_RESULT_KEY, remote_input.getResultKey())
 				.putExtra(EXTRA_ORIGINAL_KEY, sbn.getOriginalKey()).putExtra(EXTRA_CONVERSATION_ID, cid)
 				.putExtra(Intent.EXTRA_USER, sbn.getUser())
-				.putExtra(EXTRA_USER_ID, id);;
+				.putExtra(EXTRA_USER_ID, id);
 		if (SDK_INT >= N && input_history != null)
 			proxy.putCharSequenceArrayListExtra(EXTRA_REMOTE_INPUT_HISTORY, new ArrayList<>(Arrays.asList(input_history)));
 
@@ -297,6 +306,20 @@ class MessagingBuilder {
 		RemoteInput.addResultsToIntent(remote_inputs, proxy, bundle);
 
 		return PendingIntent.getBroadcast(mContext, 0, proxy.setPackage(mContext.getPackageName()), FLAG_UPDATE_CURRENT);
+	}
+
+	private Intent proxyUiReplyBuilder(final int cid, final String id, final MutableStatusBarNotification sbn, final PendingIntent on_reply,
+									final RemoteInput remote_input, final @Nullable CharSequence[] input_history) {
+		final Intent proxy = new Intent(ACTION_REPLY)		// Separate action to avoid PendingIntent overwrite.
+				.setData(Uri.fromParts(SCHEME_KEY, sbn.getKey(), null))
+				.putExtra(EXTRA_REPLY_ACTION, on_reply).putExtra(EXTRA_RESULT_KEY, remote_input.getResultKey())
+				.putExtra(EXTRA_ORIGINAL_KEY, sbn.getOriginalKey()).putExtra(EXTRA_CONVERSATION_ID, cid)
+				.putExtra(Intent.EXTRA_USER, sbn.getUser())
+				.putExtra(EXTRA_USER_ID, id);
+		if (SDK_INT >= N && input_history != null)
+			proxy.putCharSequenceArrayListExtra(EXTRA_REMOTE_INPUT_HISTORY, new ArrayList<>(Arrays.asList(input_history)));
+
+		return proxy;
 	}
 
 	private final BroadcastReceiver mReplyReceiver = new BroadcastReceiver() { @Override public void onReceive(final Context context, final Intent proxy) {

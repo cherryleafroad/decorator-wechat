@@ -86,10 +86,7 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
                     .setPositiveButton(
                         android.R.string.ok
                     ) { _, _ ->
-                        GlobalScope.launch(Dispatchers.IO) {
-                            mSharedModel.deleteAllUsers()
-                            mSharedModel.refreshUserList()
-                        }
+                        mSharedModel.deleteAllUsers()
                     }
 
                     .setNegativeButton(android.R.string.cancel, null)

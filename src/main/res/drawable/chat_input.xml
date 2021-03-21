@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--Shadow Layer-->
+
+
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="5dp" />
+            <padding
+                android:bottom="1px"
+                android:left="1px"
+                android:right="1px" />
+            <solid android:color="#01000000" />
+        </shape>
+    </item>
+
+    <!--===============-->
+
+
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="5dp" />
+            <padding android:bottom="1px" />
+            <solid android:color="#09000000" />
+        </shape>
+    </item>
+
+    <!--===============-->
+
+
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="5dp" />
+            <padding
+                android:bottom="1px"
+                android:left="1px"
+                android:right="1px" />
+            <solid android:color="#10000000" />
+        </shape>
+    </item>
+
+    <!--===============-->
+
+
+    <!--ForeGround-->
+
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/chat_input" />
+            <corners android:bottomLeftRadius="5dp" android:radius="5dp" />
+        </shape>
+    </item>
+
+</layer-list>
