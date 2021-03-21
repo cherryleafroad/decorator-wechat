@@ -153,6 +153,11 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
                 currentFragment = Fragment.USER_LIST
 
                 chatFragment.mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
+                // disable to prevent it from appearing on backpress
+                userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
+                Handler(Looper.getMainLooper()).postDelayed({
+                    userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = true
+                }, 400)
 
                 // check for drafts and if so, save it
                 val uid = mSharedViewModel.chatData.value?.uid!!
@@ -200,6 +205,13 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
             )
 
             mService!!.send(msg)
+        }
+        
+        if (currentFragment == Fragment.USER_LIST) {
+            userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
+            Handler(Looper.getMainLooper()).postDelayed({
+                userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = true
+            }, 400)
         }
     }
 

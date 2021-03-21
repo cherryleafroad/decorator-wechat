@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 
 class UserListFragment : Fragment(), UserAdapterOnClickListener {
     private var _mBinding: FragmentUserlistBinding? = null
-    private val mBinding
+    val mBinding
         get() = _mBinding!!
 
     private var mAdapterData = mutableListOf<UserWithMessageAndAvatar>()
