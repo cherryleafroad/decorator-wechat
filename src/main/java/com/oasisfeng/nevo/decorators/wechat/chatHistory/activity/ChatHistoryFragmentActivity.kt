@@ -82,6 +82,12 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
                 )
                 msg.replyTo = mMessenger
                 mService!!.send(msg)
+
+                val msgOpen = Message.obtain(
+                    null,
+                    MessengerService.MSG_UI_OPEN
+                )
+                mService!!.send(msgOpen)
             } catch (e: RemoteException) {
                 // crashed
             }
@@ -171,6 +177,32 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         super.onBackPressed()
     }
 
+    override fun onPause() {
+        super.onPause()
+
+        if (mService != null) {
+            val msg = Message.obtain(
+                null,
+                MessengerService.MSG_UI_CLOSED
+            )
+
+            mService!!.send(msg)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (mService != null) {
+            val msg = Message.obtain(
+                null,
+                MessengerService.MSG_UI_OPEN
+            )
+
+            mService!!.send(msg)
+        }
+    }
+
     override fun onStart() {
         super.onStart()
 
@@ -213,7 +245,8 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
                 if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt()) &&
                     !sendRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
 
-                    //v.clearFocus()
+                    // wechat doesn't clear focus, however I find it distracting that it won't go away
+                    v.clearFocus()
                     val imm: InputMethodManager =
                         getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                     imm.hideSoftInputFromWindow(v.getWindowToken(), 0)

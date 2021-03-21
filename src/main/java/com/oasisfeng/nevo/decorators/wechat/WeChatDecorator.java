@@ -275,6 +275,13 @@ public class WeChatDecorator extends NevoDecoratorService {
 		final List<MessagingStyle.Message> messages = messaging.getMessages();
 		if (messages.isEmpty()) return true;
 
+		boolean isUiOpen = ((WeChatApp)this.getApplicationContext()).isUiOpen;
+		if (isUiOpen) {
+			// no notification - and remove old one
+			cancelNotification(evolving.getOriginalKey());
+			return false;
+		}
+
 		if (SDK_INT >= Build.VERSION_CODES.R && input_history != null) {    // EXTRA_REMOTE_INPUT_HISTORY is not longer supported on Android R.
 			for (int i = input_history.length - 1; i >= 0; i--)             // Append them to messages in MessagingStyle.
 				messages.add(new MessagingStyle.Message(input_history[i], 0L, (Person) null));

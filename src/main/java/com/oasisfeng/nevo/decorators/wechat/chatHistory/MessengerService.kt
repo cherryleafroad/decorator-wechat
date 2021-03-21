@@ -26,6 +26,8 @@ class MessengerService : Service(), LifecycleOwner {
         const val MSG_UNREGISTER_CLIENT = 2
         const val MSG_NEW_REPLY = 3
         const val MSG_NEW_REPLY_ARRAY = 4
+        const val MSG_UI_OPEN = 5
+        const val MSG_UI_CLOSED = 6
 
         const val EXTRA_REPLY = "extra_reply"
         const val EXTRA_REPLY_ARRAY = "extra_reply_array"
@@ -64,7 +66,6 @@ class MessengerService : Service(), LifecycleOwner {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
                 MSG_REGISTER_CLIENT -> {
-                    (applicationContext as WeChatApp).isUiOpen = true
                     mClients.add(msg.replyTo)
 
                     // register events to be sent to this client - note - singleliveevent only works for ONE observation!
@@ -95,9 +96,16 @@ class MessengerService : Service(), LifecycleOwner {
                 }
 
                 MSG_UNREGISTER_CLIENT -> {
-                    (applicationContext as WeChatApp).isUiOpen = false
                     (applicationContext as WeChatApp).replyIntentEvent.removeObservers(this@MessengerService)
                     mClients.remove(msg.replyTo)
+                }
+
+                MSG_UI_OPEN -> {
+                    (applicationContext as WeChatApp).isUiOpen = true
+                }
+
+                MSG_UI_CLOSED -> {
+                    (applicationContext as WeChatApp).isUiOpen = false
                 }
 
                 else -> super.handleMessage(msg)
