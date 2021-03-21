@@ -73,7 +73,7 @@ object DatabaseHelpers {
         }
     }
 
-    suspend fun getUserUid(context: Context, userSid: String): Long? {
+    private suspend fun getUserUid(context: Context, userSid: String): Long? {
         val db = AppDatabase.get(context.applicationContext)
         return db.userDao().getUidFromUserId(userSid)
     }
@@ -85,11 +85,15 @@ object DatabaseHelpers {
         GlobalScope.launch(Dispatchers.IO) {
             val chatType = if (isChat) ChatType.CHAT else ChatType.GROUP
 
-            val uid = db.userDao().getUidFromUserId(id)
-            if (uid != null) {
+            val user = db.userDao().findByUserId(id)
+            if (user != null) {
+                val now = System.currentTimeMillis()
                 val message =
-                    Message(uid, reply, MessageType.SENDER, chatType, System.currentTimeMillis())
+                    Message(user.u_id, reply, MessageType.SENDER, chatType, now)
                 db.messageDao().insert(message)
+                
+                user.latest_message = now
+                db.userDao().update(user)
 
                 // notify userlist of new reply
                 val intent = Intent(ACTION_NOTIFY_USER_CHANGE)
