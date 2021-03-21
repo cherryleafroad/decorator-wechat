@@ -73,6 +73,7 @@ class ChatFragment : Fragment() {
         if (mSharedModel.replyIntents.contains(data.uid)) {
             replyIntent = mSharedModel.replyIntents[data.uid]
             mBinding.inputIndicator.background = AppCompatResources.getDrawable(requireContext(), R.drawable.chat_input_indicator_enabled)
+            mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
         }
 
         // register to update replyintent variable
@@ -81,6 +82,7 @@ class ChatFragment : Fragment() {
 
             replyIntent = it
             mBinding.inputIndicator.background = AppCompatResources.getDrawable(requireContext(), R.drawable.chat_input_indicator_enabled)
+            mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
         })
 
         mChatSelectedTitle = data.title

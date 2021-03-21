@@ -16,12 +16,6 @@ class DatabaseRepository(private val database: AppDatabase) {
     val userlist: LiveData<List<UserWithMessageAndAvatar>>
         get() = _userlist
 
-    init {
-        GlobalScope.launch(Dispatchers.IO) {
-            refreshUserlist()
-        }
-    }
-
     suspend fun getAllDrafts(): List<Draft> {
         return database.draftDao().getAllDrafts()
     }

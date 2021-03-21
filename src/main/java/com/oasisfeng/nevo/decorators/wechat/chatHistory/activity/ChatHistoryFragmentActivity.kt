@@ -34,7 +34,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
     private var bound = false
     // to access child fragments
     private val userListFragment = UserListFragment()
-    private val chatFragment = ChatFragment()
+    private var chatFragment = ChatFragment()
 
     internal class IncomingHandler(val activity: WeakReference<ChatHistoryFragmentActivity>) : Handler(
         Looper.myLooper()!!
@@ -132,6 +132,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         mSharedViewModel.chatData.observe(this, {
             it ?: return@observe
 
+            chatFragment = ChatFragment()
             supportFragmentManager.beginTransaction().apply {
                 addToBackStack(null)
                 add(R.id.fragment_frame, chatFragment)
