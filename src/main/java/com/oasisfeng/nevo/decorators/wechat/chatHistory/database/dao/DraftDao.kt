@@ -1,7 +1,9 @@
 package com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao
 
-import androidx.room.*
-import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Avatar
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Draft
 
 @Dao

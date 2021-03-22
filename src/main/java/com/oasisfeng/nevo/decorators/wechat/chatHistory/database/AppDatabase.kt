@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.graphics.drawable.Drawable
 import androidx.room.*
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.AvatarDao
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.DraftDao
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.MessageDao

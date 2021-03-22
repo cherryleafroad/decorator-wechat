@@ -1,6 +1,9 @@
 package com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
 
 @Entity(tableName = "drafts",
     foreignKeys = [ForeignKey(entity = User::class,

@@ -7,9 +7,6 @@ import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.AppDatabase
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Draft
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageWithAvatar
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.UserWithMessageAndAvatar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 class DatabaseRepository(private val database: AppDatabase) {
     private val _userlist: MutableLiveData<List<UserWithMessageAndAvatar>> = MutableLiveData()
