@@ -147,6 +147,14 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
             // it can only have one observer, so make sure that's true
             mSharedViewModel.chatReplyIntent.removeObservers(this)
             _chatFragment = ChatFragment()
+
+            // chat got restarted, due to theme change, so place the text back to normal
+            if (mSharedViewModel.restartedChat) {
+                mSharedViewModel.restartedChat = false
+                chatFragment.restarted = true
+                chatFragment.inputText = mSharedViewModel.inputData
+            }
+
             notifyServiceOpenUid(it.uid)
             supportFragmentManager.beginTransaction().apply {
                 addToBackStack(null)
@@ -161,14 +169,13 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
             ChatHistoryFragment.CHAT -> {
                 currentFragment = ChatHistoryFragment.USER_LIST
 
+                // just in case it got set to true because of entering/exiting chat through onpause/onresume
+                mSharedViewModel.restartedChat = false
+
                 notifyServiceClosedUid()
 
-                chatFragment.mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
                 // disable to prevent it from appearing on backpress
                 userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
-                Handler(Looper.getMainLooper()).postDelayed({
-                    userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = true
-                }, 500)
 
                 // check for drafts and if so, save it
                 val uid = mSharedViewModel.chatData.value?.uid!!
@@ -228,9 +235,8 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
 
         if (currentFragment == ChatHistoryFragment.USER_LIST) {
             userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
-            Handler(Looper.getMainLooper()).postDelayed({
-                userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = true
-            }, 500)
+        } else {
+            chatFragment.mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
         }
     }
 

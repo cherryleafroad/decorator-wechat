@@ -40,6 +40,10 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     // Data for the selected chat we will pass to ChatFragment
     private var _chatData: MutableLiveData<ChatData?> = MutableLiveData()
 
+    // used for when theme changing restarts chat activity
+    var restartedChat = false
+    var inputData = ""
+
     private var config: PagingConfig = PagingConfig(
         initialLoadSize = 30,
         pageSize = 25,

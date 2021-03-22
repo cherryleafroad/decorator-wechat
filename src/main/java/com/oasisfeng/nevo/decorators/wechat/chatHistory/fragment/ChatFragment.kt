@@ -9,8 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.transition.TransitionInflater
 import android.view.*
 import android.widget.TextView
@@ -43,8 +41,13 @@ class ChatFragment : Fragment() {
     var mChatSelectedId: Long = 0
 
     private var replyIntent: ReplyIntent? = null
+    var restarted = false
+    var inputText = ""
 
     companion object {
+        const val STATE_RESTART = "state_restart"
+        const val STATE_INPUT_TEXT = "state_input_text"
+
         const val EXTRA_USERNAME = "username"
         const val ACTION_USERNAME_CHANGED = "username_changed"
     }
@@ -68,20 +71,28 @@ class ChatFragment : Fragment() {
         val data = mSharedModel.chatData.value!!
         mChatSelectedId = data.uid
 
+        if (savedInstanceState != null) {
+            // used for when the activity was restarted
+            mSharedModel.apply {
+                restartedChat = savedInstanceState.getBoolean(STATE_RESTART)
+                inputData = savedInstanceState.getString(STATE_INPUT_TEXT, "")
+            }
+        }
+
         if (mSharedModel.replyIntents.contains(data.uid)) {
             replyIntent = mSharedModel.replyIntents[data.uid]
             mBinding.inputIndicator.background = AppCompatResources.getDrawable(requireContext(), R.drawable.chat_input_indicator_enabled)
             mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
+        } else {
+            // register to update replyintent variable
+            mSharedModel.chatReplyIntent.observe(this, {
+                it ?: return@observe
+
+                replyIntent = it
+                mBinding.inputIndicator.background = AppCompatResources.getDrawable(requireContext(), R.drawable.chat_input_indicator_enabled)
+                mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
+            })
         }
-
-        // register to update replyintent variable
-        mSharedModel.chatReplyIntent.observe(this, {
-            it ?: return@observe
-
-            replyIntent = it
-            mBinding.inputIndicator.background = AppCompatResources.getDrawable(requireContext(), R.drawable.chat_input_indicator_enabled)
-            mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
-        })
 
         mChatSelectedTitle = data.title
         mBinding.toolbarTitle.text = mChatSelectedTitle
@@ -95,6 +106,7 @@ class ChatFragment : Fragment() {
 
         mBinding.textInput.addTextChangedListener {
             mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty() && replyIntent != null
+            inputText = it.toString()
         }
 
         // sending messages always scrolls to the end
@@ -142,26 +154,14 @@ class ChatFragment : Fragment() {
             }
         })
 
-        val handler = Handler(Looper.getMainLooper())
         // pretend that we are adjusting layout size
         mBinding.bubbleRecycler.addOnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
             if (atEnd) {
                 mBinding.bubbleRecycler.scrollToPosition(0)
             }
 
-            if (!firstLoad) {
-                // hide the scrollbar until the layout is done
-                mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
-
-                // get rid of any running callbacks just in case there are some before this
-                // that way there are no conflicts of interest
-                handler.removeCallbacksAndMessages(null)
-                // re-enable it cause we obviously want it -
-                // last handler is the one that goes through
-                handler.postDelayed({
-                    mBinding.bubbleRecycler.isVerticalScrollBarEnabled = true
-                }, 500)
-            }
+            // hide the scrollbar until the layout is done
+            mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
         }
 
         val pagedData = data.messageData
@@ -174,16 +174,29 @@ class ChatFragment : Fragment() {
         })
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(STATE_RESTART, true)
+        outState.putString(STATE_INPUT_TEXT, inputText)
+
+        super.onSaveInstanceState(outState)
+    }
+
     override fun onStart() {
         super.onStart()
 
-        val data = mSharedModel.chatData.value!!
+        if (!restarted) {
+            val data = mSharedModel.chatData.value!!
 
-        // add draft to textinput if one was saved
-        if (mSharedModel.drafts.contains(data.uid)) {
+            // add draft to textinput if one was saved
+            if (mSharedModel.drafts.contains(data.uid)) {
             mBinding.textInput.setText(mSharedModel.drafts[data.uid], TextView.BufferType.EDITABLE)
+            } else {
+                mBinding.textInput.setText("", TextView.BufferType.EDITABLE)
+            }
         } else {
-            mBinding.textInput.setText("", TextView.BufferType.EDITABLE)
+            restarted = false
+            // restore text as it was last time
+            mBinding.textInput.setText(inputText, TextView.BufferType.EDITABLE)
         }
     }
 

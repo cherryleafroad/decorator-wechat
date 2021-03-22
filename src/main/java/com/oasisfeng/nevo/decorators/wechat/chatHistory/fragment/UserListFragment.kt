@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter.UserAdapter
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter.UserAdapterOnClickListener
@@ -55,6 +56,17 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
                 onOptionsItemSelected(it)
             }
         }
+
+        // always disabled unless moved
+        mBinding.userRecycler.isVerticalScrollBarEnabled = false
+
+        mBinding.userRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+
+                mBinding.userRecycler.isVerticalScrollBarEnabled = true
+            }
+        })
 
         mAdapter = UserAdapter(requireContext(), this, mAdapterData)
         val layout = LinearLayoutManager(requireContext())
