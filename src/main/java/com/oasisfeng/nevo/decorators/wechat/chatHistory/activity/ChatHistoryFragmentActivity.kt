@@ -23,7 +23,7 @@ import com.oasisfeng.nevo.decorators.wechat.databinding.ActivityChatHistoryFragm
 import java.lang.ref.WeakReference
 
 
-private enum class Fragment {
+private enum class ChatHistoryFragment {
     USER_LIST,
     CHAT
 }
@@ -53,7 +53,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
                             main.mSharedViewModel.replyIntents[d.uid] = d
                         }
 
-                        if (main.currentFragment == Fragment.CHAT) {
+                        if (main.currentFragment == ChatHistoryFragment.CHAT) {
                             // chat should also be updated as well
                             main.mSharedViewModel.apply {
                                 replyIntents[main.chatFragment.mChatSelectedId].let {
@@ -86,15 +86,13 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
 
             try {
                 val msg = Message.obtain(
-                    null,
-                    MessengerService.MSG_REGISTER_CLIENT
+                    null, MessengerService.MSG_REGISTER_CLIENT
                 )
                 msg.replyTo = mMessenger
                 mService!!.send(msg)
 
                 val msgOpen = Message.obtain(
-                    null,
-                    MessengerService.MSG_UI_OPEN
+                    null, MessengerService.MSG_UI_OPEN
                 )
                 mService!!.send(msgOpen)
             } catch (e: RemoteException) {
@@ -102,36 +100,34 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
             }
 
             // As part of the sample, tell the user what happened.
-            Log.d(TAG, "Connected to ${className?.className}")
+            Log.d(TAG, "Connected to ${className?.shortClassName}")
         }
 
         override fun onServiceDisconnected(className: ComponentName) {
             mService = null
-            Log.d(TAG, "Disconnected from ${className.className}")
+            Log.d(TAG, "Disconnected from ${className.shortClassName}")
         }
     }
 
     lateinit var mSharedViewModel: SharedViewModel
     private lateinit var mBinding: ActivityChatHistoryFragmentBinding
-    private var currentFragment = Fragment.USER_LIST
+    private var currentFragment = ChatHistoryFragment.USER_LIST
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mBinding = ActivityChatHistoryFragmentBinding.inflate(layoutInflater)
         setContentView(mBinding.root)
 
-
-
         mSharedViewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
 
         supportFragmentManager.addFragmentOnAttachListener { _, fragment -> run {
             currentFragment = when (fragment) {
                 is ChatFragment -> {
-                    Fragment.CHAT
+                    ChatHistoryFragment.CHAT
                 }
 
                 is UserListFragment -> {
-                    Fragment.USER_LIST
+                    ChatHistoryFragment.USER_LIST
                 }
 
                 else -> throw NotImplementedError()
@@ -158,8 +154,8 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         when (currentFragment) {
-            Fragment.CHAT -> {
-                currentFragment = Fragment.USER_LIST
+            ChatHistoryFragment.CHAT -> {
+                currentFragment = ChatHistoryFragment.USER_LIST
 
                 chatFragment.mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
                 // disable to prevent it from appearing on backpress
@@ -183,7 +179,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
                 mSharedViewModel.refreshUserList()
             }
 
-            Fragment.USER_LIST -> {
+            ChatHistoryFragment.USER_LIST -> {
                 finish()
             }
         }
@@ -222,7 +218,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
             mService!!.send(msg2)
         }
 
-        if (currentFragment == Fragment.USER_LIST) {
+        if (currentFragment == ChatHistoryFragment.USER_LIST) {
             userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
             Handler(Looper.getMainLooper()).postDelayed({
                 userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = true
