@@ -140,9 +140,12 @@ class ChatFragment : Fragment() {
         })
 
         var firstLoad = true
+        // this is used to determine to ignore the layoutchangelistener
+        var dataInserted = false
         mAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 super.onItemRangeInserted(positionStart, itemCount)
+                dataInserted = true
 
                 if ((positionStart == 0 && firstLoad) || atEnd) {
                     mBinding.bubbleRecycler.scrollToPosition(0)
@@ -156,12 +159,16 @@ class ChatFragment : Fragment() {
 
         // pretend that we are adjusting layout size
         mBinding.bubbleRecycler.addOnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
-            if (atEnd) {
+            if (atEnd && !dataInserted) {
                 mBinding.bubbleRecycler.scrollToPosition(0)
             }
 
-            // hide the scrollbar until the layout is done
-            mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
+            if (!dataInserted) {
+                // hide the scrollbar until the layout is done
+                mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
+            }
+
+            dataInserted = false
         }
 
         val pagedData = data.messageData
