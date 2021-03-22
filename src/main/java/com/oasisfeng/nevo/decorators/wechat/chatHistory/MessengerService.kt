@@ -108,6 +108,22 @@ class MessengerService : Service(), LifecycleOwner {
                     (applicationContext as WeChatApp).isUiOpen = false
                 }
 
+                MSG_NEW_REPLY_ARRAY -> {
+                    // requested a new reply array
+                    val msgArr = Message.obtain(
+                        null, MSG_NEW_REPLY_ARRAY, 0, 0
+                    )
+
+                    val bundleArr = Bundle()
+                    val values = (applicationContext as WeChatApp).replyMap.values
+                    if (values.isNotEmpty()) {
+                        val replyArr = ArrayList(values)
+                        bundleArr.putParcelableArrayList(EXTRA_REPLY_ARRAY, replyArr)
+                        msgArr.data = bundleArr
+                        msg.replyTo.send(msgArr)
+                    }
+                }
+
                 else -> super.handleMessage(msg)
             }
         }

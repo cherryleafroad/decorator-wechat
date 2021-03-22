@@ -42,7 +42,7 @@ class ChatFragment : Fragment() {
     private val mSharedModel: SharedViewModel by activityViewModels()
 
     private lateinit var mChatSelectedTitle: String
-    private var mChatSelectedId: Long = 0
+    var mChatSelectedId: Long = 0
 
     private var replyIntent: ReplyIntent? = null
 

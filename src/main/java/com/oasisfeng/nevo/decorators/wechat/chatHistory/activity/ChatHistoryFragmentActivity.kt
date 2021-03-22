@@ -52,6 +52,15 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
                         data.forEach { d ->
                             main.mSharedViewModel.replyIntents[d.uid] = d
                         }
+
+                        if (main.currentFragment == Fragment.CHAT) {
+                            // chat should also be updated as well
+                            main.mSharedViewModel.apply {
+                                replyIntents[main.chatFragment.mChatSelectedId].let {
+                                    chatReplyIntent.postValue(it)
+                                }
+                            }
+                        }
                     }
 
                     MessengerService.MSG_NEW_REPLY -> {
@@ -200,13 +209,19 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
 
         if (mService != null) {
             val msg = Message.obtain(
-                null,
-                MessengerService.MSG_UI_OPEN
+                null, MessengerService.MSG_UI_OPEN
             )
 
             mService!!.send(msg)
+
+            // request an intent update since we weren't there to receive them
+            val msg2 = Message.obtain(
+                null, MessengerService.MSG_NEW_REPLY_ARRAY
+            )
+            msg2.replyTo = mMessenger
+            mService!!.send(msg2)
         }
-        
+
         if (currentFragment == Fragment.USER_LIST) {
             userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
             Handler(Looper.getMainLooper()).postDelayed({
@@ -267,6 +282,4 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         }
         return super.dispatchTouchEvent(event)
     }
-
-
 }
