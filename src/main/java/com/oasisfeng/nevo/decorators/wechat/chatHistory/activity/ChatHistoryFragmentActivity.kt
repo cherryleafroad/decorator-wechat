@@ -97,20 +97,8 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         ) {
             mService = Messenger(service)
 
-            try {
-                val msg = Message.obtain(
-                    null, MessengerService.MSG_REGISTER_CLIENT
-                )
-                msg.replyTo = mMessenger
-                mService!!.send(msg)
-
-                val msgOpen = Message.obtain(
-                    null, MessengerService.MSG_UI_OPEN
-                )
-                mService!!.send(msgOpen)
-            } catch (e: RemoteException) {
-                // crashed
-            }
+            sendServiceMsg(MessengerService.MSG_REGISTER_CLIENT)
+            sendServiceMsg(MessengerService.MSG_UI_OPEN)
 
             // As part of the sample, tell the user what happened.
             Log.d(TAG, "Connected to ${className?.shortClassName}")
@@ -208,67 +196,60 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
     private fun notifyServiceOpenUid(uid: Long) {
         if (mService != null) {
             lifecycleScope.launch(Dispatchers.IO) {
-                val msg = Message.obtain(
-                    null, MessengerService.MSG_SET_UI_CHAT_ID
-                )
-
                 val sid = mSharedViewModel.getSidFromUid(uid)
 
                 val b = Bundle()
                 b.putString(EXTRA_ID, sid)
 
-                msg.data = b
-
-                mService!!.send(msg)
+                sendServiceMsg(MessengerService.MSG_SET_UI_CHAT_ID, b)
             }
         }
     }
 
     private fun notifyServiceClosedUid() {
-        if (mService != null) {
-            val msg = Message.obtain(
-                null, MessengerService.MSG_DEL_UI_CHAT_ID
-            )
-
-            mService!!.send(msg)
-        }
+        sendServiceMsg(MessengerService.MSG_DEL_UI_CHAT_ID)
     }
 
     override fun onPause() {
         super.onPause()
 
-        if (mService != null) {
-            val msg = Message.obtain(
-                null, MessengerService.MSG_UI_CLOSED
-            )
-
-            mService!!.send(msg)
-        }
+        sendServiceMsg(MessengerService.MSG_UI_CLOSED)
     }
 
     override fun onResume() {
         super.onResume()
 
-        if (mService != null) {
-            val msg = Message.obtain(
-                null, MessengerService.MSG_UI_OPEN
-            )
-
-            mService!!.send(msg)
-
-            // request an intent update since we weren't there to receive them
-            val msg2 = Message.obtain(
-                null, MessengerService.MSG_NEW_REPLY_ARRAY
-            )
-            msg2.replyTo = mMessenger
-            mService!!.send(msg2)
+        sendServiceMsg(MessengerService.MSG_UI_OPEN)
+        if (currentFragment == ChatHistoryFragment.CHAT) {
+            notifyServiceOpenUid(chatFragment.mChatSelectedId)
         }
+        // request an intent update since we weren't there to receive them
+        sendServiceMsg(MessengerService.MSG_NEW_REPLY_ARRAY)
 
         if (currentFragment == ChatHistoryFragment.USER_LIST) {
             userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
             Handler(Looper.getMainLooper()).postDelayed({
                 userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = true
             }, 500)
+        }
+    }
+
+    private fun sendServiceMsg(message: Int, data: Bundle? = null) {
+        mService?.let { it ->
+            try {
+                val msg = Message.obtain(
+                    null, message
+                )
+
+                data?.let { b ->
+                    msg.data = b
+                }
+
+                msg.replyTo = mMessenger
+                it.send(msg)
+            } catch (e: RemoteException) {
+                // nothing to do - it crahsed
+            }
         }
     }
 
@@ -284,18 +265,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         super.onStop()
 
         if (bound) {
-            if (mService != null) {
-                try {
-                    val msg = Message.obtain(
-                        null,
-                        MessengerService.MSG_UNREGISTER_CLIENT
-                    )
-                    msg.replyTo = mMessenger
-                    mService!!.send(msg)
-                } catch (e: RemoteException) {
-                    // nothing to do - it crahsed
-                }
-            }
+            sendServiceMsg(MessengerService.MSG_UNREGISTER_CLIENT)
 
             unbindService(mConnection)
             bound = false
