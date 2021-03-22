@@ -34,7 +34,9 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
     private var bound = false
     // to access child fragments
     private val userListFragment = UserListFragment()
-    private var chatFragment = ChatFragment()
+    private val chatFragment: ChatFragment
+        get() = _chatFragment!!
+    private var _chatFragment: ChatFragment? = null
 
     internal class IncomingHandler(val activity: WeakReference<ChatHistoryFragmentActivity>) : Handler(
         Looper.myLooper()!!
@@ -68,7 +70,11 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
                         val data =
                             msg.data.getParcelable<ReplyIntent>(MessengerService.EXTRA_REPLY)!!
                         main.mSharedViewModel.replyIntents[data.uid] = data
-                        main.mSharedViewModel.chatReplyIntent.postValue(data)
+                        if (main.currentFragment == ChatHistoryFragment.CHAT) {
+                            if (data.uid == main.chatFragment.mChatSelectedId) {
+                                main.mSharedViewModel.chatReplyIntent.postValue(data)
+                            }
+                        }
                     }
 
                     else -> super.handleMessage(msg)
@@ -143,7 +149,9 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         mSharedViewModel.chatData.observe(this, {
             it ?: return@observe
 
-            chatFragment = ChatFragment()
+            // it can only have one observer, so make sure that's true
+            mSharedViewModel.chatReplyIntent.removeObservers(this)
+            _chatFragment = ChatFragment()
             supportFragmentManager.beginTransaction().apply {
                 addToBackStack(null)
                 add(R.id.fragment_frame, chatFragment)
@@ -257,22 +265,25 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        if (event.action == MotionEvent.ACTION_DOWN) {
-            val v = currentFocus
-            if (v is EditText) {
-                val outRect = Rect()
-                val sendRect = Rect()
-                v.getGlobalVisibleRect(outRect)
-                chatFragment.mBinding.sendButton.getGlobalVisibleRect(sendRect)
+        if (currentFragment == ChatHistoryFragment.CHAT) {
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                val v = currentFocus
+                if (v is EditText) {
+                    val outRect = Rect()
+                    val sendRect = Rect()
+                    v.getGlobalVisibleRect(outRect)
+                    chatFragment.mBinding.sendButton.getGlobalVisibleRect(sendRect)
 
-                if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt()) &&
-                    !sendRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                    if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt()) &&
+                        !sendRect.contains(event.rawX.toInt(), event.rawY.toInt())
+                    ) {
 
-                    // wechat doesn't clear focus, however I find it distracting that it won't go away
-                    v.clearFocus()
-                    val imm: InputMethodManager =
-                        getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
+                        // wechat doesn't clear focus, however I find it distracting that it won't go away
+                        v.clearFocus()
+                        val imm: InputMethodManager =
+                            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
+                    }
                 }
             }
         }

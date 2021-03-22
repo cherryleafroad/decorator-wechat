@@ -1,7 +1,6 @@
 package com.oasisfeng.nevo.decorators.wechat;
 
 import android.annotation.SuppressLint;
-import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.Notification.Action;
 import android.app.Notification.BigTextStyle;
@@ -34,8 +33,6 @@ import androidx.core.app.NotificationCompat.MessagingStyle.Message;
 import androidx.core.app.Person;
 
 import com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation;
-import com.oasisfeng.nevo.decorators.wechat.chatHistory.MessengerService;
-import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent;
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.DatabaseHelpers;
 import com.oasisfeng.nevo.sdk.MutableNotification;
 import com.oasisfeng.nevo.sdk.MutableStatusBarNotification;
