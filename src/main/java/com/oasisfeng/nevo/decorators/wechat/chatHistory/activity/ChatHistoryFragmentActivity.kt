@@ -162,7 +162,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
                 userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
                 Handler(Looper.getMainLooper()).postDelayed({
                     userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = true
-                }, 400)
+                }, 500)
 
                 // check for drafts and if so, save it
                 val uid = mSharedViewModel.chatData.value?.uid!!
@@ -222,7 +222,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
             userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
             Handler(Looper.getMainLooper()).postDelayed({
                 userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = true
-            }, 400)
+            }, 500)
         }
     }
 

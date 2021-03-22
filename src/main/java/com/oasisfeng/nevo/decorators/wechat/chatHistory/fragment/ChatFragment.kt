@@ -144,7 +144,7 @@ class ChatFragment : Fragment() {
 
         val handler = Handler(Looper.getMainLooper())
         // pretend that we are adjusting layout size
-        mBinding.bubbleRecycler.addOnLayoutChangeListener { v: View?, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int ->
+        mBinding.bubbleRecycler.addOnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
             if (atEnd) {
                 mBinding.bubbleRecycler.scrollToPosition(0)
             }
@@ -160,7 +160,7 @@ class ChatFragment : Fragment() {
                 // last handler is the one that goes through
                 handler.postDelayed({
                     mBinding.bubbleRecycler.isVerticalScrollBarEnabled = true
-                }, 400)
+                }, 500)
             }
         }
 
