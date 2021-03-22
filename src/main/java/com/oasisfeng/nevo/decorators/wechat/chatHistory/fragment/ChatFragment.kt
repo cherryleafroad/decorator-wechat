@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.transition.TransitionInflater
-import android.util.Log
 import android.view.*
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
@@ -23,7 +22,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.oasisfeng.nevo.decorators.wechat.R
-import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter.ChatBubbleAdapter
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SharedViewModel

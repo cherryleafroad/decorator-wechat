@@ -9,15 +9,15 @@ import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.oasisfeng.nevo.decorators.wechat.R
-import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SharedViewModel
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter.UserAdapter
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter.UserAdapterOnClickListener
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.UserWithMessageAndAvatar
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SharedViewModel
 import com.oasisfeng.nevo.decorators.wechat.databinding.FragmentUserlistBinding
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class UserListFragment : Fragment(), UserAdapterOnClickListener {
@@ -115,7 +115,7 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
             .setPositiveButton(
                 android.R.string.ok
             ) { _, _ ->
-                GlobalScope.launch(Dispatchers.IO) {
+                lifecycleScope.launch(Dispatchers.IO) {
                     mSharedModel.deleteUser(uid)
                     mSharedModel.refreshUserList()
                 }
