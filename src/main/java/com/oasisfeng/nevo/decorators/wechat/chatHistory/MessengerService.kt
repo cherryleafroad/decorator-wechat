@@ -10,6 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.oasisfeng.nevo.decorators.wechat.WeChatApp
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.activity.ChatHistoryFragmentActivity.Companion.EXTRA_ID
 import kotlinx.parcelize.Parcelize
 
 
@@ -28,6 +29,8 @@ class MessengerService : Service(), LifecycleOwner {
         const val MSG_NEW_REPLY_ARRAY = 4
         const val MSG_UI_OPEN = 5
         const val MSG_UI_CLOSED = 6
+        const val MSG_SET_UI_CHAT_ID = 7
+        const val MSG_DEL_UI_CHAT_ID = 8
 
         const val EXTRA_REPLY = "extra_reply"
         const val EXTRA_REPLY_ARRAY = "extra_reply_array"
@@ -96,7 +99,12 @@ class MessengerService : Service(), LifecycleOwner {
                 }
 
                 MSG_UNREGISTER_CLIENT -> {
-                    (applicationContext as WeChatApp).replyIntentEvent.removeObservers(this@MessengerService)
+                    (applicationContext as WeChatApp).apply {
+                        replyIntentEvent.removeObservers(this@MessengerService)
+                        uiSelectedId = ""
+                        isUiOpen = false
+                    }
+
                     mClients.remove(msg.replyTo)
                 }
 
@@ -105,7 +113,10 @@ class MessengerService : Service(), LifecycleOwner {
                 }
 
                 MSG_UI_CLOSED -> {
-                    (applicationContext as WeChatApp).isUiOpen = false
+                    (applicationContext as WeChatApp).apply {
+                        isUiOpen = false
+                        uiSelectedId = ""
+                    }
                 }
 
                 MSG_NEW_REPLY_ARRAY -> {
@@ -122,6 +133,15 @@ class MessengerService : Service(), LifecycleOwner {
                         msgArr.data = bundleArr
                         msg.replyTo.send(msgArr)
                     }
+                }
+
+                MSG_SET_UI_CHAT_ID -> {
+                    val id = msg.data.getString(EXTRA_ID)!!
+                    (applicationContext as WeChatApp).uiSelectedId = id
+                }
+
+                MSG_DEL_UI_CHAT_ID -> {
+                    (applicationContext as WeChatApp).uiSelectedId = ""
                 }
 
                 else -> super.handleMessage(msg)

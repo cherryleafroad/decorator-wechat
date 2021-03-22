@@ -276,8 +276,14 @@ public class WeChatDecorator extends NevoDecoratorService {
 		if (messages.isEmpty()) return true;
 
 		boolean isUiOpen = ((WeChatApp)this.getApplicationContext()).isUiOpen;
-		if (isUiOpen) {
+		String selectedId = ((WeChatApp)this.getApplicationContext()).uiSelectedId;
+		// main ui is open
+		if (isUiOpen && selectedId.equals("")) {
 			// no notification - and remove old one
+			cancelNotification(evolving.getOriginalKey());
+			return false;
+		} else if (isUiOpen && selectedId.equals(conversation.id)) {
+			// this current notification is the same as the open chat
 			cancelNotification(evolving.getOriginalKey());
 			return false;
 		}

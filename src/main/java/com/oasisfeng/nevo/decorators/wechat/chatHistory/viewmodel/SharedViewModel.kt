@@ -105,6 +105,10 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    suspend fun getSidFromUid(uid: Long): String {
+        return databaseRepository.getSidFromUid(uid)
+    }
+
     @Suppress("FunctionName")
     private suspend fun _refreshUserList() {
         databaseRepository.refreshUserlist()

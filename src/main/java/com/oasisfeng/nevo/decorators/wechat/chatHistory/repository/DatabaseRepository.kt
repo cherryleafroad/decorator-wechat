@@ -16,6 +16,10 @@ class DatabaseRepository(private val database: AppDatabase) {
     val userlist: LiveData<List<UserWithMessageAndAvatar>>
         get() = _userlist
 
+    suspend fun getSidFromUid(uid: Long): String {
+        return database.userDao().getSidFromUid(uid)
+    }
+
     suspend fun getAllDrafts(): List<Draft> {
         return database.draftDao().getAllDrafts()
     }

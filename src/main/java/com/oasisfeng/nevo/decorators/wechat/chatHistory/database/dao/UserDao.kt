@@ -34,6 +34,9 @@ interface UserDao {
     @Query("SELECT u_id FROM users WHERE user_sid LIKE :user_id")
     suspend fun getUidFromUserId(user_id: String): Long?
 
+    @Query("SELECT user_sid FROM users WHERE u_id = :uid")
+    suspend fun getSidFromUid(uid: Long): String
+
     @Update
     suspend fun update(user: User)
 

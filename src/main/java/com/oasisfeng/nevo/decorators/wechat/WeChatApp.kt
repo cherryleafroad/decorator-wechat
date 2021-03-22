@@ -33,6 +33,8 @@ class WeChatApp : Application() {
     @JvmField
     var isUiOpen = false
     @JvmField
+    var uiSelectedId = ""
+    @JvmField
     val replyIntentEvent: SingleLiveEvent<ReplyIntent> = SingleLiveEvent()
     var replying = false
     var sharedPreferences: SharedPreferences? = null

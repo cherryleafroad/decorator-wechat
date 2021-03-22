@@ -12,6 +12,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.MessengerService
@@ -20,6 +21,8 @@ import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.ChatFragment
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.UserListFragment
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SharedViewModel
 import com.oasisfeng.nevo.decorators.wechat.databinding.ActivityChatHistoryFragmentBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 
@@ -29,6 +32,10 @@ private enum class ChatHistoryFragment {
 }
 
 class ChatHistoryFragmentActivity : AppCompatActivity() {
+    companion object {
+        const val EXTRA_ID = "chat_sid"
+    }
+
     private var mService: Messenger? = null
     private val mMessenger = Messenger(IncomingHandler(WeakReference(this)))
     private var bound = false
@@ -152,6 +159,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
             // it can only have one observer, so make sure that's true
             mSharedViewModel.chatReplyIntent.removeObservers(this)
             _chatFragment = ChatFragment()
+            notifyServiceOpenUid(it.uid)
             supportFragmentManager.beginTransaction().apply {
                 addToBackStack(null)
                 add(R.id.fragment_frame, chatFragment)
@@ -164,6 +172,8 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         when (currentFragment) {
             ChatHistoryFragment.CHAT -> {
                 currentFragment = ChatHistoryFragment.USER_LIST
+
+                notifyServiceClosedUid()
 
                 chatFragment.mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
                 // disable to prevent it from appearing on backpress
@@ -195,13 +205,41 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         super.onBackPressed()
     }
 
+    private fun notifyServiceOpenUid(uid: Long) {
+        if (mService != null) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val msg = Message.obtain(
+                    null, MessengerService.MSG_SET_UI_CHAT_ID
+                )
+
+                val sid = mSharedViewModel.getSidFromUid(uid)
+
+                val b = Bundle()
+                b.putString(EXTRA_ID, sid)
+
+                msg.data = b
+
+                mService!!.send(msg)
+            }
+        }
+    }
+
+    private fun notifyServiceClosedUid() {
+        if (mService != null) {
+            val msg = Message.obtain(
+                null, MessengerService.MSG_DEL_UI_CHAT_ID
+            )
+
+            mService!!.send(msg)
+        }
+    }
+
     override fun onPause() {
         super.onPause()
 
         if (mService != null) {
             val msg = Message.obtain(
-                null,
-                MessengerService.MSG_UI_CLOSED
+                null, MessengerService.MSG_UI_CLOSED
             )
 
             mService!!.send(msg)
