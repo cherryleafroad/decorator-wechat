@@ -11,9 +11,7 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.transition.TransitionInflater
 import android.view.*
-import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -111,6 +109,7 @@ class ChatFragment : Fragment() {
         mBinding.textInput.addTextChangedListener {
             mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty() && replyIntent != null
             inputText = it.toString()
+            mSharedModel.inputData = it.toString()
         }
 
         // we start out at the bottom
@@ -209,8 +208,10 @@ class ChatFragment : Fragment() {
             val data = mSharedModel.chatData.value!!
 
             // add draft to textinput if one was saved
-            if (mSharedModel.drafts.contains(data.uid)) {
-            mBinding.textInput.setText(mSharedModel.drafts[data.uid], TextView.BufferType.EDITABLE)
+            if (mSharedModel.inputData.isNotEmpty()) {
+                mBinding.textInput.setText(mSharedModel.inputData, TextView.BufferType.EDITABLE)
+            } else if (mSharedModel.drafts.contains(data.uid)) {
+                mBinding.textInput.setText(mSharedModel.drafts[data.uid], TextView.BufferType.EDITABLE)
             } else {
                 mBinding.textInput.setText("", TextView.BufferType.EDITABLE)
             }

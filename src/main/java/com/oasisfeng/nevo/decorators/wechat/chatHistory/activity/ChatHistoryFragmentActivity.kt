@@ -95,6 +95,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
 
                 // just in case it got set to true because of entering/exiting chat through onpause/onresume
                 mSharedViewModel.restartedChat = false
+                mSharedViewModel.inputData = ""
 
                 messengerClient.sendServiceMsg(MessengerService.MSG_DEL_UI_CHAT_ID)
 
