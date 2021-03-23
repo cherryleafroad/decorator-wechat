@@ -11,6 +11,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.oasisfeng.nevo.decorators.wechat.WeChatApp
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.activity.ChatHistoryFragmentActivity.Companion.EXTRA_ID
+import com.zhuinden.liveevent.observe
 import kotlinx.parcelize.Parcelize
 
 
@@ -72,17 +73,17 @@ class MessengerService : Service(), LifecycleOwner {
                     mClients.add(msg.replyTo)
 
                     // register events to be sent to this client - note - singleliveevent only works for ONE observation!
-                    (applicationContext as WeChatApp).replyIntentEvent.observe(this@MessengerService, {
+                    (applicationContext as WeChatApp).replyIntentEvent.observe(this@MessengerService) {
                         val newMsg = Message.obtain(
                             null, MSG_NEW_REPLY, 0, 0
                         )
 
                         val bundle = Bundle()
-                        bundle.putParcelable(EXTRA_REPLY, it!!)
+                        bundle.putParcelable(EXTRA_REPLY, it)
                         newMsg.data = bundle
 
                         mClients[0].send(newMsg)
-                    })
+                    }
 
                     val msgArr = Message.obtain(
                         null, MSG_NEW_REPLY_ARRAY, 0, 0
@@ -100,9 +101,9 @@ class MessengerService : Service(), LifecycleOwner {
 
                 MSG_UNREGISTER_CLIENT -> {
                     (applicationContext as WeChatApp).apply {
-                        replyIntentEvent.removeObservers(this@MessengerService)
                         uiSelectedId = ""
                         isUiOpen = false
+                        replyIntentEvent.removeObservers(this@MessengerService)
                     }
 
                     mClients.remove(msg.replyTo)

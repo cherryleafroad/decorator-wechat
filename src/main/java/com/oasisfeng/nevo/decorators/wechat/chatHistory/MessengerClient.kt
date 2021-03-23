@@ -105,7 +105,7 @@ class MessengerClient(val activity: ChatHistoryFragmentActivity) : ServiceConnec
                             // chat should also be updated as well
                             main.mSharedViewModel.apply {
                                 replyIntents[main.chatFragment.mChatSelectedId].let {
-                                    chatReplyIntent.postValue(it)
+                                    replyIntentEmitter.emit(it!!)
                                 }
                             }
                         }
@@ -118,7 +118,7 @@ class MessengerClient(val activity: ChatHistoryFragmentActivity) : ServiceConnec
                         main.mSharedViewModel.replyIntents[data.uid] = data
                         if (main.currentFragment == ChatHistoryFragment.CHAT) {
                             if (data.uid == main.chatFragment.mChatSelectedId) {
-                                main.mSharedViewModel.chatReplyIntent.postValue(data)
+                                main.mSharedViewModel.replyIntentEmitter.emit(data)
                             }
                         }
                     }

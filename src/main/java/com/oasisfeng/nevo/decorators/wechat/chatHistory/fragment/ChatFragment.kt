@@ -26,6 +26,7 @@ import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter.ChatBubbleAdapter
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SharedViewModel
 import com.oasisfeng.nevo.decorators.wechat.databinding.FragmentChatBinding
+import com.zhuinden.liveevent.observe
 import kotlinx.coroutines.launch
 
 
@@ -85,16 +86,14 @@ class ChatFragment : Fragment() {
             replyIntent = mSharedModel.replyIntents[data.uid]
             mBinding.inputIndicator.background = AppCompatResources.getDrawable(requireContext(), R.drawable.chat_input_indicator_enabled)
             mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
-        } else {
-            // register to update replyintent variable
-            mSharedModel.chatReplyIntent.observe(this, {
-                it ?: return@observe
-
-                replyIntent = it
-                mBinding.inputIndicator.background = AppCompatResources.getDrawable(requireContext(), R.drawable.chat_input_indicator_enabled)
-                mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
-            })
         }
+
+        // register to update replyintent variable
+        mSharedModel.replyIntentEvent.observe(this, {
+            replyIntent = it
+            mBinding.inputIndicator.background = AppCompatResources.getDrawable(requireContext(), R.drawable.chat_input_indicator_enabled)
+            mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
+        })
 
         mChatSelectedTitle = data.title
         mBinding.toolbarTitle.text = mChatSelectedTitle

@@ -2,7 +2,6 @@ package com.oasisfeng.nevo.decorators.wechat
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.arch.lifecycle.SingleLiveEvent
 import android.content.ContentProviderClient
 import android.content.Intent
 import android.content.SharedPreferences
@@ -14,6 +13,7 @@ import android.os.Looper
 import android.util.ArrayMap
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.MutableLiveData
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.MessengerService
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
@@ -35,7 +35,7 @@ class WeChatApp : Application() {
     @JvmField
     var uiSelectedId = ""
     @JvmField
-    val replyIntentEvent: SingleLiveEvent<ReplyIntent> = SingleLiveEvent()
+    val replyIntentEvent = MutableLiveData<ReplyIntent>()
     var replying = false
     var sharedPreferences: SharedPreferences? = null
     var settingSynchronousRemoval = false

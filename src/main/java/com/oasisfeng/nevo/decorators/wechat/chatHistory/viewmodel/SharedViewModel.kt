@@ -2,7 +2,6 @@ package com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.arch.lifecycle.SingleLiveEvent
 import android.util.ArrayMap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -13,6 +12,8 @@ import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.AppDatabase
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageWithAvatar
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.repository.DatabaseRepository
+import com.zhuinden.eventemitter.EventEmitter
+import com.zhuinden.eventemitter.EventSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -31,7 +32,9 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     val drafts = ArrayMap<Long, String>()
 
     // single event used for getting intent AFTER observation if it's not in the map
-    val chatReplyIntent = SingleLiveEvent<ReplyIntent>()
+    val replyIntentEmitter: EventEmitter<ReplyIntent> = EventEmitter()
+    val replyIntentEvent: EventSource<ReplyIntent> = replyIntentEmitter
+
     val replyIntents = ArrayMap<Long, ReplyIntent>()
 
 

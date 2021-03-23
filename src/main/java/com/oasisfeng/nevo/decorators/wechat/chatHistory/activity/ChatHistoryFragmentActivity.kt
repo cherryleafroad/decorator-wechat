@@ -68,8 +68,6 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         mSharedViewModel.chatData.observe(this, {
             it ?: return@observe
 
-            // it can only have one observer, so make sure that's true
-            mSharedViewModel.chatReplyIntent.removeObservers(this)
             _chatFragment = ChatFragment()
 
             // chat got restarted, due to theme change, so place the text back to normal

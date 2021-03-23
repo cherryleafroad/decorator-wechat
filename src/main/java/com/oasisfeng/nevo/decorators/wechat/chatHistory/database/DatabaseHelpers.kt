@@ -78,7 +78,7 @@ object DatabaseHelpers {
     }
 
     @JvmStatic
-    fun addReply(context: Context, id: String, isChat: Boolean, reply: String, timestamp: Long) {
+    fun addReply(context: Context, id: String, isChat: Boolean, reply: String) {
         val db = AppDatabase.get(context.applicationContext)
 
         GlobalScope.launch(Dispatchers.IO) {
@@ -141,6 +141,7 @@ object DatabaseHelpers {
         }
     }
 
+    @Suppress("BlockingMethodInNonBlockingContext")
     private suspend fun saveAvatar(context: Context, id: String, key: String, avatar: Bitmap, db: AppDatabase) {
         val hash = id.hashCode()
 

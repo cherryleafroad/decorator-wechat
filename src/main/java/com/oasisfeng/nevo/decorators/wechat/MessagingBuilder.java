@@ -354,7 +354,7 @@ class MessagingBuilder {
 					boolean chatHistoryEnabled = ((WeChatApp)mContext.getApplicationContext()).getSharedPreferences().getBoolean(mContext.getString(R.string.pref_chat_history), false);
 					if (chatHistoryEnabled) {
 						final Conversation conversation = mController.getConversation(user, proxy.getIntExtra(EXTRA_CONVERSATION_ID, 0));
-						DatabaseHelpers.addReply(mContext, userId, conversation.isChat(), input.toString(), conversation.timestamp);
+						DatabaseHelpers.addReply(mContext, userId, conversation.isChat(), input.toString());
 					}
 
 					final Bundle addition = new Bundle(); final CharSequence[] inputs;
