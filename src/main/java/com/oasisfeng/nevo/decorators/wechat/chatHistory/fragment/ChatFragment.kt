@@ -11,7 +11,9 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.transition.TransitionInflater
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -19,6 +21,8 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING
+import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter.ChatBubbleAdapter
@@ -109,10 +113,12 @@ class ChatFragment : Fragment() {
             inputText = it.toString()
         }
 
+        // we start out at the bottom
+        var atEnd = true
         // sending messages always scrolls to the end
         mBinding.sendButton.setOnClickListener {
+            atEnd = true
             sendMessage()
-            mBinding.bubbleRecycler.scrollToPosition(0)
         }
 
         // disable for first opening of chat
@@ -127,48 +133,54 @@ class ChatFragment : Fragment() {
             layoutManager = mLayout
         }
 
-        // we start out at the bottom
-        var atEnd = true
+        // this is used to determine to ignore the layoutchangelistener
+        var dragging = false
+
         mBinding.bubbleRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
 
-                val atBottom = recyclerView.canScrollVertically(-1) && !recyclerView.canScrollVertically(1)
-                atEnd = atBottom && newState == RecyclerView.SCROLL_STATE_IDLE
-                mBinding.bubbleRecycler.isVerticalScrollBarEnabled = true
-            }
-        })
+                when (newState) {
+                    SCROLL_STATE_IDLE -> {
+                        atEnd = !recyclerView.canScrollVertically(1)
+                        dragging = false
+                    }
 
-        var firstLoad = true
-        // this is used to determine to ignore the layoutchangelistener
-        var dataInserted = false
-        mAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
-            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                super.onItemRangeInserted(positionStart, itemCount)
-                dataInserted = true
-
-                if ((positionStart == 0 && firstLoad) || atEnd) {
-                    mBinding.bubbleRecycler.scrollToPosition(0)
-
-                    if (firstLoad) {
-                        firstLoad = false
+                    SCROLL_STATE_DRAGGING -> {
+                        dragging = true
+                        atEnd = !recyclerView.canScrollVertically(1)
+                        mBinding.bubbleRecycler.isVerticalScrollBarEnabled = true
                     }
                 }
             }
         })
 
+        var firstLoad = true
+        mAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(positionStart, itemCount)
+
+                if ((positionStart == 0 && atEnd) || firstLoad) {
+                    mBinding.bubbleRecycler.scrollToPosition(0)
+
+                    firstLoad = false
+                }
+            }
+        })
+
         // pretend that we are adjusting layout size
-        mBinding.bubbleRecycler.addOnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
-            if (atEnd && !dataInserted) {
-                mBinding.bubbleRecycler.scrollToPosition(0)
-            }
+        mBinding.bubbleRecycler.addOnLayoutChangeListener { _: View, _: Int, _: Int, _: Int, bottom: Int, _: Int, _: Int, _: Int, oldBottom: Int ->
+            // same layout size triggers often, but there's no real change?
+            if (oldBottom != bottom) {
+                if (atEnd) {
+                    mBinding.bubbleRecycler.scrollToPosition(0)
+                }
 
-            if (!dataInserted) {
-                // hide the scrollbar until the layout is done
-                mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
+                if (!dragging) {
+                    // hide the scrollbar until the layout is done
+                    mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
+                }
             }
-
-            dataInserted = false
         }
 
         val pagedData = data.messageData
