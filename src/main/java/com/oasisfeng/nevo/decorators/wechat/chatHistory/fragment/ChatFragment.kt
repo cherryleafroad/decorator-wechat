@@ -180,6 +180,8 @@ class ChatFragment : Fragment() {
                     // hide the scrollbar until the layout is done
                     mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
                 }
+            } else if (restarted) {
+                mBinding.bubbleRecycler.scrollToPosition(0)
             }
         }
 
