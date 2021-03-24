@@ -104,8 +104,8 @@ class MessengerClient(val activity: ChatHistoryFragmentActivity) : ServiceConnec
                         if (main.currentFragment == ChatHistoryFragment.CHAT) {
                             // chat should also be updated as well
                             main.mSharedViewModel.apply {
-                                replyIntents[main.chatFragment.mChatSelectedId].let {
-                                    replyIntentEmitter.emit(it!!)
+                                replyIntents[main.chatFragment.mChatSelectedId]?.let {
+                                    replyIntentEmitter.emit(it)
                                 }
                             }
                         }

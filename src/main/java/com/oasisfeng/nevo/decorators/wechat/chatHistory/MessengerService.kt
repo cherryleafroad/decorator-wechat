@@ -81,7 +81,13 @@ class MessengerService : Service(), LifecycleOwner {
                         bundle.putParcelable(EXTRA_REPLY, it)
                         newMsg.data = bundle
 
-                        mClients[0].send(newMsg)
+                        try {
+                            mClients[0].send(newMsg)
+                        } catch (e: RuntimeException) {
+                            // seems it must've died, probably crashed
+                            // just do some cleanup then
+                            mClients.remove(msg.replyTo)
+                        }
                     }
 
                     val msgArr = Message.obtain(
