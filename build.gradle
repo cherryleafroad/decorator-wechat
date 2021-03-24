@@ -106,4 +106,5 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$livedata_version"
 
     implementation 'com.github.Zhuinden:live-event:1.2.0'
+    implementation 'me.everything:overscroll-decor-android:1.1.0'
 }

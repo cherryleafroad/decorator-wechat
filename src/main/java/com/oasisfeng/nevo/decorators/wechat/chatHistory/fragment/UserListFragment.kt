@@ -20,6 +20,7 @@ import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SharedViewMode
 import com.oasisfeng.nevo.decorators.wechat.databinding.FragmentUserlistBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import me.everything.android.ui.overscroll.OverScrollDecoratorHelper
 
 class UserListFragment : Fragment(), UserAdapterOnClickListener {
     private var _mBinding: FragmentUserlistBinding? = null
@@ -65,6 +66,9 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
             userRecycler.adapter = mAdapter
             userRecycler.layoutManager = layout
         }
+
+        // bouncy bouncy on user list
+        OverScrollDecoratorHelper.setUpOverScroll(mBinding.userRecycler, OverScrollDecoratorHelper.ORIENTATION_VERTICAL)
 
         mSharedModel.userList.observe(viewLifecycleOwner, {
             it ?: return@observe
