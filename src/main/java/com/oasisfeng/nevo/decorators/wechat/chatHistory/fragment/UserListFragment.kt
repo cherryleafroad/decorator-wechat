@@ -57,17 +57,6 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
             }
         }
 
-        // always disabled unless moved
-        mBinding.userRecycler.isVerticalScrollBarEnabled = false
-
-        mBinding.userRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-
-                mBinding.userRecycler.isVerticalScrollBarEnabled = true
-            }
-        })
-
         mAdapter = UserAdapter(requireContext(), this, mAdapterData)
         val layout = LinearLayoutManager(requireContext())
         mBinding.apply {

@@ -97,9 +97,6 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
 
                 messengerClient.sendServiceMsg(MessengerService.MSG_DEL_UI_CHAT_ID)
 
-                // disable to prevent it from appearing on backpress
-                userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
-
                 // check for drafts and if so, save it
                 val uid = mSharedViewModel.chatData.value?.uid!!
                 val draft = chatFragment.mBinding.textInput.text.toString()
@@ -139,9 +136,7 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
         // request an intent update since we weren't there to receive them
         messengerClient.sendServiceMsg(MessengerService.MSG_NEW_REPLY_ARRAY)
 
-        if (currentFragment == ChatHistoryFragment.USER_LIST) {
-            userListFragment.mBinding.userRecycler.isVerticalScrollBarEnabled = false
-        } else {
+        if (currentFragment == ChatHistoryFragment.CHAT) {
             chatFragment.mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
         }
     }
