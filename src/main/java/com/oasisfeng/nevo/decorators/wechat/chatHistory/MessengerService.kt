@@ -11,7 +11,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.oasisfeng.nevo.decorators.wechat.WeChatApp
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.activity.ChatHistoryFragmentActivity.Companion.EXTRA_ID
-import com.zhuinden.liveevent.observe
 import kotlinx.parcelize.Parcelize
 
 

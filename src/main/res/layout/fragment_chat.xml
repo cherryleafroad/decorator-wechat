@@ -63,7 +63,7 @@
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:ems="10"
-                    android:inputType="textMultiLine|textNoSuggestions|textCapSentences"
+                    android:inputType="textMultiLine|textCapSentences"
                     android:maxLines="5"
                     android:textCursorDrawable="@drawable/chat_cursor"
                     tools:ignore="HardcodedText,LabelFor" />
