@@ -12,15 +12,18 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
+import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageWithAvatar
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.ChatFragment
 import com.oasisfeng.nevo.decorators.wechat.databinding.*
 
 
 class ChatBubbleAdapter(
-    private val context: Context
+    private val context: Context,
+    private val activity: ChatFragment
 ) : PagingDataAdapter<MessageWithAvatar, ChatBubbleAdapter.ChatBubbleViewHolder<MessageWithAvatar>>(
     DIFF_CALLBACK
 ) {
@@ -79,9 +82,18 @@ class ChatBubbleAdapter(
         }
     }
 
-    inner class ChatBubbleRecalledViewHolder(private val binding: ItemBubbleRecalledBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
+    inner class ChatBubbleRecalledVisibleViewHolder(private val binding: ItemBubbleRecalledBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         override fun bind(item: MessageWithAvatar, position: Int) {
-            binding.chatBubbleRecalled.text = item.message.message
+            binding.chatBubbleRecalled.text = context.getString(R.string.message_header_recalled_visible)
+                .replace("%s", if (item.message.chat_type == ChatType.CHAT) activity.mChatSelectedTitle else item.message.group_chat_username)
+                .replace("%m", item.message.message)
+        }
+    }
+
+    inner class ChatBubbleRecalledHiddenViewHolder(private val binding: ItemBubbleRecalledBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
+        override fun bind(item: MessageWithAvatar, position: Int) {
+            binding.chatBubbleRecalled.text = context.getString(R.string.message_header_recalled_invisible)
+                .replace("%s", if (item.message.chat_type == ChatType.CHAT) activity.mChatSelectedTitle else item.message.group_chat_username)
         }
     }
 
@@ -105,9 +117,13 @@ class ChatBubbleAdapter(
                 val binding = ItemChatBubbleSenderBinding.inflate(layoutInflater, parent, false)
                 ChatBubbleSenderViewHolder(binding)
             }
-            MessageType.RECALLED.ordinal -> {
+            MessageType.RECALLED_VISIBLE.ordinal -> {
                 val binding = ItemBubbleRecalledBinding.inflate(layoutInflater, parent, false)
-                ChatBubbleRecalledViewHolder(binding)
+                ChatBubbleRecalledVisibleViewHolder(binding)
+            }
+            MessageType.RECALLED_HIDDEN.ordinal -> {
+                val binding = ItemBubbleRecalledBinding.inflate(layoutInflater, parent, false)
+                ChatBubbleRecalledHiddenViewHolder(binding)
             }
             MessageType.DATE_HEADER.ordinal -> {
                 val binding = ItemBubbleDateHeaderBinding.inflate(layoutInflater, parent, false)
@@ -122,7 +138,8 @@ class ChatBubbleAdapter(
         when (holder) {
             is ChatBubbleReceiverViewHolder -> holder.bind(element, position)
             is ChatBubbleSenderViewHolder -> holder.bind(element, position)
-            is ChatBubbleRecalledViewHolder -> holder.bind(element, position)
+            is ChatBubbleRecalledVisibleViewHolder -> holder.bind(element, position)
+            is ChatBubbleRecalledHiddenViewHolder -> holder.bind(element, position)
             is ChatBubbleDateHeaderViewHolder -> holder.bind(element, position)
             else -> throw IllegalArgumentException()
         }
@@ -132,7 +149,8 @@ class ChatBubbleAdapter(
         return when (getItem(position)?.message?.message_type) {
             MessageType.SENDER -> MessageType.SENDER.ordinal
             MessageType.RECEIVER -> MessageType.RECEIVER.ordinal
-            MessageType.RECALLED -> MessageType.RECALLED.ordinal
+            MessageType.RECALLED_VISIBLE -> MessageType.RECALLED_VISIBLE.ordinal
+            MessageType.RECALLED_HIDDEN -> MessageType.RECALLED_HIDDEN.ordinal
             MessageType.DATE_HEADER -> MessageType.DATE_HEADER.ordinal
             null -> throw IllegalArgumentException("Invalid item type")
         }

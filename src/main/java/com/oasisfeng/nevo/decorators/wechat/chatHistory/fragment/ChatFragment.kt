@@ -40,7 +40,7 @@ class ChatFragment : Fragment() {
 
     private val mSharedModel: SharedViewModel by activityViewModels()
 
-    private lateinit var mChatSelectedTitle: String
+    lateinit var mChatSelectedTitle: String
     var mChatSelectedId: Long = 0
 
     private var replyIntent: ReplyIntent? = null
@@ -121,7 +121,7 @@ class ChatFragment : Fragment() {
 
         // disable for first opening of chat
         mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
-        mAdapter = ChatBubbleAdapter(requireContext())
+        mAdapter = ChatBubbleAdapter(requireContext(), this)
         mLayout = LinearLayoutManager(requireContext())
         mLayout.reverseLayout = true
         mLayout.stackFromEnd = true

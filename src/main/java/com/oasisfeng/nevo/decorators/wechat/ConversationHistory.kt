@@ -128,11 +128,11 @@ internal object ConversationHistory {
     }
 
     private fun saveRecalledMsg(context: Context, key: String, history: MutableList<String?>, index: Int, user: User, isGroupChat: Boolean) {
-        val visible = (context.applicationContext as WeChatApp).sharedPreferences?.getBoolean(context.getString(R.string.pref_recalled), false)
+        val visible = (context.applicationContext as WeChatApp).sharedPreferences?.getBoolean(context.getString(R.string.pref_recalled), false)!!
 
         val sender = splitSender(history[index])
 
-        val newMsg: String = if (visible == true) {
+        val newMsg: String = if (visible) {
             // [Recalled] Message
             if (isGroupChat) {
                 "${sender[0]}: ${context.getString(R.string.recalled_message)} ${sender[1]}"
@@ -154,29 +154,17 @@ internal object ConversationHistory {
         if (mChatHistoryEnabled) {
             GlobalScope.launch(Dispatchers.IO) {
 
-                databaseMsg = if (visible == true) {
-                    if (isGroupChat) {
-                        context.getString(R.string.message_header_recalled_visible)
-                            .replace("%s", sender[0].toString())
-                            .replace("%m", sender[1].toString())
-                    } else {
-                        context.getString(R.string.message_header_recalled_visible)
-                            .replace("%m", databaseMsg)
-                            .replace("%s", user.username)
-                    }
+                databaseMsg = if (isGroupChat) {
+                    sender[1].toString()
                 } else {
-                    if (isGroupChat) {
-                        context.getString(R.string.message_header_recalled_invisible).replace("%s", sender[0].toString())
-                    } else {
-                        context.getString(R.string.message_header_recalled_invisible).replace("%s", user.username)
-                    }
+                    databaseMsg
                 }
 
                 val us = mDb.userDao().findByUsername(user.username)!!
 
                 val dbHistory = mDb.messageDao().getAllMessagesByUserLimitDescNoDateHeader(us.u_id, mUnreadCount[key]!!)
                 dbHistory[index].message = databaseMsg
-                dbHistory[index].message_type = MessageType.RECALLED
+                dbHistory[index].message_type = if (visible) MessageType.RECALLED_VISIBLE else MessageType.RECALLED_HIDDEN
                 mDb.messageDao().update(dbHistory[index])
 
                 notifyChatUiChangedData(context, ACTION_NOTIFY_USER_CHANGE)
