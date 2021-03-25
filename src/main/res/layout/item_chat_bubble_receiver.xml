@@ -20,7 +20,7 @@
         android:text="Foobar123"
         android:textColor="@color/chat_group_username_text"
         android:paddingBottom="2dp"
-        android:paddingStart="3dp"
+        android:paddingStart="4dp"
         android:visibility="gone"
         app:layout_constraintStart_toEndOf="@id/avatar_holder"
         app:layout_constraintTop_toTopOf="parent"
@@ -37,23 +37,23 @@
         app:layout_constraintTop_toBottomOf="@id/chat_group_username"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constrainedWidth="true"
+        android:layout_marginStart="7dp"
         tools:ignore="RtlSymmetry">
 
         <TextView
             android:id="@+id/chat_bubble_receiver"
+            android:background="@drawable/chat_receiver_bubble"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/chat_receiver_bubble"
             android:gravity="start"
             android:lineSpacingExtra="4dp"
-            android:padding="10dp"
-            android:text="Receiver bubble this is some very long tesxt and stuff liek that"
+            android:text="Receiver bubble"
             android:textColor="@color/chat_receiver_bubble_text"
-            android:textSize="17dp"
+            android:textSize="17sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constrainedWidth="true"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -69,8 +69,8 @@
 
         <ImageView
             android:id="@+id/avatar"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@drawable/blank_user"
             android:contentDescription="avatar"
             android:scaleType="centerInside" />

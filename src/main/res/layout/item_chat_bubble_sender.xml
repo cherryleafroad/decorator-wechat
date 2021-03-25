@@ -18,7 +18,6 @@
         android:layout_height="wrap_content"
         android:background="@drawable/chat_sender_bubble"
         android:lineSpacingExtra="4dp"
-        android:padding="10dp"
         android:text="Hey, I've always wanted to tell you, but.. I really like you.. Will you be my girlfriend?"
         android:textColor="@color/chat_sender_bubble_text"
         android:textSize="17sp"
