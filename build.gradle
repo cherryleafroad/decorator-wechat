@@ -39,6 +39,15 @@ android {
         }
     }
 
+    buildTypes {
+        release {
+            packagingOptions {
+                exclude 'DebugProbesKt.bin'
+                exclude 'app-release'
+            }
+        }
+    }
+
     aaptOptions {
         noCompress "apk"
     }
