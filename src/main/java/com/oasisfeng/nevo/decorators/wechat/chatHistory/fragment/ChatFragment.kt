@@ -121,7 +121,7 @@ class ChatFragment : Fragment() {
 
         // disable for first opening of chat
         mBinding.bubbleRecycler.isVerticalScrollBarEnabled = false
-        mAdapter = ChatBubbleAdapter(requireContext(), this)
+        mAdapter = ChatBubbleAdapter(requireContext(), this, mSharedModel.selfUserData)
         mLayout = LinearLayoutManager(requireContext())
         mLayout.reverseLayout = true
         mLayout.stackFromEnd = true

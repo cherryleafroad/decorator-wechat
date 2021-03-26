@@ -26,4 +26,7 @@
     <string name="action_like_text" translatable="false">👍</string>
     <string name="pref_chat_history" translatable="false">chat_history</string>
     <string name="pref_chat_history_activity" translatable="false">chat_history_activity</string>
+    <string name="pref_enable_avatar" translatable="false">enable_avatar</string>
+    <string name="pref_select_avatar" translatable="false">select_avatar</string>
+    <string name="pref_image_preview" translatable="false">image_preview</string>
 </resources>

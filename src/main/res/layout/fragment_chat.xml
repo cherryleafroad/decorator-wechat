@@ -148,7 +148,7 @@
             android:layout_width="match_parent"
             android:layout_height="0.8dp"
             android:background="@color/chat_bottom_divider"
-            app:layout_constraintBottom_toTopOf="@id/input_bar"/>
+            app:layout_constraintBottom_toTopOf="@id/input_bar" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

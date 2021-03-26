@@ -6,13 +6,16 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.ArrayMap
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.oasisfeng.nevo.decorators.wechat.*
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Avatar
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Message
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.User
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.UserType
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.UserListFragment.Companion.ACTION_NOTIFY_USER_CHANGE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -162,5 +165,26 @@ object DatabaseHelpers {
         }
 
         avatarMap[key] = avatar
+    }
+
+    fun prepopulateDatabase(db: AppDatabase) {
+        GlobalScope.launch(Dispatchers.IO) {
+            // wxid's are pretty much always random, there's no way one will be named this
+            val userYou = User(
+                "wxid_user_you",
+                "You",
+                0,
+                UserType.YOU
+            )
+
+            val uid = db.userDao().insert(userYou)
+
+            val avatar = Avatar(
+                uid,
+                ""
+            )
+
+            db.avatarDao().insert(avatar)
+        }
     }
 }

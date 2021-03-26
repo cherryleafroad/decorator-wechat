@@ -11,6 +11,7 @@ import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.MessengerClient
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.MessengerService
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.ChatFragment
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.SettingsFragment
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.UserListFragment
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SharedViewModel
 import com.oasisfeng.nevo.decorators.wechat.databinding.ActivityChatHistoryFragmentBinding
@@ -18,7 +19,8 @@ import com.oasisfeng.nevo.decorators.wechat.databinding.ActivityChatHistoryFragm
 
 enum class ChatHistoryFragment {
     USER_LIST,
-    CHAT
+    CHAT,
+    SETTINGS
 }
 
 class ChatHistoryFragmentActivity : AppCompatActivity() {
@@ -53,6 +55,10 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
 
                 is UserListFragment -> {
                     ChatHistoryFragment.USER_LIST
+                }
+
+                is SettingsFragment -> {
+                    ChatHistoryFragment.SETTINGS
                 }
 
                 else -> throw NotImplementedError()
@@ -110,6 +116,10 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
 
                 mSharedViewModel.clearChatData()
                 mSharedViewModel.refreshUserList()
+            }
+
+            ChatHistoryFragment.SETTINGS -> {
+                currentFragment = ChatHistoryFragment.USER_LIST
             }
 
             ChatHistoryFragment.USER_LIST -> {

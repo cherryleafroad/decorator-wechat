@@ -18,12 +18,14 @@ import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageW
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.ChatFragment
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SelfUserData
 import com.oasisfeng.nevo.decorators.wechat.databinding.*
 
 
 class ChatBubbleAdapter(
     private val context: Context,
-    private val activity: ChatFragment
+    private val activity: ChatFragment,
+    private val selfUserData: SelfUserData
 ) : PagingDataAdapter<MessageWithAvatar, ChatBubbleAdapter.ChatBubbleViewHolder<MessageWithAvatar>>(
     DIFF_CALLBACK
 ) {
@@ -115,6 +117,7 @@ class ChatBubbleAdapter(
             }
             MessageType.SENDER.ordinal -> {
                 val binding = ItemChatBubbleSenderBinding.inflate(layoutInflater, parent, false)
+                binding.selfUserData = selfUserData
                 ChatBubbleSenderViewHolder(binding)
             }
             MessageType.RECALLED_VISIBLE.ordinal -> {

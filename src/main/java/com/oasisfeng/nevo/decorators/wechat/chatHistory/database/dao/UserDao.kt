@@ -3,6 +3,7 @@ package com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao
 import androidx.room.*
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.User
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.UserWithMessageAndAvatar
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.UserType
 
 @Dao
 interface UserDao {
@@ -10,8 +11,11 @@ interface UserDao {
     fun getAll(): List<User>
 
     @Transaction
-    @Query("SELECT * FROM users ORDER BY latest_message DESC")
-    suspend fun getUsersWithMessageAndAvatar(): List<UserWithMessageAndAvatar>
+    @Query("SELECT * FROM users WHERE user_type = :user_type ORDER BY latest_message DESC")
+    suspend fun getUsersWithMessageAndAvatar(user_type: UserType = UserType.OTHER): List<UserWithMessageAndAvatar>
+
+    @Query("SELECT * FROM users WHERE user_type = :userType")
+    suspend fun getUserSelf(userType: UserType = UserType.YOU): User
 
     @Query("SELECT * FROM users WHERE user_sid IN (:user_ids)")
     suspend fun getAllByUserIds(vararg user_ids: String): List<User>

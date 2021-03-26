@@ -54,7 +54,8 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constrainedWidth="true"/>
+            app:layout_constrainedWidth="true"
+            tools:ignore="HardcodedText" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -73,7 +74,8 @@
             android:layout_height="40dp"
             android:background="@drawable/blank_user"
             android:contentDescription="avatar"
-            android:scaleType="centerInside" />
+            android:scaleType="centerInside"
+            tools:ignore="HardcodedText" />
 
     </androidx.cardview.widget.CardView>
 

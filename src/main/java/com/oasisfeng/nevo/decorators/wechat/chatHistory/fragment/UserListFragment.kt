@@ -24,7 +24,7 @@ import me.everything.android.ui.overscroll.OverScrollDecoratorHelper
 
 class UserListFragment : Fragment(), UserAdapterOnClickListener {
     private var _mBinding: FragmentUserlistBinding? = null
-    val mBinding
+    private val mBinding
         get() = _mBinding!!
 
     private var mAdapterData = mutableListOf<UserWithMessageAndAvatar>()
@@ -65,6 +65,7 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
 
             userRecycler.adapter = mAdapter
             userRecycler.layoutManager = layout
+            userRecycler.isVerticalScrollBarEnabled = false
         }
 
         // bouncy bouncy on user list
@@ -99,6 +100,18 @@ class UserListFragment : Fragment(), UserAdapterOnClickListener {
                     .show()
                 true
             }
+
+            R.id.menu_settings -> {
+                val settings = SettingsFragment()
+                parentFragmentManager.beginTransaction().apply {
+                    addToBackStack(null)
+                    add(R.id.fragment_frame, settings)
+                    commit()
+                }
+
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
     }

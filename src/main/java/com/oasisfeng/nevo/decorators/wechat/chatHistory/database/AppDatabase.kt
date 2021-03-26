@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.graphics.drawable.Drawable
 import androidx.room.*
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.AvatarDao
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.DraftDao
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.dao.MessageDao
@@ -14,6 +15,7 @@ import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Message
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.User
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.UserType
 
 private object AppDatabaseInstance {
     private lateinit var instance: AppDatabase
@@ -28,6 +30,13 @@ private object AppDatabaseInstance {
                 context,
                 AppDatabase::class.java, "messages"
             )
+                // prepop database with first initialiation info
+                .addCallback(object : RoomDatabase.Callback() {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        super.onCreate(db)
+                        DatabaseHelpers.prepopulateDatabase(AppDatabase.get(context))
+                    }
+                })
                 .enableMultiInstanceInvalidation()
                 .build()
         }
@@ -36,8 +45,7 @@ private object AppDatabaseInstance {
     }
 }
 
-
-@Database(entities = [User::class, Message::class, Avatar::class, Draft::class], version = 4, exportSchema = false)
+@Database(entities = [User::class, Message::class, Avatar::class, Draft::class], version = 5, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     companion object {
@@ -79,6 +87,16 @@ class Converters {
 
     @TypeConverter
     fun fromChatType(value: ChatType): Int {
+        return value.ordinal
+    }
+
+    @TypeConverter
+    fun toUserType(value: Int): UserType {
+        return enumValues<UserType>()[value]
+    }
+
+    @TypeConverter
+    fun fromUserType(value: UserType): Int {
         return value.ordinal
     }
 

@@ -1,0 +1,21 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/general_settings_cat">
+        <SwitchPreferenceCompat
+            app:key="@string/pref_enable_avatar"
+            app:title="@string/enable_avatar"
+            app:defaultValue="true" />
+
+        <Preference
+            app:dependency="@string/pref_enable_avatar"
+            app:key="@string/pref_select_avatar"
+            app:title="@string/select_avatar">
+        </Preference>
+
+        <com.oasisfeng.nevo.decorators.wechat.chatHistory.fragment.ImageViewPreference
+            app:key="@string/pref_image_preview"
+            app:layout="@layout/settings_avatar_preview"
+            app:selectable="false" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

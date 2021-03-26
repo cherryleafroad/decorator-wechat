@@ -4,9 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.PagingSource
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.AppDatabase
-import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Draft
-import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageWithAvatar
-import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.UserWithMessageAndAvatar
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.*
 
 class DatabaseRepository(private val database: AppDatabase) {
     private val _userlist: MutableLiveData<List<UserWithMessageAndAvatar>> = MutableLiveData()
@@ -15,6 +13,18 @@ class DatabaseRepository(private val database: AppDatabase) {
 
     suspend fun getSidFromUid(uid: Long): String {
         return database.userDao().getSidFromUid(uid)
+    }
+
+    suspend fun getUserSelf(): User {
+        return database.userDao().getUserSelf()
+    }
+
+    suspend fun getSelfAvatarFilename(): String {
+        return database.avatarDao().getSelfAvatar()
+    }
+
+    suspend fun saveAvatar(avatar: Avatar) {
+        database.avatarDao().update(avatar)
     }
 
     suspend fun getAllDrafts(): List<Draft> {
