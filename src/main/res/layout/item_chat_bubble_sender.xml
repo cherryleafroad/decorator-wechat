@@ -31,10 +31,10 @@
             app:layout_constraintEnd_toStartOf="@id/avatar_holder"
             app:layout_constrainedWidth="true"
             app:layout_constraintHorizontal_bias="1"
-            android:layout_marginEnd="@{selfUserData.avatarEnabled ? @dimen/seven_dp : @dimen/zero_dp}"
+            android:layout_marginEnd="@{selfUserData.avatarEnabled ? @dimen/six_dp : @dimen/zero_dp}"
             tools:ignore="RtlSymmetry">
             <TextView
-                android:gravity="start"
+                android:gravity="start|center_vertical"
                 android:id="@+id/chat_bubble_sender"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -61,8 +61,8 @@
 
             <ImageView
                 android:id="@+id/avatar"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:background="@{selfUserData.avatar ?? context.getDrawable(R.drawable.blank_user)}"
                 android:contentDescription="avatar"
                 android:scaleType="centerCrop"
