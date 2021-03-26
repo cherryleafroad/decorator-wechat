@@ -19,7 +19,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.*
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceViewHolder
+import androidx.preference.SwitchPreferenceCompat
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.Avatar

@@ -89,7 +89,6 @@ import static android.service.notification.NotificationListenerService.REASON_CA
 import static android.service.notification.NotificationListenerService.REASON_CANCEL_ALL;
 import static android.service.notification.NotificationListenerService.REASON_CHANNEL_BANNED;
 import static android.service.notification.NotificationListenerService.REASON_CLICK;
-import static android.service.notification.NotificationListenerService.REASON_LISTENER_CANCEL;
 import static android.service.notification.NotificationListenerService.REASON_SNOOZED;
 import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation.TYPE_BOT_MESSAGE;
 import static com.oasisfeng.nevo.decorators.wechat.ConversationManager.Conversation.TYPE_DIRECT_MESSAGE;

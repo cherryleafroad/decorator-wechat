@@ -6,7 +6,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.ArrayMap
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.oasisfeng.nevo.decorators.wechat.*
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
