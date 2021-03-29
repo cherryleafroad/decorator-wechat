@@ -16,6 +16,7 @@ class EmojiMap {
 	static final String[][] MAP = new String[][] {
 			{ "OK",			"OK",			"👌" },
 			{ "耶",			"Yeah!",		"✌" },
+			{ "歐耶",		null,			"✌" }, // TW
 			{ "嘘",			"Shhh"	,		"🤫" },
 			{ "晕",			"Dizzy",		"😵" },
 			{ null,			"Nuh-uh",		"🙅" },
@@ -25,6 +26,7 @@ class EmojiMap {
 			{ "囧",			"Tension",		"😳" },
 			{ null,			"Blush",		"😳" }, // same as above in newer versions
 			{ "鸡",			"Chick",		"🐥" },
+			{ "小雞",		null,			"🐥" }, // TW
 			{ "强",			"Thumbs Up",	"👍" },
 			{ null,			"ThumbsUp",		"👍" }, // same as above in newer versions
 			{ "弱",			"Weak",			"👎" },
@@ -64,11 +66,14 @@ class EmojiMap {
 			{ "骷髅",		"Skull",		"💀" },
 			{ "敲打",		"Hammer",		"👊" },
 			{ "捂脸",		"Facepalm",		"🤦" },
+			{ "掩面",		null,			"🤦" }, // TW
 			{ "奸笑",		"Smirk",		"😏" },
 			{ "皱眉",		"Concerned",	"😟" },
+			{ "皺眉",		null,			"😟" }, // TW
 			{ "红包",		"Packet",		SDK_INT > O_MR1 ? "🧧"/* Emoji 11+ */: "💰" },
 			{ "小狗",		"Pup",			"🐶" },
 			{ "再见",		"Bye",			"🙋" },
+			{ "再見",		null,			"🙋" }, // TW
 			{ null,			"Wave",			"🙋" }, // same as above
 			{ "擦汗",		"Relief",		"😶" },
 			{ null,			"Speechless",	"😶" }, // same as above in newer versions
@@ -109,9 +114,12 @@ class EmojiMap {
 			{ "怄火",		"Aaagh!",		"😡" },
 //			{ "转圈",		"Twirl",		"" },
 			{ "蜡烛",		"Candle",		"🕯️" },
+			{ "蠟燭",		null,			"🕯️" }, // TW
 //			{ "勾引",		"Beckon",		""},
 //			{ "嘿哈",		"Hey",			"" },
+//			{ "吼嘿",		null,			"" }, // TW
 			{ "机智",		"Smart",		"👉" },
+			{ "機智",		null,			"👉" }, // TW
 //			{ "抠鼻",		"DigNose",		"" },
 //			{ null,			"NosePick",		"" }, // same as above for newer wechat
 			{ "可怜",		"Whimper",		"🥺" },
@@ -120,35 +128,49 @@ class EmojiMap {
 			{ "左哼哼",		"Bah！L",		"😗" },
 			{ "右哼哼",		"Bah！R",		"😗" },
 			{ "破涕为笑",	"Lol",			"😂" },
+			{ "破涕為笑",	null,			"😂" }, // TW
 			{ "悠闲",		"Commando", 	"🪖" },
 			{ "笑脸",		"Happy", 		"😄" },
+			{ "笑臉",		null, 			"😄" }, // TW
 			{ "生病",		"Sick", 		"😷" },
 			{ "脸红",		"Flushed", 		"😳" },
+			{ "臉紅",		null, 			"😳" }, // TW
 			{ "恐惧",		"Terror", 		"😱" },
+			{ "恐懼",		null, 			"😱" }, // TW
 			{ "失望",		"LetDown",	 	"😔" },
 			{ null,			"Let Down",	 	"😔" },
 			{ "无语",		"Duh", 			"😒" },
+			{ "無語",		null, 			"😒" }, // TW
 			{ "吃瓜",		"Onlooker", 	"🍉" },
 			{ "加油",		"GoForIt", 		"✊" },
 			{ "加油加油",	"KeepFighting", "😷" },
+			{ "加油！",		null,			"😷" }, // TW
 			{ "汗",			"Sweats", 		"😑" },
 			{ "天啊",		"OMG", 			"🤯" },
-//			{ null,			"Emm", 			"" },
+//			{ "一言難盡",	"Emm", 			"" },
 			{ "社会社会",	"Respect", 		"👏" },
+			{ "失敬失敬",	null, 			"👏" }, // TW
 			{ "旺柴",		"Doge", 		"🐶" },
 			{ "好的",		"NoProb", 		"👌" },
 			{ "打脸",		"MyBad", 		"👊" },
+			{ "打臉",		null, 			"👊" }, // TW
 			{ "哇",			"Wow", 			"🤩" },
 			{ "翻白眼",		"Boring", 		"🙄" },
 			{ "666",		"Awesome", 		"😝" },
 //			{ "让我看看",	"LetMeSee", 	"" },
+//			{ "讓我看看",	null, 			"" }, // TW
 			{ "叹气",		"Sigh", 		"😌" }, // will have its own in next standard => 😮‍💨
+			{ "嘆息",		null, 			"😌" }, // TW
 			{ "苦涩",		"Hurt", 		"😥" },
+			{ "難受",		null, 			"😥" }, // TW
 			{ "裂开",		"Broken", 		"💔" },
+			{ "崩潰",		null, 			"💔" }, // TW
 			{ "合十",		"Worship",		"🙏" },
 			{ "福",			"Blessing",		"🌠" }, //wishing star is often used as a "blessing" or "wish"
 			{ "烟花",		"Fireworks",	"🎆" },
+			{ "煙花",		null,			"🎆" }, // TW
 			{ "爆竹",		"Firecracker",	"🧨" },
+
 			// regular ones, usually can be found in titles
 			{ null,			"Guitar",		"🎸" },
 			{ null,			"Noodles",		"🍜" },
@@ -290,6 +312,7 @@ class EmojiMap {
 			{ "饭",			"Rice",			"🍚" },
 			{ "瓢虫",		"Ladybug",		"🐞" },
 			{ "礼物",		"Gift",			"🎁" },
+			{ "禮物",		"gift",			"🎁" }, // TW + alternate key
 			{ null,			"Watermelon",	"🍉" },
 //			{ "差劲",		"Pinky",		"" },
 			{ "爱你",		"RockOn",		"🤟" },
@@ -309,6 +332,7 @@ class EmojiMap {
 			{ "茶",			"Tea",			"🍵" },
 			{ "药丸",		"Pill",			"💊" },
 			{ "庆祝",		"Party",		"🎉" },
+			{ "慶祝",		null,			"🎉" }, // TW
 			{ "火箭",		"Rocket ship",	"🚀" },
 			{ "饥饿",		"Hungry", 		"😋" },
 			{ "酷",			"Ruthless", 	"😈" },
