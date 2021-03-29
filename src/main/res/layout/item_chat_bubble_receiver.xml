@@ -20,7 +20,7 @@
         android:text="Foobar123"
         android:textColor="@color/chat_group_username_text"
         android:paddingBottom="2dp"
-        android:paddingStart="2dp"
+        android:paddingStart="3dp"
         android:visibility="gone"
         app:layout_constraintStart_toEndOf="@id/avatar_holder"
         app:layout_constraintTop_toTopOf="parent"
