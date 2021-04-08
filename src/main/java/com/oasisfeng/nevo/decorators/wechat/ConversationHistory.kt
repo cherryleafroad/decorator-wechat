@@ -160,7 +160,7 @@ internal object ConversationHistory {
                     databaseMsg
                 }
 
-                val us = mDb.userDao().findByUsername(user.username)!!
+                val us = mDb.userDao().findByUserId(user.user_sid)!!
 
                 val dbHistory = mDb.messageDao().getAllMessagesByUserLimitDescNoDateHeader(us.u_id, mUnreadCount[key]!!)
                 dbHistory[index].message = databaseMsg
@@ -419,7 +419,7 @@ internal object ConversationHistory {
         // make sure to grab the latest which is the last one
         var msgCheck: String? = ""
         val username = if (!isGroupChat) {
-            EmojiTranslator.translate(splitSender(conversation.ticker)[0]).toString()
+            EmojiTranslator.translate(splitSender(conversation.ticker)[0]!!).toString()
         } else {
             conversation.title.toString()
         }
@@ -455,11 +455,17 @@ internal object ConversationHistory {
             if (mChatHistoryEnabled) {
                 // Add to database
                 GlobalScope.launch(Dispatchers.IO) {
+                    val databaseUsername = if (!isGroupChat) {
+                        splitSender(conversation.ticker)[0]!!
+                    } else {
+                        EmojiTranslator.extractExtras(conversation.title.toString())
+                    }
+
                     var user = mDb.userDao().findByUserId(conversation.id!!)
                     if (user == null) {
                         user = User(
                             user_sid = conversation.id!!,
-                            username = username,
+                            username = databaseUsername,
                             latest_message = conversation.timestamp
                         )
 
@@ -473,8 +479,8 @@ internal object ConversationHistory {
                         mDb.avatarDao().insert(avatar)
                     } else {
                         // update username
-                        if (user.username != username) {
-                            user.username = username
+                        if (user.username != databaseUsername) {
+                            user.username = databaseUsername
                             mDb.userDao().update(user)
                             notifyChatUiChangedData(context, ACTION_USERNAME_CHANGED, user.username)
                         }
@@ -489,16 +495,28 @@ internal object ConversationHistory {
                         val groupChatUsername: String
                         val msg: String
 
-                        if (!isGroupChat) {
-                            chatType = ChatType.CHAT
-                            groupChatUsername = ""
-                            msg = EmojiTranslator.translate(mConversationHistory[key]!![0]!!)
-                                .toString()
+                        if (msgCheck != "[Message]") {
+                            if (!isGroupChat) {
+                                chatType = ChatType.CHAT
+                                groupChatUsername = ""
+                                msg = EmojiTranslator.extractExtras(carExtenderMessages[0])
+                            } else {
+                                chatType = ChatType.GROUP
+                                val split = splitSender(EmojiTranslator.extractExtras(carExtenderMessages[0]))
+                                groupChatUsername = split[0].toString()
+                                msg = split[1].toString()
+                            }
                         } else {
-                            val split = splitSender(EmojiTranslator.translate(mConversationHistory[key]!![0]!!))
-                            chatType = ChatType.GROUP
-                            groupChatUsername = split[0].toString()
-                            msg = split[1].toString()
+                            if (!isGroupChat) {
+                                chatType = ChatType.CHAT
+                                groupChatUsername = ""
+                                msg = conversation.ticker.toString()
+                            } else {
+                                chatType = ChatType.GROUP
+                                val split = splitSender(conversation.ticker)
+                                groupChatUsername = split[0].toString()
+                                msg = split[1].toString()
+                            }
                         }
 
                         // Insert date header if needed

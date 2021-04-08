@@ -176,7 +176,7 @@ class WeChatMessage {
 				if (conversation.isGroupChat() && title_as_sender) sender = SELF;		// WeChat incorrectly use group chat title as sender for self-sent messages.
 			} else sender = null;		// Not really the sender name, revert the parsing result.
 		}
-		return new WeChatMessage(conversation, from_self ? SELF : sender, EmojiTranslator.translate(text), 0);
+		return new WeChatMessage(conversation, from_self ? SELF : sender, EmojiTranslator.translate_java(text), 0);
 	}
 
 	private Message toMessage() {

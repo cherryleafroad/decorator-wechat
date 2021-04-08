@@ -21,7 +21,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING
 import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
+import com.oasisfeng.nevo.decorators.wechat.EmojiTranslator
 import com.oasisfeng.nevo.decorators.wechat.R
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.Helpers
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter.ChatBubbleAdapter
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.viewmodel.SharedViewModel
@@ -40,8 +42,10 @@ class ChatFragment : Fragment() {
 
     private val mSharedModel: SharedViewModel by activityViewModels()
 
-    lateinit var mChatSelectedTitle: String
+    lateinit var mChatSelectedTitle: CharSequence
     var mChatSelectedId: Long = 0
+    var mEmojiTitleSize: Int = 0
+    var mEmojiSize: Int = 0
 
     private var replyIntent: ReplyIntent? = null
     var restarted = false
@@ -95,7 +99,8 @@ class ChatFragment : Fragment() {
             mBinding.sendButton.isEnabled = mBinding.textInput.text.isNotEmpty()
         })
 
-        mChatSelectedTitle = data.title
+        mEmojiTitleSize = Helpers.sizeToEmojiHeight(mBinding.toolbarTitle.textSize)
+        mChatSelectedTitle = EmojiTranslator.translate(data.title, requireContext(), mEmojiTitleSize, true, true)!!
         mBinding.toolbarTitle.text = mChatSelectedTitle
 
         mBinding.toolbar.apply {
@@ -244,9 +249,12 @@ class ChatFragment : Fragment() {
                 AlertDialog.Builder(requireContext())
                     .setTitle(getString(R.string.delete_chat))
                     .setMessage(
-                        getString(R.string.delete_chat_summary).replace(
-                            "%s",
-                            mChatSelectedTitle
+                        EmojiTranslator.translate(
+                            getString(R.string.delete_chat_summary).replace(
+                                "%s",
+                                mChatSelectedTitle.toString()
+                            ),
+                            requireContext(), mEmojiTitleSize, true, true
                         )
                     )
 
@@ -268,7 +276,12 @@ class ChatFragment : Fragment() {
 
     private val mUsernameChanged: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            mChatSelectedTitle = intent.getStringExtra(EXTRA_USERNAME)!!
+            mChatSelectedTitle = com.oasisfeng.nevo.decorators.wechat.EmojiTranslator.translate(
+                intent.getStringExtra(EXTRA_USERNAME)!!,
+                requireContext(), mEmojiTitleSize,
+                true,
+                true
+            )!!
             mBinding.toolbarTitle.text = mChatSelectedTitle
         }
     }

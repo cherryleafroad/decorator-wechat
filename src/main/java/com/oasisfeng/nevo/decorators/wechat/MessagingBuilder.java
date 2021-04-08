@@ -99,7 +99,7 @@ class MessagingBuilder {
 		for (final StatusBarNotification each : archive) {
 			final Notification notification = each.getNotification();
 			final Bundle its_extras = notification.extras;
-			final CharSequence its_title = EmojiTranslator.translate(its_extras.getCharSequence(Notification.EXTRA_TITLE));
+			final CharSequence its_title = EmojiTranslator.translate_java(its_extras.getCharSequence(Notification.EXTRA_TITLE));
 			if (! title.equals(its_title)) {
 				Log.d(TAG, "Skip other conversation with the same key in archive: " + its_title);	// ID reset by WeChat due to notification removal in previous evolving
 				continue;
@@ -228,7 +228,7 @@ class MessagingBuilder {
 				if (TextUtils.equals(conversation.title, sender)) sender = null;		// In this case, the actual sender is user itself.
 			}
 		}
-		actual_text = EmojiTranslator.translate(actual_text);
+		actual_text = EmojiTranslator.translate_java(actual_text);
 
 		final Person person;
 		if (sender != null && sender.isEmpty()) person = null;		// Empty string as a special mark for "self"

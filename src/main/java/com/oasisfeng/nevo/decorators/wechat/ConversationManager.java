@@ -89,7 +89,7 @@ public class ConversationManager {
 			if (participant == null) builder = new Person.Builder().setKey(key);
 			else if (! TextUtils.equals(name, requireNonNull(participant.getUri()).substring(SCHEME_ORIGINAL_NAME.length())))	// Original name is changed
 				builder = participant.toBuilder();
-			if (builder != null) mParticipants.put(key, participant = builder.setUri(SCHEME_ORIGINAL_NAME + name).setName(EmojiTranslator.translate(name)).build());
+			if (builder != null) mParticipants.put(key, participant = builder.setUri(SCHEME_ORIGINAL_NAME + name).setName(EmojiTranslator.translate_java(name)).build());
 			return participant;
 		}
 

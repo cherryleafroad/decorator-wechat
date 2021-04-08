@@ -151,7 +151,7 @@ public class WeChatDecorator extends NevoDecoratorService {
 			return false;
 		}
 		// titles can have emoji too! ;)
-		title = EmojiTranslator.translate(title);
+		title = EmojiTranslator.translate_java(title);
 		final int flags = n.flags; final String channel_id = SDK_INT >= O ? n.getChannelId() : null;
 		if ((flags & Notification.FLAG_ONGOING_EVENT) != 0 && CHANNEL_VOIP.equals(channel_id)) return false;
 

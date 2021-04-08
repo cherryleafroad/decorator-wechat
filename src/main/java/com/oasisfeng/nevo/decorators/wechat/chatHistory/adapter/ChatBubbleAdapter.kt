@@ -3,6 +3,7 @@ package com.oasisfeng.nevo.decorators.wechat.chatHistory.adapter
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.text.SpannableStringBuilder
 import android.util.ArrayMap
 import android.view.LayoutInflater
 import android.view.View.VISIBLE
@@ -12,8 +13,10 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
+import com.oasisfeng.nevo.decorators.wechat.EmojiTranslator
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.Helpers
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.MessageWithAvatar
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
@@ -51,7 +54,12 @@ class ChatBubbleAdapter(
 
     inner class ChatBubbleReceiverViewHolder(private val binding: ItemChatBubbleReceiverBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         override fun bind(item: MessageWithAvatar, position: Int) {
-            binding.chatBubbleReceiver.text = item.message.message
+            binding.chatBubbleReceiver.text = EmojiTranslator.translate(
+                item.message.message,
+                context,
+                Helpers.sizeToEmojiHeight(binding.chatBubbleReceiver.textSize),
+                true
+            )
 
             val avFilename = item.avatar.filename
             if (item.message.chat_type == ChatType.CHAT) {
@@ -69,7 +77,13 @@ class ChatBubbleAdapter(
                 }
             } else if (item.message.chat_type == ChatType.GROUP) {
                 binding.chatGroupUsername.apply {
-                    text = item.message.group_chat_username
+                    text = EmojiTranslator.translate(
+                        item.message.group_chat_username,
+                        context,
+                        Helpers.sizeToEmojiHeight(textSize),
+                        true,
+                        true
+                    )
                     visibility = VISIBLE
                 }
 
@@ -80,22 +94,57 @@ class ChatBubbleAdapter(
 
     inner class ChatBubbleSenderViewHolder(private val binding: ItemChatBubbleSenderBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         override fun bind(item: MessageWithAvatar, position: Int) {
-            binding.chatBubbleSender.text = item.message.message
+            binding.chatBubbleSender.text = EmojiTranslator.translate(
+                item.message.message,
+                context,
+                Helpers.sizeToEmojiHeight(binding.chatBubbleSender.textSize),
+                true
+            )
         }
     }
 
     inner class ChatBubbleRecalledVisibleViewHolder(private val binding: ItemBubbleRecalledBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         override fun bind(item: MessageWithAvatar, position: Int) {
-            binding.chatBubbleRecalled.text = context.getString(R.string.message_header_recalled_visible)
-                .replace("%s", if (item.message.chat_type == ChatType.CHAT) activity.mChatSelectedTitle else item.message.group_chat_username)
-                .replace("%m", item.message.message)
+            var title = if (item.message.chat_type == ChatType.CHAT) {
+                activity.mChatSelectedTitle.toString()
+            } else  {
+                item.message.group_chat_username
+            }
+            val titleTrans = EmojiTranslator.translate(
+                title,
+                context,
+                Helpers.sizeToEmojiHeight(binding.chatBubbleRecalled.textSize),
+                true,
+                true
+            )
+
+            val msg = EmojiTranslator.translate(
+                item.message.message,
+                context,
+                Helpers.sizeToEmojiHeight(binding.chatBubbleRecalled.textSize),
+                true
+            )
+
+            val spannable = SpannableStringBuilder(context.getString(R.string.message_header_recalled_visible))
+            spannable.replace(1, 3, titleTrans)
+            spannable.replace(spannable.length-2, spannable.length, msg)
+
+            binding.chatBubbleRecalled.text = spannable
         }
     }
 
     inner class ChatBubbleRecalledHiddenViewHolder(private val binding: ItemBubbleRecalledBinding) : ChatBubbleViewHolder<MessageWithAvatar>(binding) {
         override fun bind(item: MessageWithAvatar, position: Int) {
-            binding.chatBubbleRecalled.text = context.getString(R.string.message_header_recalled_invisible)
-                .replace("%s", if (item.message.chat_type == ChatType.CHAT) activity.mChatSelectedTitle else item.message.group_chat_username)
+            var message: CharSequence = context.getString(R.string.message_header_recalled_invisible)
+                .replace("%s", if (item.message.chat_type == ChatType.CHAT) activity.mChatSelectedTitle.toString() else item.message.group_chat_username)
+            message = EmojiTranslator.translate(
+                message,
+                context,
+                Helpers.sizeToEmojiHeight(binding.chatBubbleRecalled.textSize),
+                true,
+                true
+            )
+            binding.chatBubbleRecalled.text = message
         }
     }
 

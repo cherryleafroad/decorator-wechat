@@ -11,10 +11,14 @@ import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.oasisfeng.nevo.decorators.wechat.EmojiTranslator
 import com.oasisfeng.nevo.decorators.wechat.R
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.DateConverter
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.Helpers
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.activity.ChatHistoryFragmentActivity
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.entity.UserWithMessageAndAvatar
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.ChatType
+import com.oasisfeng.nevo.decorators.wechat.chatHistory.database.type.MessageType
 import com.oasisfeng.nevo.decorators.wechat.databinding.ItemUserBinding
 import java.util.*
 
@@ -55,7 +59,13 @@ class UserAdapter(
         }
 
         holder.binding.apply {
-            username.text = data.user.username
+            username.text = EmojiTranslator.translate(
+                data.user.username,
+                context,
+                Helpers.sizeToEmojiHeight(username.textSize),
+                true,
+                true
+            )
             avatar.background = userAvatar ?: ResourcesCompat.getDrawable(context.resources, R.drawable.blank_user, null)
         }
 
@@ -65,10 +75,63 @@ class UserAdapter(
             val color = ForegroundColorSpan(context.getColor(R.color.draft_label))
             ssb.setSpan(color, 0, ssb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
-            ssb.append(" ${activity.mSharedViewModel.drafts[data.user.u_id]}")
+            ssb.append(EmojiTranslator.translate(
+                activity.mSharedViewModel.drafts[data.user.u_id]!!,
+                context,
+                Helpers.sizeToEmojiHeight(holder.binding.message.textSize),
+                true
+            ))
             ssb
         } else {
-             data.data.message.message
+            if (data.data.message.message_type == MessageType.RECALLED_HIDDEN || data.data.message.message_type == MessageType.RECALLED_VISIBLE) {
+                val title = if (data.data.message.chat_type == ChatType.CHAT) {
+                    data.user.username
+                } else {
+                    data.data.message.group_chat_username
+                }
+
+                val size = Helpers.sizeToEmojiHeight(holder.binding.message.textSize)
+
+                val titleTrans = EmojiTranslator.translate(
+                    title,
+                    context,
+                    size,
+                    true,
+                    true
+                )
+
+                if (data.data.message.message_type == MessageType.RECALLED_VISIBLE) {
+                    val msgTrans = EmojiTranslator.translate(
+                        data.data.message.message,
+                        context,
+                        size,
+                        true
+                    )
+
+                    val spannable = SpannableStringBuilder(
+                        context.getString(R.string.message_header_recalled_visible)
+                    )
+                    spannable.replace(1, 3, titleTrans)
+                    spannable.replace(spannable.length - 2, spannable.length, msgTrans)
+
+                    spannable
+                } else {
+                    val spannable = SpannableStringBuilder(
+                        context.getString(R.string.message_header_recalled_invisible)
+                    )
+
+                    spannable.replace(1, 3, titleTrans)
+
+                    spannable
+                }
+            } else {
+                EmojiTranslator.translate(
+                    data.data.message.message,
+                    context,
+                    Helpers.sizeToEmojiHeight(holder.binding.message.textSize),
+                    true
+                )
+            }
         }
 
         holder.binding.date.text = dateString

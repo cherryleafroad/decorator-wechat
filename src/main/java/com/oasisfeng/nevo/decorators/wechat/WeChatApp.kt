@@ -17,6 +17,10 @@ import androidx.lifecycle.MutableLiveData
 import com.oasisfeng.nevo.decorators.wechat.WeChatDecorator.TAG
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.MessengerService
 import com.oasisfeng.nevo.decorators.wechat.chatHistory.ReplyIntent
+import com.vdurmont.emoji.EmojiManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
 class WeChatApp : Application() {
@@ -44,10 +48,19 @@ class WeChatApp : Application() {
     private lateinit var resolver: SettingsObserver
     private var isUIProcess = false
 
+    init {
+        EmojiJNI.nativeInit(this)
+    }
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate() {
         super.onCreate()
+
+        GlobalScope.launch(Dispatchers.IO) {
+            EmojiJNI.initialize(this@WeChatApp)
+            EmojiTranslator.loadData()
+            EmojiManager.loadJson(this@WeChatApp, "emojis-java.json")
+        }
 
         val isUI = getProcessName().substringAfter(':', "") == "ui"
 

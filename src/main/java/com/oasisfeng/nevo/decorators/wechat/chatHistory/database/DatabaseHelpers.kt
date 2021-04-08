@@ -89,8 +89,8 @@ object DatabaseHelpers {
             val user = db.userDao().findByUserId(id)
             if (user != null) {
                 val now = System.currentTimeMillis()
-                val message =
-                    Message(user.u_id, reply, MessageType.SENDER, chatType, now)
+                val translated = EmojiTranslator.extractExtras(reply)
+                val message = Message(user.u_id, translated, MessageType.SENDER, chatType, now)
                 db.messageDao().insert(message)
                 
                 user.latest_message = now

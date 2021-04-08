@@ -39,7 +39,6 @@ class ChatHistoryFragmentActivity : AppCompatActivity() {
     private lateinit var mBinding: ActivityChatHistoryFragmentBinding
     var currentFragment = ChatHistoryFragment.USER_LIST
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mBinding = ActivityChatHistoryFragmentBinding.inflate(layoutInflater)
