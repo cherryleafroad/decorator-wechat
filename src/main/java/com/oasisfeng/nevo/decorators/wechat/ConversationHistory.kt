@@ -510,7 +510,7 @@ internal object ConversationHistory {
                             if (!isGroupChat) {
                                 chatType = ChatType.CHAT
                                 groupChatUsername = ""
-                                msg = conversation.ticker.toString()
+                                msg = splitSender(conversation.ticker.toString())[1].toString()
                             } else {
                                 chatType = ChatType.GROUP
                                 val split = splitSender(conversation.ticker)
