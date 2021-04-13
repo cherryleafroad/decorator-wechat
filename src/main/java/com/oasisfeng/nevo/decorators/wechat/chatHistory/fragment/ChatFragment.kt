@@ -45,7 +45,6 @@ class ChatFragment : Fragment() {
     lateinit var mChatSelectedTitle: CharSequence
     var mChatSelectedId: Long = 0
     var mEmojiTitleSize: Int = 0
-    var mEmojiSize: Int = 0
 
     private var replyIntent: ReplyIntent? = null
     var restarted = false
@@ -100,7 +99,7 @@ class ChatFragment : Fragment() {
         })
 
         mEmojiTitleSize = Helpers.sizeToEmojiHeight(mBinding.toolbarTitle.textSize)
-        mChatSelectedTitle = EmojiTranslator.translate(data.title, requireContext(), mEmojiTitleSize, true, true)!!
+        mChatSelectedTitle = EmojiTranslator.translate(data.title, requireContext(), mEmojiTitleSize, isChat = true, isTitle = true)
         mBinding.toolbarTitle.text = mChatSelectedTitle
 
         mBinding.toolbar.apply {
@@ -145,6 +144,7 @@ class ChatFragment : Fragment() {
 
                 when (newState) {
                     SCROLL_STATE_IDLE -> {
+
                         atEnd = !recyclerView.canScrollVertically(1)
                         dragging = false
                     }
@@ -176,7 +176,7 @@ class ChatFragment : Fragment() {
             // same layout size triggers often, but there's no real change?
             if (oldBottom != bottom) {
                 if (atEnd) {
-                    mBinding.bubbleRecycler.scrollToPosition(0)
+                    mBinding.bubbleRecycler.smoothScrollToPosition(0)
                 }
 
                 if (!dragging) {
@@ -212,12 +212,18 @@ class ChatFragment : Fragment() {
             val data = mSharedModel.chatData.value!!
 
             // add draft to textinput if one was saved
-            if (mSharedModel.inputData.isNotEmpty()) {
-                mBinding.textInput.setText(mSharedModel.inputData, TextView.BufferType.EDITABLE)
-            } else if (mSharedModel.drafts.contains(data.uid)) {
-                mBinding.textInput.setText(mSharedModel.drafts[data.uid], TextView.BufferType.EDITABLE)
-            } else {
-                mBinding.textInput.setText("", TextView.BufferType.EDITABLE)
+            when {
+                mSharedModel.inputData.isNotEmpty() -> {
+                    mBinding.textInput.setText(mSharedModel.inputData, TextView.BufferType.EDITABLE)
+                }
+
+                mSharedModel.drafts.contains(data.uid) -> {
+                    mBinding.textInput.setText(mSharedModel.drafts[data.uid], TextView.BufferType.EDITABLE)
+                }
+
+                else -> {
+                    mBinding.textInput.setText("", TextView.BufferType.EDITABLE)
+                }
             }
         } else {
             restarted = false
@@ -254,7 +260,7 @@ class ChatFragment : Fragment() {
                                 "%s",
                                 mChatSelectedTitle.toString()
                             ),
-                            requireContext(), mEmojiTitleSize, true, true
+                            requireContext(), mEmojiTitleSize, isChat = true, isTitle = true
                         )
                     )
 
@@ -276,12 +282,12 @@ class ChatFragment : Fragment() {
 
     private val mUsernameChanged: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            mChatSelectedTitle = com.oasisfeng.nevo.decorators.wechat.EmojiTranslator.translate(
+            mChatSelectedTitle = EmojiTranslator.translate(
                 intent.getStringExtra(EXTRA_USERNAME)!!,
                 requireContext(), mEmojiTitleSize,
-                true,
-                true
-            )!!
+                isChat = true,
+                isTitle = true
+            )
             mBinding.toolbarTitle.text = mChatSelectedTitle
         }
     }
